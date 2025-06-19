@@ -1,0 +1,68 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Cozy Comfort</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        
+        <AuthorizeView Roles="Administrator,Manufacturer">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manufacturer/dashboard">
+                    <span class="bi bi-factory" aria-hidden="true"></span> Manufacturing
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manufacturer/products">
+                    <span class="bi bi-box" aria-hidden="true"></span> Products
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Administrator,Distributor">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="distributor/dashboard">
+                    <span class="bi bi-truck" aria-hidden="true"></span> Distribution
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="distributor/orders">
+                    <span class="bi bi-clipboard" aria-hidden="true"></span> Orders
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Administrator,Seller">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="seller/dashboard">
+                    <span class="bi bi-shop" aria-hidden="true"></span> Sales
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="seller/shop">
+                    <span class="bi bi-cart" aria-hidden="true"></span> Shop
+                </NavLink>
+            </div>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

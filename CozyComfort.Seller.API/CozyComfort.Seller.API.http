@@ -1,0 +1,6 @@
+@CozyComfort.Seller.API_HostAddress = http://localhost:5186
+
+GET {{CozyComfort.Seller.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

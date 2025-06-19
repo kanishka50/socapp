@@ -1,0 +1,117 @@
+﻿@page "/login"
+@using CozyComfort.Shared.DTOs
+@using CozyComfort.Shared.Enums
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@using CozyComfort.BlazorApp.Services.Interfaces
+
+<PageTitle>Login - Cozy Comfort</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Login to Cozy Comfort</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Login As:</label>
+                            <InputSelect @bind-Value="selectedRole" class="form-select">
+                                <option value="">Select Role</option>
+                                <option value="manufacturer">Manufacturer</option>
+                                <option value="distributor">Distributor</option>
+                                <option value="seller">Seller</option>
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <InputText @bind-Value="loginModel.Email" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <InputText @bind-Value="loginModel.Password"
+                                       type="password" class="form-control" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" disabled="@loading">
+                            @if (loading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            Login
+                        </button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">@errorMessage</div>
+                    }
+
+                    <div class="mt-3">
+                        <h5>Test Accounts:</h5>
+                        <ul>
+                            <li>Manufacturer: manufacturer@cozycomfort.com / Manufacturer123!</li>
+                            <li>Distributor: distributor@cozycomfort.com / Distributor123!</li>
+                            <li>Seller: seller@cozycomfort.com / Seller123!</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginModel = new();
+    private string selectedRole = "";
+    private bool loading;
+    private string errorMessage = "";
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrEmpty(selectedRole))
+        {
+            errorMessage = "Please select a role";
+            return;
+        }
+
+        loading = true;
+        errorMessage = "";
+
+        try
+        {
+            var result = await AuthService.LoginAsync(selectedRole, loginModel);
+
+            if (result.Success)
+            {
+                var redirectUrl = selectedRole switch
+                {
+                    "manufacturer" => "/manufacturer/dashboard",
+                    "distributor" => "/distributor/dashboard",
+                    "seller" => "/seller/dashboard",
+                    _ => "/"
+                };
+                Navigation.NavigateTo(redirectUrl);
+            }
+            else
+            {
+                errorMessage = result.Message ?? "Login failed";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred during login";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

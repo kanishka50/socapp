@@ -1,0 +1,11 @@
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\bin\Debug\net8.0\CozyComfort.Shared.deps.json
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\bin\Debug\net8.0\CozyComfort.Shared.dll
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\bin\Debug\net8.0\CozyComfort.Shared.pdb
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.AssemblyInfoInputs.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.AssemblyInfo.cs
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.csproj.CoreCompileInputs.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.dll
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\refint\CozyComfort.Shared.dll
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.pdb
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\ref\CozyComfort.Shared.dll

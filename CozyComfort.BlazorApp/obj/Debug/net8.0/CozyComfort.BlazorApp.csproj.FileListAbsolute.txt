@@ -1,0 +1,7 @@
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\CozyComfort.BlazorApp.csproj.AssemblyReference.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\CozyComfort.BlazorApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\CozyComfort.BlazorApp.AssemblyInfoInputs.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\CozyComfort.BlazorApp.AssemblyInfo.cs
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\CozyComfort.BlazorApp.csproj.CoreCompileInputs.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.BlazorApp\obj\Debug\net8.0\CozyComfort.BlazorApp.MvcApplicationPartsAssemblyInfo.cache
