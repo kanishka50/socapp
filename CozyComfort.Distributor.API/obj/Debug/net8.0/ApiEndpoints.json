@@ -83,7 +83,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "CozyComfort.Distributor.API.Models.DTOs.CreateManufacturerOrderDto",
+        "Type": "CozyComfort.Shared.DTOs.Distributor.CreateManufacturerOrderDto",
         "IsRequired": true
       }
     ],
@@ -99,7 +99,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "CozyComfort.Distributor.API.Models.DTOs.ProcessSellerOrderDto",
+        "Type": "CozyComfort.Shared.DTOs.Distributor.ProcessSellerOrderDto",
         "IsRequired": true
       }
     ],
@@ -172,7 +172,7 @@
       },
       {
         "Name": "dto",
-        "Type": "CozyComfort.Distributor.API.Models.DTOs.UpdateDistributorStockDto",
+        "Type": "CozyComfort.Shared.DTOs.Distributor.UpdateDistributorStockDto",
         "IsRequired": true
       }
     ],
@@ -188,7 +188,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "CozyComfort.Distributor.API.Models.DTOs.CreateDistributorProductDto",
+        "Type": "CozyComfort.Shared.DTOs.Distributor.CreateDistributorProductDto",
         "IsRequired": true
       }
     ],
@@ -204,7 +204,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "CozyComfort.Distributor.API.Models.DTOs.DistributorStockCheckRequest",
+        "Type": "CozyComfort.Shared.DTOs.Distributor.DistributorStockCheckRequest",
         "IsRequired": true
       }
     ],

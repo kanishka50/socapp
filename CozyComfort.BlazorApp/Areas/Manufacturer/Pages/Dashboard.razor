@@ -1,0 +1,11 @@
+﻿@page "/manufacturer/dashboard"
+@attribute [Authorize(Roles = "Manufacturer,Administrator")]
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Manufacturer Dashboard</PageTitle>
+
+<h3>Welcome to Manufacturer Dashboard!</h3>
+
+<div class="alert alert-success">
+    You have successfully logged in as a Manufacturer.
+</div>

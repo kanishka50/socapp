@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CozyComfort.Distributor.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93829e64312565c00ea02c13ec75eb746489106e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+89d51ae395b63907fbe9e2acc37448adced1844c")]
 [assembly: System.Reflection.AssemblyProductAttribute("CozyComfort.Distributor.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CozyComfort.Distributor.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

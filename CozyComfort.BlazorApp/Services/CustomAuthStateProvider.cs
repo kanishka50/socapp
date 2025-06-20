@@ -10,27 +10,37 @@ namespace CozyComfort.BlazorApp.Services
     {
         private readonly ILocalStorageService _localStorage;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly AuthenticationState _anonymous;
 
         public CustomAuthStateProvider(ILocalStorageService localStorage, IHttpClientFactory httpClientFactory)
         {
             _localStorage = localStorage;
             _httpClientFactory = httpClientFactory;
+            _anonymous = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _localStorage.GetItemAsync<string>("authToken");
-
-            if (string.IsNullOrWhiteSpace(token))
+            try
             {
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                var token = await _localStorage.GetItemAsync<string>("authToken");
+
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    return _anonymous;
+                }
+
+                // Set token for all HTTP clients
+                SetAuthorizationHeader(token);
+
+                return new AuthenticationState(new ClaimsPrincipal(
+                    new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
             }
-
-            // Set token for all HTTP clients
-            SetAuthorizationHeader(token);
-
-            return new AuthenticationState(new ClaimsPrincipal(
-                new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
+            catch (InvalidOperationException)
+            {
+                // This happens during prerendering when JS interop is not available
+                return _anonymous;
+            }
         }
 
         public void NotifyUserAuthentication(string token)
@@ -43,8 +53,7 @@ namespace CozyComfort.BlazorApp.Services
 
         public void NotifyUserLogout()
         {
-            var authState = Task.FromResult(new AuthenticationState(
-                new ClaimsPrincipal(new ClaimsIdentity())));
+            var authState = Task.FromResult(_anonymous);
             NotifyAuthenticationStateChanged(authState);
         }
 

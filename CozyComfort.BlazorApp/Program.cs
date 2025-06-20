@@ -49,6 +49,9 @@ builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 
+// Add Distributed Memory Cache - IMPORTANT: Add this before AddSession
+builder.Services.AddDistributedMemoryCache();
+
 // Add Session for cart
 builder.Services.AddSession(options =>
 {
@@ -61,7 +64,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();
 
 // Add SessionService if you have one
-// builder.Services.AddScoped<SessionService>();
+builder.Services.AddScoped<SessionService>();
 
 var app = builder.Build();
 

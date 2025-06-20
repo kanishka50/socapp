@@ -27,8 +27,20 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Areas/Distributor/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcRGlzdHJpYnV0b3JcUGFnZXNcRGFzaGJvYXJkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Areas/Manufacturer/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWFudWZhY3R1cmVyXFBhZ2VzXERhc2hib2FyZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Areas/Manufacturer/Pages/Products.razor]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWFudWZhY3R1cmVyXFBhZ2VzXFByb2R1Y3RzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Areas/Seller/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU2VsbGVyXFBhZ2VzXERhc2hib2FyZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Pages/Counter.razor]

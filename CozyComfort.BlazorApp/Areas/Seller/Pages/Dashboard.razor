@@ -1,0 +1,11 @@
+﻿@page "/seller/dashboard"
+@attribute [Authorize(Roles = "Seller,Administrator")]
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Seller Dashboard</PageTitle>
+
+<h3>Welcome to Seller Dashboard!</h3>
+
+<div class="alert alert-success">
+    You have successfully logged in as a Seller.
+</div>

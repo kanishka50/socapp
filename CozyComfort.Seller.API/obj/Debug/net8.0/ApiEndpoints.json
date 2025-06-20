@@ -25,7 +25,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "CozyComfort.Seller.API.Models.DTOs.RegisterCustomerDto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.RegisterCustomerDto",
         "IsRequired": true
       }
     ],
@@ -62,7 +62,7 @@
       },
       {
         "Name": "dto",
-        "Type": "CozyComfort.Seller.API.Models.DTOs.AddToCartDto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.AddToCartDto",
         "IsRequired": true
       }
     ],
@@ -172,7 +172,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "CozyComfort.Seller.API.Models.DTOs.CreateCustomerOrderDto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CreateCustomerOrderDto",
         "IsRequired": true
       }
     ],

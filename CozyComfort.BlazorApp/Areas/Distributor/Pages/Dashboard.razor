@@ -1,0 +1,11 @@
+﻿@page "/distributor/dashboard"
+@attribute [Authorize(Roles = "Distributor,Administrator")]
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Distributor Dashboard</PageTitle>
+
+<h3>Welcome to Distributor Dashboard!</h3>
+
+<div class="alert alert-success">
+    You have successfully logged in as a Distributor.
+</div>

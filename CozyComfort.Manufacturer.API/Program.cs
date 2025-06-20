@@ -91,6 +91,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
