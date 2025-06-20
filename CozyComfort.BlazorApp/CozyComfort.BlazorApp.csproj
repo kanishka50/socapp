@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Manufacturer\" />
     <Folder Include="Areas\Distributor\" />
     <Folder Include="Areas\Seller\" />
     <Folder Include="Components\Common\" />

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using CozyComfort.Seller.API.Services.Interfaces;
-using CozyComfort.Seller.API.Models.DTOs;
+//using CozyComfort.Seller.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Seller;
 
 namespace CozyComfort.Seller.API.Controllers
 {

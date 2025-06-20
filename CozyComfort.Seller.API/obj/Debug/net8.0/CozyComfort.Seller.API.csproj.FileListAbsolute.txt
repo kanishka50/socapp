@@ -10,7 +10,9 @@ C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Azure.Core.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Azure.Identity.dll
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\BCrypt.Net-Next.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Humanizer.dll
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Microsoft.Build.Locator.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Microsoft.CodeAnalysis.dll
@@ -171,6 +173,7 @@ C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\CozyComfort.Seller.API.csproj.CoreCompileInputs.cache
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\CozyComfort.Seller.API.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\CozyComfort.Seller.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\CozyComfort.Seller.API.sourcelink.json
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -186,5 +189,3 @@ C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\CozyComfort.Seller.API.pdb
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\CozyComfort.Seller.API.genruntimeconfig.cache
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\obj\Debug\net8.0\ref\CozyComfort.Seller.API.dll
-C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\BCrypt.Net-Next.dll
-C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Seller.API\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll

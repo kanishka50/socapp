@@ -1,5 +1,5 @@
 ﻿using CozyComfort.Shared.DTOs;
-using CozyComfort.Manufacturer.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Manufacturer;
 
 namespace CozyComfort.BlazorApp.Services.Interfaces
 {

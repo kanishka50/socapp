@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using CozyComfort.Seller.API.Data;
-using CozyComfort.Seller.API.Models.DTOs;
+//using CozyComfort.Seller.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;

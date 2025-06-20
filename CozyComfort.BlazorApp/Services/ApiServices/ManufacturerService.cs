@@ -1,8 +1,9 @@
 ﻿using CozyComfort.BlazorApp.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
-using CozyComfort.Manufacturer.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Manufacturer;
 using System.Net.Http.Json;
 using System.Text.Json;
+
 
 namespace CozyComfort.BlazorApp.Services.ApiServices
 {

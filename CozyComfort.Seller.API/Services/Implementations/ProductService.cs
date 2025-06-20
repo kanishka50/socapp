@@ -2,6 +2,7 @@
 using CozyComfort.Seller.API.Data;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Seller;
 
 namespace CozyComfort.Seller.API.Services.Implementations
 {

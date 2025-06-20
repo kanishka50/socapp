@@ -1,4 +1,5 @@
-﻿using CozyComfort.Distributor.API.Models.DTOs;
+﻿//using CozyComfort.Distributor.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs;
 
 namespace CozyComfort.Distributor.API.Services.Interfaces

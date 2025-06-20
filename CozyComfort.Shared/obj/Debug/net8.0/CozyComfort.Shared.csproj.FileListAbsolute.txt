@@ -5,6 +5,7 @@ C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\C
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.AssemblyInfoInputs.cache
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.AssemblyInfo.cs
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.csproj.CoreCompileInputs.cache
+C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.sourcelink.json
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\refint\CozyComfort.Shared.dll
 C:\Users\Kanishka\source\repos\CozyComfort\CozyComfort.Shared\obj\Debug\net8.0\CozyComfort.Shared.pdb

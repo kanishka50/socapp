@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
-using CozyComfort.Manufacturer.API.Models.DTOs;
+//using CozyComfort.Manufacturer.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Manufacturer;
 using CozyComfort.Shared.DTOs;
 
 namespace CozyComfort.Manufacturer.API.Services.Interfaces

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using CozyComfort.Manufacturer.API.Models.DTOs;
+//using CozyComfort.Manufacturer.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Manufacturer;
 using CozyComfort.Manufacturer.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
 

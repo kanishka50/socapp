@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CozyComfort.Distributor.API.Data;
-using CozyComfort.Distributor.API.Models.DTOs;
+//using CozyComfort.Distributor.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Distributor.API.Models.Entities;
 using CozyComfort.Distributor.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
