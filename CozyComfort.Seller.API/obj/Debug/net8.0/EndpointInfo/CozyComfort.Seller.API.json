@@ -534,79 +534,31 @@
         "additionalProperties": false
       },
       "RegisterCustomerDto": {
-        "required": [
-          "confirmPassword",
-          "email",
-          "firstName",
-          "lastName",
-          "password",
-          "phone"
-        ],
         "type": "object",
         "properties": {
           "email": {
-            "maxLength": 256,
-            "minLength": 0,
             "type": "string",
-            "format": "email"
+            "nullable": true
           },
           "password": {
-            "maxLength": 100,
-            "minLength": 6,
-            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,}$",
-            "type": "string"
-          },
-          "confirmPassword": {
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "firstName": {
-            "maxLength": 100,
-            "minLength": 0,
-            "pattern": "^[a-zA-Z\\s]+$",
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "lastName": {
-            "maxLength": 100,
-            "minLength": 0,
-            "pattern": "^[a-zA-Z\\s]+$",
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "phone": {
-            "maxLength": 20,
-            "minLength": 0,
             "type": "string",
-            "format": "tel"
+            "nullable": true
           },
           "address": {
-            "maxLength": 500,
-            "minLength": 0,
             "type": "string",
             "nullable": true
-          },
-          "city": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "postalCode": {
-            "maxLength": 20,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "country": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "acceptTerms": {
-            "type": "boolean"
-          },
-          "subscribeToNewsletter": {
-            "type": "boolean"
           }
         },
         "additionalProperties": false

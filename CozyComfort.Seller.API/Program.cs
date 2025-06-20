@@ -95,6 +95,10 @@ builder.Services.AddHttpClient("DistributorAPI", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+// Add this after builder creation
+builder.Services.AddDbContext<SellerDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 // Register Services
 builder.Services.AddScoped<ISellerAuthService, SellerAuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();

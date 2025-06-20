@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using CozyComfort.Seller.API.Models.Entities;
 using CozyComfort.Shared.Models;
 using CozyComfort.Shared.Enums;
+using CozyComfort.Seller.API.Models.Entities;
 
 namespace CozyComfort.Seller.API.Data
 {
@@ -12,115 +12,115 @@ namespace CozyComfort.Seller.API.Data
         {
         }
 
+        public DbSet<User> Users { get; set; }
         public DbSet<SellerProduct> Products { get; set; }
         public DbSet<CustomerOrder> Orders { get; set; }
         public DbSet<CustomerOrderItem> OrderItems { get; set; }
-        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure SellerProduct
-            modelBuilder.Entity<SellerProduct>(entity =>
-            {
-                entity.ToTable("SellerProducts");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.ProductName).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.SKU).IsRequired().HasMaxLength(50);
-                entity.HasIndex(e => e.SKU).IsUnique();
-                entity.Property(e => e.PurchasePrice).HasPrecision(18, 2);
-                entity.Property(e => e.SellingPrice).HasPrecision(18, 2);
-            });
+            // Configure User entity
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
 
-            // Configure CustomerOrder
-            modelBuilder.Entity<CustomerOrder>(entity =>
-            {
-                entity.ToTable("CustomerOrders");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
-                entity.HasIndex(e => e.OrderNumber).IsUnique();
-                entity.Property(e => e.SubTotal).HasPrecision(18, 2);
-                entity.Property(e => e.Tax).HasPrecision(18, 2);
-                entity.Property(e => e.ShippingCost).HasPrecision(18, 2);
-                entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
-            });
+            // Configure SellerProduct entity
+            modelBuilder.Entity<SellerProduct>()
+                .Property(p => p.PurchasePrice)
+                .HasPrecision(18, 2);
 
-            // Configure CustomerOrderItem
-            modelBuilder.Entity<CustomerOrderItem>(entity =>
-            {
-                entity.ToTable("CustomerOrderItems");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
+            modelBuilder.Entity<SellerProduct>()
+                .Property(p => p.SellingPrice)
+                .HasPrecision(18, 2);
 
-                entity.HasOne(e => e.Order)
-                    .WithMany(o => o.OrderItems)
-                    .HasForeignKey(e => e.OrderId)
-                    .OnDelete(DeleteBehavior.Cascade);
+            // Configure CustomerOrder entity
+            modelBuilder.Entity<CustomerOrder>()
+                .Property(o => o.TotalAmount)
+                .HasPrecision(18, 2);
 
-                entity.HasOne(e => e.Product)
-                    .WithMany(p => p.OrderItems)
-                    .HasForeignKey(e => e.ProductId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
+            // Configure CustomerOrderItem entity
+            modelBuilder.Entity<CustomerOrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasPrecision(18, 2);
 
-            // Seed data
+            // Configure relationships
+            modelBuilder.Entity<CustomerOrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId);
+
+            modelBuilder.Entity<CustomerOrderItem>()
+                .HasOne(oi => oi.Product)
+                .WithMany(p => p.OrderItems)
+                .HasForeignKey(oi => oi.ProductId);
+
+            // Seed initial data
             SeedData(modelBuilder);
         }
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Seed seller user
+            // Seed seller users
             modelBuilder.Entity<User>().HasData(
                 new User
                 {
                     Id = 1,
-                    Email = "seller@cozycomfort.com",
-                    FirstName = "Sarah",
+                    Email = "admin@seller.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                    FirstName = "Admin",
                     LastName = "Seller",
+                    Role = UserRole.Administrator,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Id = 2,
+                    Email = "seller@cozycomfort.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Seller123!"),
+                    FirstName = "Bob",
+                    LastName = "Seller",
                     Role = UserRole.Seller,
-                    CompanyName = "Comfort Retail Store",
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
                 }
             );
 
-            // Seed seller products
+            // Seed sample products for sellers - using CurrentStock property
             modelBuilder.Entity<SellerProduct>().HasData(
                 new SellerProduct
                 {
                     Id = 1,
                     DistributorProductId = 1,
-                    ProductName = "Luxury Wool Blanket - Queen Size",
-                    SKU = "LWB-Q-001",
-                    Description = "Experience ultimate comfort with our premium Merino wool blanket",
-                    Category = "Premium Blankets",
-                    PurchasePrice = 259.99m,
-                    SellingPrice = 349.99m,
-                    CurrentStock = 10,
-                    DisplayStock = 10,
+                    ProductName = "Office Chair - Retail",
+                    Description = "Comfortable office chair for retail",
+                    SKU = "CHAIR-RETAIL-001",
+                    Category = "Chairs",
+                    PurchasePrice = 250.00M,
+                    SellingPrice = 399.99M,
+                    CurrentStock = 25,  // Changed from Stock to CurrentStock
+                    DisplayStock = 25,
                     IsAvailable = true,
-                    ImageUrl = "/images/luxury-wool-queen.jpg",
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true
+                    ImageUrl = "/images/office-chair-retail.jpg",
+                    CreatedAt = DateTime.UtcNow
                 },
                 new SellerProduct
                 {
                     Id = 2,
                     DistributorProductId = 2,
-                    ProductName = "Cotton Comfort Blanket - King Size",
-                    SKU = "CCB-K-001",
-                    Description = "Breathable organic cotton blanket perfect for all seasons",
-                    Category = "Cotton Blankets",
-                    PurchasePrice = 199.99m,
-                    SellingPrice = 279.99m,
-                    CurrentStock = 15,
+                    ProductName = "Standing Desk - Retail",
+                    Description = "Adjustable standing desk for retail",
+                    SKU = "DESK-RETAIL-001",
+                    Category = "Desks",
+                    PurchasePrice = 500.00M,
+                    SellingPrice = 799.99M,
+                    CurrentStock = 15,  // Changed from Stock to CurrentStock
                     DisplayStock = 15,
                     IsAvailable = true,
-                    ImageUrl = "/images/cotton-comfort-king.jpg",
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true
+                    ImageUrl = "/images/standing-desk-retail.jpg",
+                    CreatedAt = DateTime.UtcNow
                 }
             );
         }
