@@ -65,6 +65,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
+builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 
 // Add distributed memory cache for session

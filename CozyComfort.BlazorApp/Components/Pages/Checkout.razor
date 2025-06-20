@@ -1,0 +1,353 @@
+﻿@page "/checkout"
+@using CozyComfort.Shared.DTOs.Seller
+@using CozyComfort.BlazorApp.Services.Interfaces
+@using System.ComponentModel.DataAnnotations
+@inject ISellerService SellerService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Checkout - CozyComfort</PageTitle>
+
+<div class="container mt-4">
+    <h2>Checkout</h2>
+    
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (cart?.Items?.Any() == true)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <EditForm Model="@orderModel" OnValidSubmit="@PlaceOrder">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Customer Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <InputText @bind-Value="orderModel.CustomerName" class="form-control" />
+                                    <ValidationMessage For="() => orderModel.CustomerName" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <InputText @bind-Value="orderModel.CustomerEmail" class="form-control" />
+                                    <ValidationMessage For="() => orderModel.CustomerEmail" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <InputText @bind-Value="orderModel.CustomerPhone" class="form-control" />
+                                <ValidationMessage For="() => orderModel.CustomerPhone" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Shipping Address</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Street Address</label>
+                                <InputText @bind-Value="orderModel.ShippingAddress.Street" class="form-control" />
+                                <ValidationMessage For="() => orderModel.ShippingAddress.Street" />
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">City</label>
+                                    <InputText @bind-Value="orderModel.ShippingAddress.City" class="form-control" />
+                                    <ValidationMessage For="() => orderModel.ShippingAddress.City" />
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">State</label>
+                                    <InputText @bind-Value="orderModel.ShippingAddress.State" class="form-control" />
+                                    <ValidationMessage For="() => orderModel.ShippingAddress.State" />
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">ZIP Code</label>
+                                    <InputText @bind-Value="orderModel.ShippingAddress.ZipCode" class="form-control" />
+                                    <ValidationMessage For="() => orderModel.ShippingAddress.ZipCode" />
+                                </div>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" @bind="sameAsShipping" id="sameAsShipping">
+                                <label class="form-check-label" for="sameAsShipping">
+                                    Billing address same as shipping
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!sameAsShipping)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Billing Address</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Street Address</label>
+                                    <InputText @bind-Value="orderModel.BillingAddress.Street" class="form-control" />
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">City</label>
+                                        <InputText @bind-Value="orderModel.BillingAddress.City" class="form-control" />
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">State</label>
+                                        <InputText @bind-Value="orderModel.BillingAddress.State" class="form-control" />
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">ZIP Code</label>
+                                        <InputText @bind-Value="orderModel.BillingAddress.ZipCode" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Payment Method</h5>
+                        </div>
+                        <div class="card-body">
+                            <InputRadioGroup @bind-Value="orderModel.PaymentMethod">
+                                <div class="form-check mb-2">
+                                    <InputRadio class="form-check-input" id="creditCard" Value="@("Credit Card")" />
+                                    <label class="form-check-label" for="creditCard">
+                                        Credit Card
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <InputRadio class="form-check-input" id="paypal" Value="@("PayPal")" />
+                                    <label class="form-check-label" for="paypal">
+                                        PayPal
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <InputRadio class="form-check-input" id="bankTransfer" Value="@("Bank Transfer")" />
+                                    <label class="form-check-label" for="bankTransfer">
+                                        Bank Transfer
+                                    </label>
+                                </div>
+                            </InputRadioGroup>
+                            <ValidationMessage For="() => orderModel.PaymentMethod" />
+                        </div>
+                    </div>
+                    
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" @onclick="BackToCart">
+                            Back to Cart
+                        </button>
+                        <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                            @if (isProcessing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Processing...</span>
+                            }
+                            else
+                            {
+                                <span>Place Order</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var item in cart.Items)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <small>@item.ProductName</small><br>
+                                    <small class="text-muted">Qty: @item.Quantity</small>
+                                </div>
+                                <small>$@((item.UnitPrice * item.Quantity).ToString("F2"))</small>
+                            </div>
+                        }
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>$@cart.SubTotal.ToString("F2")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax:</span>
+                            <span>$@cart.Tax.ToString("F2")</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping:</span>
+                            <span>$@cart.ShippingCost.ToString("F2")</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total:</strong>
+                            <strong>$@cart.Total.ToString("F2")</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Your cart is empty. <a href="/shop">Continue shopping</a>
+        </div>
+    }
+</div>
+
+@code {
+    private CartDto? cart;
+    private OrderFormModel orderModel = new();
+    private bool isLoading = true;
+    private bool isProcessing = false;
+    private bool sameAsShipping = true;
+    private string sessionId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sessionId = await GetSessionId();
+        await LoadCart();
+        await LoadUserInfo();
+    }
+
+    private async Task<string> GetSessionId()
+    {
+        return await JSRuntime.InvokeAsync<string>("localStorage.getItem", "sessionId") ?? string.Empty;
+    }
+
+    private async Task LoadCart()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await SellerService.GetCartAsync(sessionId);
+            if (response.Success && response.Data?.Items?.Any() == true)
+            {
+                cart = response.Data;
+            }
+            else
+            {
+                Navigation.NavigateTo("/cart");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading cart: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadUserInfo()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            orderModel.CustomerEmail = authState.User.Identity.Name ?? string.Empty;
+        }
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+
+            if (sameAsShipping)
+            {
+                orderModel.BillingAddress = new AddressDto
+                {
+                    Street = orderModel.ShippingAddress.Street,
+                    City = orderModel.ShippingAddress.City,
+                    State = orderModel.ShippingAddress.State,
+                    ZipCode = orderModel.ShippingAddress.ZipCode
+                };
+            }
+
+            var createOrderDto = new CreateCustomerOrderDto
+            {
+                SessionId = sessionId,
+                CustomerName = orderModel.CustomerName,
+                CustomerEmail = orderModel.CustomerEmail,
+                CustomerPhone = orderModel.CustomerPhone,
+                ShippingAddress = $"{orderModel.ShippingAddress.Street}, {orderModel.ShippingAddress.City}, {orderModel.ShippingAddress.State} {orderModel.ShippingAddress.ZipCode}",
+                BillingAddress = $"{orderModel.BillingAddress.Street}, {orderModel.BillingAddress.City}, {orderModel.BillingAddress.State} {orderModel.BillingAddress.ZipCode}",
+                PaymentMethod = orderModel.PaymentMethod
+            };
+
+            var response = await SellerService.CreateOrderAsync(createOrderDto);
+            if (response.Success && response.Data != null)
+            {
+                // Clear the cart
+                await SellerService.ClearCartAsync(sessionId);
+                
+                // Store order number for confirmation page
+                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "lastOrderNumber", response.Data.OrderNumber);
+                
+                // Navigate to confirmation
+                Navigation.NavigateTo($"/order-confirmation");
+            }
+            else
+            {
+                // Show error message
+                Console.WriteLine($"Order failed: {response.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error placing order: {ex.Message}");
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private void BackToCart()
+    {
+        Navigation.NavigateTo("/cart");
+    }
+
+    // Model classes for form binding
+    private class OrderFormModel
+    {
+        [Required(ErrorMessage = "Name is required")]
+        public string CustomerName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string CustomerEmail { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone is required")]
+        [Phone(ErrorMessage = "Invalid phone number")]
+        public string CustomerPhone { get; set; } = string.Empty;
+
+        public AddressDto ShippingAddress { get; set; } = new();
+        public AddressDto BillingAddress { get; set; } = new();
+
+        [Required(ErrorMessage = "Please select a payment method")]
+        public string PaymentMethod { get; set; } = "Credit Card";
+    }
+}

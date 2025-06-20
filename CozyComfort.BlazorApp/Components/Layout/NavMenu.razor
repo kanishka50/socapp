@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject ISellerService SellerService
+@inject SessionService SessionService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Cozy Comfort</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -14,13 +17,33 @@
                 <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="shop">
                 <span class="bi bi-shop" aria-hidden="true"></span> Shop
             </NavLink>
         </div>
-        
+
+        <!-- Cart Link - Available to everyone -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cart">
+                <span class="bi bi-cart" aria-hidden="true"></span> Cart
+                @if (cartItemCount > 0)
+                {
+                    <span class="badge bg-danger ms-1">@cartItemCount</span>
+                }
+            </NavLink>
+        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="my-orders">
+                        <span class="bi bi-bag-check" aria-hidden="true"></span> My Orders
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
         <AuthorizeView Roles="Administrator,Manufacturer">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="manufacturer/dashboard">
@@ -50,12 +73,12 @@
         <AuthorizeView Roles="Administrator,Seller">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="seller/dashboard">
-                    <span class="bi bi-shop" aria-hidden="true"></span> Sales
+                    <span class="bi bi-shop-window" aria-hidden="true"></span> Sales Dashboard
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="seller/shop">
-                    <span class="bi bi-cart" aria-hidden="true"></span> Shop
+                <NavLink class="nav-link" href="seller/orders">
+                    <span class="bi bi-receipt" aria-hidden="true"></span> Manage Orders
                 </NavLink>
             </div>
         </AuthorizeView>
@@ -64,11 +87,46 @@
 
 @code {
     private bool collapseNavMenu = true;
-
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private int cartItemCount = 0;
+    private Timer? cartUpdateTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCartCount();
+
+        // Set up a timer to update cart count every 30 seconds
+        cartUpdateTimer = new Timer(async _ => await LoadCartCount(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task LoadCartCount()
+    {
+        try
+        {
+            var sessionId = SessionService.GetSessionId();
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                var response = await SellerService.GetCartAsync(sessionId);
+                if (response.Success && response.Data != null)
+                {
+                    cartItemCount = response.Data.Items.Sum(i => i.Quantity);
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading cart count: {ex.Message}");
+        }
+    }
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    public void Dispose()
+    {
+        cartUpdateTimer?.Dispose();
     }
 }

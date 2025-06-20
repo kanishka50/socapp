@@ -1,0 +1,97 @@
+﻿@page "/order-confirmation"
+@using CozyComfort.BlazorApp.Services.Interfaces
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Order Confirmation - CozyComfort</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                    </div>
+
+                    <h2 class="mb-3">Order Confirmed!</h2>
+
+                    <p class="lead mb-4">
+                        Thank you for your order. We've received your request and will process it shortly.
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(orderNumber))
+                    {
+                        <div class="alert alert-info">
+                            <h5 class="mb-2">Order Number: <strong>@orderNumber</strong></h5>
+                            <p class="mb-0">Please save this number for your records.</p>
+                        </div>
+                    }
+
+                    <div class="my-4">
+                        <h5>What happens next?</h5>
+                        <ul class="list-unstyled mt-3">
+                            <li class="mb-2">
+                                <i class="bi bi-check text-success"></i>
+                                We'll send a confirmation email to your registered email address
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check text-success"></i>
+                                Our team will verify stock availability
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check text-success"></i>
+                                You'll receive shipping updates once your order is dispatched
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3 mt-5">
+                        <button class="btn btn-primary" @onclick="ContinueShopping">
+                            Continue Shopping
+                        </button>
+                        <button class="btn btn-outline-primary" @onclick="ViewOrders">
+                            View My Orders
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="text-muted">
+                    Need help? Contact our support team at
+                    <a href="mailto:support@cozycomfort.com">support@cozycomfort.com</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string orderNumber = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get order number from session storage
+        orderNumber = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "lastOrderNumber") ?? string.Empty;
+
+        // Clear it after retrieving
+        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "lastOrderNumber");
+
+        // If no order number, redirect to shop
+        if (string.IsNullOrEmpty(orderNumber))
+        {
+            Navigation.NavigateTo("/shop");
+        }
+    }
+
+    private void ContinueShopping()
+    {
+        Navigation.NavigateTo("/shop");
+    }
+
+    private void ViewOrders()
+    {
+        Navigation.NavigateTo("/my-orders");
+    }
+}

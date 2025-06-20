@@ -2,16 +2,15 @@
 {
     public class SessionService
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public SessionService(IHttpContextAccessor httpContextAccessor)
-        {
-            _httpContextAccessor = httpContextAccessor;
-        }
+        private string? _sessionId;
 
         public string GetSessionId()
         {
-            return _httpContextAccessor.HttpContext?.Session?.Id ?? Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(_sessionId))
+            {
+                _sessionId = Guid.NewGuid().ToString();
+            }
+            return _sessionId;
         }
     }
 }
