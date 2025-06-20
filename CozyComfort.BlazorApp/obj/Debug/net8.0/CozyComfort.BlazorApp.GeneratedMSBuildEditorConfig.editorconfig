@@ -31,10 +31,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWFudWZhY3R1cmVyXFBhZ2VzXFByb2R1Y3RzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/App.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -51,12 +47,24 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Pages/Shop.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTaG9wLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Pages/Weather.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xXZWF0aGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Routes.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Products/Component.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQcm9kdWN0c1xDb21wb25lbnQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Shared/ErrorMessage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcRXJyb3JNZXNzYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Shared/LoadingSpinner.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcTG9hZGluZ1NwaW5uZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/_Imports.razor]

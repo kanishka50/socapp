@@ -1,0 +1,294 @@
+﻿@page "/shop"
+@inject ISellerService SellerService
+@inject SessionService SessionService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Shop - Cozy Comfort</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Search -->
+                    <div class="mb-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" class="form-control" placeholder="Search products..." 
+                               @bind="searchTerm" @bind:event="oninput" />
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" @bind="selectedCategory">
+                            <option value="">All Categories</option>
+                            <option value="Luxury">Luxury</option>
+                            <option value="Comfort">Comfort</option>
+                            <option value="Economy">Economy</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort By -->
+                    <div class="mb-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" @bind="sortBy">
+                            <option value="">Default</option>
+                            <option value="name">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="price">Price (Low to High)</option>
+                            <option value="price-desc">Price (High to Low)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary w-100" @onclick="ApplyFilters">
+                        Apply Filters
+                    </button>
+                    <button class="btn btn-outline-secondary w-100 mt-2" @onclick="ClearFilters">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Our Products</h2>
+                <div>
+                    @if (products != null)
+                    {
+                        <span class="text-muted">Showing @products.Items.Count of @products.TotalCount products</span>
+                    }
+                </div>
+            </div>
+
+            @if (loading)
+            {
+                <LoadingSpinner Message="Loading products..." />
+            }
+            else if (errorMessage != null)
+            {
+                <ErrorMessage Message="@errorMessage" />
+            }
+            else if (products == null || !products.Items.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No products found matching your criteria.
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var product in products.Items)
+                    {
+                        <div class="col-md-4 col-lg-3">
+                            <ProductCard Product="product" OnAddToCart="AddToCart" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (products.TotalPages > 1)
+                {
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">
+                                    Previous
+                                </button>
+                            </li>
+                            
+                            @for (int i = 1; i <= Math.Min(products.TotalPages, 10); i++)
+                            {
+                                var pageNumber = i;
+                                <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(pageNumber)">
+                                        @pageNumber
+                                    </button>
+                                </li>
+                            }
+                            
+                            @if (products.TotalPages > 10)
+                            {
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                <li class="page-item @(currentPage == products.TotalPages ? "active" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(products.TotalPages)">
+                                        @products.TotalPages
+                                    </button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(currentPage == products.TotalPages ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">
+                                    Next
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add to Cart Success Modal -->
+@if (showCartModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-check-circle text-success"></i> Added to Cart
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="() => showCartModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@cartMessage</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => showCartModal = false">
+                        Continue Shopping
+                    </button>
+                    <a href="/cart" class="btn btn-primary">
+                        View Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PagedResult<SellerProductDto>? products;
+    private bool loading = true;
+    private string? errorMessage;
+    private string searchTerm = "";
+    private string selectedCategory = "";
+    private string sortBy = "";
+    private int currentPage = 1;
+    private int pageSize = 12;
+    
+    private bool showCartModal = false;
+    private string cartMessage = "";
+    private string? sessionId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sessionId = SessionService.GetSessionId();
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        loading = true;
+        errorMessage = null;
+
+        try
+        {
+            var request = new PagedRequest
+            {
+                PageNumber = currentPage,
+                PageSize = pageSize,
+                SearchTerm = searchTerm,
+                SortBy = GetSortField(),
+                IsDescending = sortBy.EndsWith("-desc")
+            };
+
+            // Add category filter to search term if selected
+            if (!string.IsNullOrEmpty(selectedCategory))
+            {
+                request.SearchTerm = string.IsNullOrEmpty(request.SearchTerm) 
+                    ? selectedCategory 
+                    : $"{request.SearchTerm} {selectedCategory}";
+            }
+
+            var response = await SellerService.GetProductsAsync(request);
+            
+            if (response.Success)
+            {
+                products = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load products";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while loading products. Please try again.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private string GetSortField()
+    {
+        return sortBy switch
+        {
+            "name" or "name-desc" => "ProductName",
+            "price" or "price-desc" => "Price",
+            _ => ""
+        };
+    }
+
+    private async Task ApplyFilters()
+    {
+        currentPage = 1;
+        await LoadProducts();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = "";
+        selectedCategory = "";
+        sortBy = "";
+        currentPage = 1;
+        await LoadProducts();
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page >= 1 && page <= (products?.TotalPages ?? 1))
+        {
+            currentPage = page;
+            await LoadProducts();
+        }
+    }
+
+    private async Task AddToCart(SellerProductDto product)
+    {
+        try
+        {
+            var addToCartDto = new AddToCartDto
+            {
+                ProductId = product.Id,
+                Quantity = 1
+            };
+
+            var response = await SellerService.AddToCartAsync(sessionId!, addToCartDto);
+            
+            if (response.Success)
+            {
+                cartMessage = $"{product.ProductName} has been added to your cart!";
+                showCartModal = true;
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Failed to add item to cart");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred. Please try again.");
+        }
+    }
+}

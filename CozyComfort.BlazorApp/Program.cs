@@ -1,4 +1,5 @@
 using Blazored.LocalStorage;
+using CozyComfort.BlazorApp;
 using CozyComfort.BlazorApp.Components;
 using CozyComfort.BlazorApp.Services;
 using CozyComfort.BlazorApp.Services.ApiServices;
@@ -51,6 +52,12 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// Add HttpContextAccessor for session
+builder.Services.AddHttpContextAccessor();
+
+// Add SessionService
+builder.Services.AddScoped<SessionService>();
 
 var app = builder.Build();
 

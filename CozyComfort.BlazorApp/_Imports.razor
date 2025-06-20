@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
 @using CozyComfort.BlazorApp
@@ -10,8 +11,17 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Authorization
 
+@* Service namespaces *@
+@using CozyComfort.BlazorApp.Services
+@using CozyComfort.BlazorApp.Services.Interfaces
+@using CozyComfort.BlazorApp.Services.ApiServices
 
+@* Shared DTOs and Models *@
 @using CozyComfort.Shared.DTOs
+@using CozyComfort.Shared.Models
+@using CozyComfort.Shared.Enums
+
+@* Specific DTO namespaces *@
 @using CozyComfort.Shared.DTOs.Manufacturer
 @using CozyComfort.Shared.DTOs.Distributor
 @using CozyComfort.Shared.DTOs.Seller

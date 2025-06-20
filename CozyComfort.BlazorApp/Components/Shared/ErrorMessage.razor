@@ -1,0 +1,40 @@
+﻿@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="alert alert-@AlertType alert-dismissible fade show" role="alert">
+        @if (!string.IsNullOrEmpty(Title))
+        {
+            <strong>@Title</strong>
+        }
+        @Message
+
+        @if (Errors != null && Errors.Any())
+        {
+            <ul class="mb-0 mt-2">
+                @foreach (var error in Errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        }
+
+        @if (IsDismissible)
+        {
+            <button type="button" class="btn-close" @onclick="Dismiss"></button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public List<string>? Errors { get; set; }
+    [Parameter] public string AlertType { get; set; } = "danger";
+    [Parameter] public bool IsDismissible { get; set; } = true;
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private async Task Dismiss()
+    {
+        Message = "";
+        await OnDismiss.InvokeAsync();
+    }
+}

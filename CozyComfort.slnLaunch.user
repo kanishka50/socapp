@@ -13,6 +13,10 @@
       {
         "Path": "CozyComfort.Seller.API\\CozyComfort.Seller.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "CozyComfort.BlazorApp\\CozyComfort.BlazorApp.csproj",
+        "Action": "Start"
       }
     ]
   }

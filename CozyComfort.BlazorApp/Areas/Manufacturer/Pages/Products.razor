@@ -1,6 +1,6 @@
 ﻿@page "/manufacturer/products"
 @using CozyComfort.Shared.DTOs
-@using CozyComfort.Manufacturer.API.Models.DTOs
+@using CozyComfort.Shared.DTOs.Manufacturer
 @attribute [Authorize(Roles = "Administrator,Manufacturer")]
 @inject IManufacturerService ManufacturerService
 @inject NavigationManager Navigation
@@ -11,8 +11,9 @@
 
 <div class="row mb-3">
     <div class="col-md-6">
-        <input type="text" class="form-control" placeholder="Search products..." 
-               @bind="searchTerm" @bind:event="oninput" @onkeyup="@(async (e) => { if (e.Key == "Enter") await LoadProducts(); })" />
+        <input type="text" class="form-control" placeholder="Search products..."
+               @bind="searchTerm" @bind:event="oninput"
+               @onkeyup="@(async (e) => { if (e.Key == "Enter") await LoadProducts(); })" />
     </div>
     <div class="col-md-6">
         <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo('/manufacturer/products/create')">
