@@ -1,45 +1,58 @@
 ﻿@page "/distributor/dashboard"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Authorization
-@attribute [Authorize(Roles = "Distributor")]
+@inject NavigationManager Navigation
 
 <PageTitle>Distributor Dashboard - Cozy Comfort</PageTitle>
 
-<div class="container mt-4">
-    <h1>Distributor Dashboard</h1>
+<AuthorizeView>
+    <Authorized>
+        <div class="container mt-4">
+            <h1>Distributor Dashboard</h1>
+            <p>Welcome, @context.User.Identity?.Name!</p>
 
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Products</h5>
-                    <p class="card-text">Manage your product inventory</p>
-                    <a href="/distributor/products" class="btn btn-primary">View Products</a>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Products</h5>
+                            <p class="card-text">Manage your product inventory</p>
+                            <a href="/distributor/products" class="btn btn-primary">View Products</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Orders</h5>
+                            <p class="card-text">View and manage orders</p>
+                            <a href="/distributor/orders" class="btn btn-primary">View Orders</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Inventory</h5>
+                            <p class="card-text">Check stock levels</p>
+                            <a href="/distributor/inventory" class="btn btn-primary">View Inventory</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Orders</h5>
-                    <p class="card-text">View and manage orders</p>
-                    <a href="/distributor/orders" class="btn btn-primary">View Orders</a>
-                </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="container mt-4">
+            <div class="alert alert-warning">
+                <h4>Access Denied</h4>
+                <p>You are not authorized to view this page. Please <a href="/login">login</a> with appropriate credentials.</p>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Inventory</h5>
-                    <p class="card-text">Check stock levels</p>
-                    <a href="/distributor/inventory" class="btn btn-primary">View Inventory</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     [CascadingParameter]
@@ -47,10 +60,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await authenticationStateTask;
-        var user = authState.User;
-
-        // You can access user claims here if needed
-        var userName = user.Identity?.Name;
+        // The AuthorizeView component will handle authorization
+        // No need to manually redirect here
     }
 }

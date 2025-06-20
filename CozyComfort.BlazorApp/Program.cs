@@ -37,7 +37,20 @@ builder.Services.AddHttpClient("SellerAPI", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-// Add Authorization
+// Add Authentication and Authorization
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Cookies";
+    options.DefaultChallengeScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/access-denied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+});
+
 builder.Services.AddAuthorizationCore();
 
 // Register CustomAuthStateProvider as Scoped
@@ -77,6 +90,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Add authentication middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Use session before antiforgery
 app.UseSession();

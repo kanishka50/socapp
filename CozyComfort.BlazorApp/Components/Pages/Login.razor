@@ -5,7 +5,6 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @using CozyComfort.BlazorApp.Services.Interfaces
-@inject IJSRuntime JSRuntime
 
 <PageTitle>Login - Cozy Comfort</PageTitle>
 
@@ -78,7 +77,6 @@
 
     protected override void OnInitialized()
     {
-        // Initialize the model to ensure it's not null
         loginModel = new LoginDto();
     }
 
@@ -107,8 +105,8 @@
                     _ => "/"
                 };
 
-                // Force navigation with full page reload to avoid header issues
-                Navigation.NavigateTo(redirectUrl, forceLoad: true);
+                // Navigate without force reload to maintain SignalR connection
+                Navigation.NavigateTo(redirectUrl);
             }
             else
             {

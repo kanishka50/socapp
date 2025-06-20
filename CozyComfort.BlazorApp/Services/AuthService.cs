@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace CozyComfort.BlazorApp.Services
 {
@@ -17,18 +15,15 @@ namespace CozyComfort.BlazorApp.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly AuthenticationStateProvider _authStateProvider;
         private readonly ILocalStorageService _localStorage;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthService(
             IHttpClientFactory httpClientFactory,
             AuthenticationStateProvider authStateProvider,
-            ILocalStorageService localStorage,
-            IHttpContextAccessor httpContextAccessor)
+            ILocalStorageService localStorage)
         {
             _httpClientFactory = httpClientFactory;
             _authStateProvider = authStateProvider;
             _localStorage = localStorage;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ApiResponse<TokenDto>> LoginAsync(string apiEndpoint, LoginDto loginDto)
@@ -68,31 +63,6 @@ namespace CozyComfort.BlazorApp.Services
 
                     // Notify the custom auth state provider
                     ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Data.Token);
-
-                    // Also sign in with cookie authentication for Blazor Server
-                    if (_httpContextAccessor.HttpContext != null)
-                    {
-                        var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, result.Data.Email),
-                            new Claim(ClaimTypes.Name, result.Data.UserName),
-                            new Claim(ClaimTypes.Email, result.Data.Email),
-                            new Claim(ClaimTypes.Role, result.Data.Role),
-                            new Claim("ApiEndpoint", apiEndpoint)
-                        };
-
-                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                        var principal = new ClaimsPrincipal(identity);
-
-                        await _httpContextAccessor.HttpContext.SignInAsync(
-                            CookieAuthenticationDefaults.AuthenticationScheme,
-                            principal,
-                            new AuthenticationProperties
-                            {
-                                IsPersistent = true,
-                                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
-                            });
-                    }
                 }
 
                 return result ?? new ApiResponse<TokenDto> { Success = false, Message = "Invalid response from server" };
@@ -124,12 +94,6 @@ namespace CozyComfort.BlazorApp.Services
             await _localStorage.RemoveItemAsync("apiEndpoint");
 
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
-
-            // Also sign out from cookie authentication
-            if (_httpContextAccessor.HttpContext != null)
-            {
-                await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            }
         }
 
         public async Task<bool> IsAuthenticatedAsync()
