@@ -10,13 +10,13 @@ namespace CozyComfort.BlazorApp.Services
     {
         private readonly ILocalStorageService _localStorage;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly AuthenticationState _anonymous;
 
-        public CustomAuthStateProvider(ILocalStorageService localStorage, IHttpClientFactory httpClientFactory)
+        public CustomAuthStateProvider(
+            ILocalStorageService localStorage,
+            IHttpClientFactory httpClientFactory)
         {
             _localStorage = localStorage;
             _httpClientFactory = httpClientFactory;
-            _anonymous = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -27,7 +27,7 @@ namespace CozyComfort.BlazorApp.Services
 
                 if (string.IsNullOrWhiteSpace(token))
                 {
-                    return _anonymous;
+                    return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
                 }
 
                 // Set token for all HTTP clients
@@ -36,25 +36,39 @@ namespace CozyComfort.BlazorApp.Services
                 return new AuthenticationState(new ClaimsPrincipal(
                     new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
             }
-            catch (InvalidOperationException)
+            catch (Exception ex)
             {
-                // This happens during prerendering when JS interop is not available
-                return _anonymous;
+                // Return anonymous user on error
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
         }
 
         public void NotifyUserAuthentication(string token)
         {
-            var authenticatedUser = new ClaimsPrincipal(
-                new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
-            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
-            NotifyAuthenticationStateChanged(authState);
+            try
+            {
+                var authenticatedUser = new ClaimsPrincipal(
+                    new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
+                var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+                NotifyAuthenticationStateChanged(authState);
+
+                // Set headers after authentication
+                SetAuthorizationHeader(token);
+            }
+            catch (Exception ex)
+            {
+                // Handle error silently or throw based on requirements
+            }
         }
 
         public void NotifyUserLogout()
         {
-            var authState = Task.FromResult(_anonymous);
+            var authState = Task.FromResult(new AuthenticationState(
+                new ClaimsPrincipal(new ClaimsIdentity())));
             NotifyAuthenticationStateChanged(authState);
+
+            // Clear headers
+            ClearAuthorizationHeaders();
         }
 
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
@@ -64,9 +78,7 @@ namespace CozyComfort.BlazorApp.Services
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-            keyValuePairs.TryGetValue(ClaimTypes.Role, out object roles);
-
-            if (roles != null)
+            if (keyValuePairs.TryGetValue(ClaimTypes.Role, out object roles))
             {
                 if (roles.ToString().Trim().StartsWith("["))
                 {
@@ -102,16 +114,41 @@ namespace CozyComfort.BlazorApp.Services
 
         private void SetAuthorizationHeader(string token)
         {
-            var manufacturerClient = _httpClientFactory.CreateClient("ManufacturerAPI");
-            var distributorClient = _httpClientFactory.CreateClient("DistributorAPI");
-            var sellerClient = _httpClientFactory.CreateClient("SellerAPI");
+            try
+            {
+                var manufacturerClient = _httpClientFactory.CreateClient("ManufacturerAPI");
+                var distributorClient = _httpClientFactory.CreateClient("DistributorAPI");
+                var sellerClient = _httpClientFactory.CreateClient("SellerAPI");
 
-            manufacturerClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
-            distributorClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
-            sellerClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
+                manufacturerClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+                distributorClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+                sellerClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+            }
+            catch (Exception ex)
+            {
+                // Handle error silently
+            }
+        }
+
+        private void ClearAuthorizationHeaders()
+        {
+            try
+            {
+                var manufacturerClient = _httpClientFactory.CreateClient("ManufacturerAPI");
+                var distributorClient = _httpClientFactory.CreateClient("DistributorAPI");
+                var sellerClient = _httpClientFactory.CreateClient("SellerAPI");
+
+                manufacturerClient.DefaultRequestHeaders.Authorization = null;
+                distributorClient.DefaultRequestHeaders.Authorization = null;
+                sellerClient.DefaultRequestHeaders.Authorization = null;
+            }
+            catch (Exception ex)
+            {
+                // Handle error silently
+            }
         }
     }
 }

@@ -4,7 +4,7 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @using CozyComfort.BlazorApp.Services.Interfaces
-@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Login - Cozy Comfort</PageTitle>
 
@@ -16,13 +16,13 @@
                     <h3>Login to Cozy Comfort</h3>
                 </div>
                 <div class="card-body">
-                    <EditForm Model="@loginFormModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger" />
 
                         <div class="mb-3">
                             <label class="form-label">Login As:</label>
-                            <InputSelect @bind-Value="loginFormModel.SelectedRole" class="form-select">
+                            <InputSelect @bind-Value="selectedRole" class="form-select">
                                 <option value="">Select Role</option>
                                 <option value="manufacturer">Manufacturer</option>
                                 <option value="distributor">Distributor</option>
@@ -32,12 +32,12 @@
 
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <InputText @bind-Value="loginFormModel.Email" class="form-control" />
+                            <InputText @bind-Value="loginModel.Email" class="form-control" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <InputText @bind-Value="loginFormModel.Password"
+                            <InputText @bind-Value="loginModel.Password"
                                        type="password" class="form-control" />
                         </div>
 
@@ -70,29 +70,14 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private LoginFormModel loginFormModel { get; set; } = new();
-
+    private LoginDto loginModel = new();
+    private string selectedRole = "";
     private bool loading;
     private string errorMessage = "";
 
-    // Combined model for form binding
-    public class LoginFormModel
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string SelectedRole { get; set; } = string.Empty;
-    }
-
-    protected override void OnInitialized()
-    {
-        loginFormModel ??= new();
-    }
-
-    // Update the HandleLogin method in Login.razor
     private async Task HandleLogin()
     {
-        if (string.IsNullOrEmpty(loginFormModel.SelectedRole))
+        if (string.IsNullOrEmpty(selectedRole))
         {
             errorMessage = "Please select a role";
             return;
@@ -103,41 +88,29 @@
 
         try
         {
-            // Create LoginDto from the form model
-            var loginDto = new LoginDto
+            var result = await AuthService.LoginAsync(selectedRole, loginModel);
+
+            if (result.Success)
             {
-                Email = loginFormModel.Email,
-                Password = loginFormModel.Password
-            };
-
-            var result = await AuthService.LoginAsync(loginFormModel.SelectedRole, loginDto);
-
-            if (result != null && result.Success)
-            {
-                // Force a full page reload to establish proper authentication state
-                await Task.Delay(100); // Small delay to ensure auth state is set
-
-                // Get the return URL from query string if it exists
-                var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-                var returnUrl = System.Web.HttpUtility.ParseQueryString(uri.Query).Get("ReturnUrl");
-
-                if (!string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith("/"))
+                var redirectUrl = selectedRole switch
                 {
-                    // Navigate to the originally requested page
-                    Navigation.NavigateTo(returnUrl, forceLoad: true);
-                }
-                else
-                {
-                    // Default navigation based on role
-                    var redirectUrl = loginFormModel.SelectedRole switch
-                    {
-                        "manufacturer" => "/manufacturer/dashboard",
-                        "distributor" => "/distributor/dashboard",
-                        "seller" => "/seller/dashboard",
-                        _ => "/"
-                    };
-                    Navigation.NavigateTo(redirectUrl, forceLoad: true);
-                }
+                    "manufacturer" => "/manufacturer/dashboard",
+                    "distributor" => "/distributor/dashboard",
+                    "seller" => "/seller/dashboard",
+                    _ => "/"
+                };
+
+                // Fix: Use one of these approaches
+
+                // Option 1: Force a full page reload (recommended)
+                Navigation.NavigateTo(redirectUrl, forceLoad: true);
+
+                // Option 2: Delay navigation (alternative)
+                // await Task.Delay(100);
+                // await InvokeAsync(() => Navigation.NavigateTo(redirectUrl));
+
+                // Option 3: Use JavaScript navigation (alternative)
+                // await JSRuntime.InvokeVoidAsync("window.location.href", redirectUrl);
             }
             else
             {
