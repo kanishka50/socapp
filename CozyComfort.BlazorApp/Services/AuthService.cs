@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace CozyComfort.BlazorApp.Services
 {
@@ -15,15 +17,18 @@ namespace CozyComfort.BlazorApp.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly AuthenticationStateProvider _authStateProvider;
         private readonly ILocalStorageService _localStorage;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthService(
             IHttpClientFactory httpClientFactory,
             AuthenticationStateProvider authStateProvider,
-            ILocalStorageService localStorage)
+            ILocalStorageService localStorage,
+            IHttpContextAccessor httpContextAccessor)
         {
             _httpClientFactory = httpClientFactory;
             _authStateProvider = authStateProvider;
             _localStorage = localStorage;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ApiResponse<TokenDto>> LoginAsync(string apiEndpoint, LoginDto loginDto)
@@ -41,19 +46,65 @@ namespace CozyComfort.BlazorApp.Services
                 var response = await httpClient.PostAsJsonAsync("api/auth/login", loginDto);
                 var content = await response.Content.ReadAsStringAsync();
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new ApiResponse<TokenDto>
+                    {
+                        Success = false,
+                        Message = "Login failed. Please check your credentials.",
+                        Errors = new List<string> { content }
+                    };
+                }
+
                 var result = JsonSerializer.Deserialize<ApiResponse<TokenDto>>(content,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                if (result.Success && result.Data != null)
+                if (result != null && result.Success && result.Data != null)
                 {
+                    // Store JWT token in local storage
                     await _localStorage.SetItemAsync("authToken", result.Data.Token);
                     await _localStorage.SetItemAsync("userRole", result.Data.Role);
                     await _localStorage.SetItemAsync("apiEndpoint", apiEndpoint);
 
+                    // Notify the custom auth state provider
                     ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(result.Data.Token);
+
+                    // Also sign in with cookie authentication for Blazor Server
+                    if (_httpContextAccessor.HttpContext != null)
+                    {
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, result.Data.Email),
+                            new Claim(ClaimTypes.Name, result.Data.UserName),
+                            new Claim(ClaimTypes.Email, result.Data.Email),
+                            new Claim(ClaimTypes.Role, result.Data.Role),
+                            new Claim("ApiEndpoint", apiEndpoint)
+                        };
+
+                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        var principal = new ClaimsPrincipal(identity);
+
+                        await _httpContextAccessor.HttpContext.SignInAsync(
+                            CookieAuthenticationDefaults.AuthenticationScheme,
+                            principal,
+                            new AuthenticationProperties
+                            {
+                                IsPersistent = true,
+                                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
+                            });
+                    }
                 }
 
-                return result;
+                return result ?? new ApiResponse<TokenDto> { Success = false, Message = "Invalid response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ApiResponse<TokenDto>
+                {
+                    Success = false,
+                    Message = "Unable to connect to the server. Please ensure the API is running.",
+                    Errors = new List<string> { ex.Message }
+                };
             }
             catch (Exception ex)
             {
@@ -73,6 +124,12 @@ namespace CozyComfort.BlazorApp.Services
             await _localStorage.RemoveItemAsync("apiEndpoint");
 
             ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
+
+            // Also sign out from cookie authentication
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
         }
 
         public async Task<bool> IsAuthenticatedAsync()
@@ -91,14 +148,16 @@ namespace CozyComfort.BlazorApp.Services
             var authState = await _authStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
 
-            if (user.Identity.IsAuthenticated)
+            if (user.Identity != null && user.Identity.IsAuthenticated)
             {
                 return new User
                 {
-                    Email = user.FindFirst(ClaimTypes.Email)?.Value,
-                    FirstName = user.FindFirst(ClaimTypes.Name)?.Value?.Split(' ')[0],
-                    LastName = user.FindFirst(ClaimTypes.Name)?.Value?.Split(' ').LastOrDefault(),
-                    Role = Enum.Parse<UserRole>(user.FindFirst(ClaimTypes.Role)?.Value ?? "Seller")
+                    Email = user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty,
+                    FirstName = user.FindFirst(ClaimTypes.Name)?.Value?.Split(' ')[0] ?? string.Empty,
+                    LastName = user.FindFirst(ClaimTypes.Name)?.Value?.Split(' ').LastOrDefault() ?? string.Empty,
+                    Role = Enum.TryParse<UserRole>(user.FindFirst(ClaimTypes.Role)?.Value, out var role)
+                        ? role
+                        : UserRole.Seller
                 };
             }
 

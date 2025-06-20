@@ -15,7 +15,18 @@ builder.Services.AddRazorComponents()
 // Add Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
 
-// Add Authorization - IMPORTANT: Order matters!
+// Add Authentication and Authorization - IMPORTANT: Order matters!
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/access-denied";
+});
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 

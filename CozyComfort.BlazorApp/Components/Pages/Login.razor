@@ -89,6 +89,7 @@
         loginFormModel ??= new();
     }
 
+    // Update the HandleLogin method in Login.razor
     private async Task HandleLogin()
     {
         if (string.IsNullOrEmpty(loginFormModel.SelectedRole))
@@ -111,16 +112,32 @@
 
             var result = await AuthService.LoginAsync(loginFormModel.SelectedRole, loginDto);
 
-            if (result.Success)
+            if (result != null && result.Success)
             {
-                var redirectUrl = loginFormModel.SelectedRole switch
+                // Force a full page reload to establish proper authentication state
+                await Task.Delay(100); // Small delay to ensure auth state is set
+
+                // Get the return URL from query string if it exists
+                var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+                var returnUrl = System.Web.HttpUtility.ParseQueryString(uri.Query).Get("ReturnUrl");
+
+                if (!string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith("/"))
                 {
-                    "manufacturer" => "/manufacturer/dashboard",
-                    "distributor" => "/distributor/dashboard",
-                    "seller" => "/seller/dashboard",
-                    _ => "/"
-                };
-                Navigation.NavigateTo(redirectUrl, forceLoad: true);
+                    // Navigate to the originally requested page
+                    Navigation.NavigateTo(returnUrl, forceLoad: true);
+                }
+                else
+                {
+                    // Default navigation based on role
+                    var redirectUrl = loginFormModel.SelectedRole switch
+                    {
+                        "manufacturer" => "/manufacturer/dashboard",
+                        "distributor" => "/distributor/dashboard",
+                        "seller" => "/seller/dashboard",
+                        _ => "/"
+                    };
+                    Navigation.NavigateTo(redirectUrl, forceLoad: true);
+                }
             }
             else
             {
