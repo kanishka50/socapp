@@ -1,6 +1,7 @@
 ﻿@page "/manufacturer/products"
 @using CozyComfort.Shared.DTOs
 @using CozyComfort.Shared.DTOs.Manufacturer
+@using CozyComfort.BlazorApp.Services.Interfaces
 @attribute [Authorize(Roles = "Administrator,Manufacturer")]
 @inject IManufacturerService ManufacturerService
 @inject NavigationManager Navigation
@@ -13,10 +14,10 @@
     <div class="col-md-6">
         <input type="text" class="form-control" placeholder="Search products..."
                @bind="searchTerm" @bind:event="oninput"
-               @onkeyup="@(async (e) => { if (e.Key == "Enter") await LoadProducts(); })" />
+               @onkeyup="HandleSearchKeyUp" />
     </div>
     <div class="col-md-6">
-        <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo('/manufacturer/products/create')">
+        <button class="btn btn-primary" @onclick="NavigateToCreateProduct">
             <i class="bi bi-plus"></i> Add New Product
         </button>
     </div>
@@ -112,7 +113,7 @@ else
                         <input type="number" class="form-control" @bind="quantityToCheck" />
                     </div>
                     <button class="btn btn-primary" @onclick="PerformStockCheck">Check Availability</button>
-                    
+
                     @if (stockCheckResult != null)
                     {
                         <div class="mt-3">
@@ -149,6 +150,19 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadProducts();
+    }
+
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoadProducts();
+        }
+    }
+
+    private void NavigateToCreateProduct()
+    {
+        Navigation.NavigateTo("/manufacturer/products/create");
     }
 
     private async Task LoadProducts()

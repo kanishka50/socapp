@@ -15,9 +15,14 @@ builder.Services.AddRazorComponents()
 // Add Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
 
-// Add Authorization
+// Add Authorization - IMPORTANT: Order matters!
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
+
+// Register CustomAuthStateProvider BEFORE AuthenticationStateProvider
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CustomAuthStateProvider>());
 
 // Configure HttpClient for each API
 builder.Services.AddHttpClient("ManufacturerAPI", client =>
@@ -40,7 +45,6 @@ builder.Services.AddHttpClient("SellerAPI", client =>
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
@@ -56,8 +60,8 @@ builder.Services.AddSession(options =>
 // Add HttpContextAccessor for session
 builder.Services.AddHttpContextAccessor();
 
-// Add SessionService
-builder.Services.AddScoped<SessionService>();
+// Add SessionService if you have one
+// builder.Services.AddScoped<SessionService>();
 
 var app = builder.Build();
 
