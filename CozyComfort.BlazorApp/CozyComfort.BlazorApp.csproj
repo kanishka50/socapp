@@ -18,6 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Distributor\Pages\" />
+    <Folder Include="Areas\Seller\Pages\" />
     <Folder Include="Components\Common\" />
     <Folder Include="Components\Manufacturer\" />
     <Folder Include="Components\Distributor\" />
