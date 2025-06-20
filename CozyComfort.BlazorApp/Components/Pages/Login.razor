@@ -4,6 +4,7 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @using CozyComfort.BlazorApp.Services.Interfaces
+@rendermode InteractiveServer
 
 <PageTitle>Login - Cozy Comfort</PageTitle>
 
@@ -15,13 +16,13 @@
                     <h3>Login to Cozy Comfort</h3>
                 </div>
                 <div class="card-body">
-                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <EditForm Model="@loginFormModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger" />
 
                         <div class="mb-3">
                             <label class="form-label">Login As:</label>
-                            <InputSelect @bind-Value="selectedRole" class="form-select">
+                            <InputSelect @bind-Value="loginFormModel.SelectedRole" class="form-select">
                                 <option value="">Select Role</option>
                                 <option value="manufacturer">Manufacturer</option>
                                 <option value="distributor">Distributor</option>
@@ -31,12 +32,12 @@
 
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <InputText @bind-Value="loginModel.Email" class="form-control" />
+                            <InputText @bind-Value="loginFormModel.Email" class="form-control" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <InputText @bind-Value="loginModel.Password"
+                            <InputText @bind-Value="loginFormModel.Password"
                                        type="password" class="form-control" />
                         </div>
 
@@ -69,14 +70,28 @@
 </div>
 
 @code {
-    private LoginDto loginModel = new();
-    private string selectedRole = "";
+    [SupplyParameterFromForm]
+    private LoginFormModel loginFormModel { get; set; } = new();
+
     private bool loading;
     private string errorMessage = "";
 
+    // Combined model for form binding
+    public class LoginFormModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string SelectedRole { get; set; } = string.Empty;
+    }
+
+    protected override void OnInitialized()
+    {
+        loginFormModel ??= new();
+    }
+
     private async Task HandleLogin()
     {
-        if (string.IsNullOrEmpty(selectedRole))
+        if (string.IsNullOrEmpty(loginFormModel.SelectedRole))
         {
             errorMessage = "Please select a role";
             return;
@@ -87,18 +102,25 @@
 
         try
         {
-            var result = await AuthService.LoginAsync(selectedRole, loginModel);
+            // Create LoginDto from the form model
+            var loginDto = new LoginDto
+            {
+                Email = loginFormModel.Email,
+                Password = loginFormModel.Password
+            };
+
+            var result = await AuthService.LoginAsync(loginFormModel.SelectedRole, loginDto);
 
             if (result.Success)
             {
-                var redirectUrl = selectedRole switch
+                var redirectUrl = loginFormModel.SelectedRole switch
                 {
                     "manufacturer" => "/manufacturer/dashboard",
                     "distributor" => "/distributor/dashboard",
                     "seller" => "/seller/dashboard",
                     _ => "/"
                 };
-                Navigation.NavigateTo(redirectUrl);
+                Navigation.NavigateTo(redirectUrl, forceLoad: true);
             }
             else
             {
@@ -107,7 +129,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "An error occurred during login";
+            errorMessage = $"An error occurred during login: {ex.Message}";
         }
         finally
         {
