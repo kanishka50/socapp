@@ -1,4 +1,5 @@
 ﻿@page "/login"
+@rendermode InteractiveServer
 @using CozyComfort.Shared.DTOs
 @using CozyComfort.Shared.Enums
 @inject IAuthService AuthService
@@ -16,7 +17,7 @@
                     <h3>Login to Cozy Comfort</h3>
                 </div>
                 <div class="card-body">
-                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger" />
 
@@ -75,6 +76,12 @@
     private bool loading;
     private string errorMessage = "";
 
+    protected override void OnInitialized()
+    {
+        // Initialize the model to ensure it's not null
+        loginModel = new LoginDto();
+    }
+
     private async Task HandleLogin()
     {
         if (string.IsNullOrEmpty(selectedRole))
@@ -100,17 +107,8 @@
                     _ => "/"
                 };
 
-                // Fix: Use one of these approaches
-
-                // Option 1: Force a full page reload (recommended)
+                // Force navigation with full page reload to avoid header issues
                 Navigation.NavigateTo(redirectUrl, forceLoad: true);
-
-                // Option 2: Delay navigation (alternative)
-                // await Task.Delay(100);
-                // await InvokeAsync(() => Navigation.NavigateTo(redirectUrl));
-
-                // Option 3: Use JavaScript navigation (alternative)
-                // await JSRuntime.InvokeVoidAsync("window.location.href", redirectUrl);
             }
             else
             {

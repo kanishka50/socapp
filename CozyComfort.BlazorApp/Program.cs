@@ -15,10 +15,10 @@ builder.Services.AddRazorComponents()
 // Add Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
 
-// Add HttpContext accessor (important for header management)
+// Add HttpContext accessor
 builder.Services.AddHttpContextAccessor();
 
-// Configure HttpClient for each API (before authentication services)
+// Configure HttpClient for each API
 builder.Services.AddHttpClient("ManufacturerAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7001/");
@@ -37,38 +37,33 @@ builder.Services.AddHttpClient("SellerAPI", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-// Add Authorization - IMPORTANT: Order matters!
+// Add Authorization
 builder.Services.AddAuthorizationCore();
 
-// Register CustomAuthStateProvider as Scoped (not Singleton) because it depends on ILocalStorageService
+// Register CustomAuthStateProvider as Scoped
 builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<CustomAuthStateProvider>());
 
-// Add CascadingAuthenticationState after registering AuthenticationStateProvider
+// Add CascadingAuthenticationState
 builder.Services.AddCascadingAuthenticationState();
 
-// Register Services as Scoped
+// Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 
-// Add Session for cart (configure before using)
+// Add distributed memory cache for session
 builder.Services.AddDistributedMemoryCache();
+
+// Add Session
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-});
-
-// Add logging
-builder.Services.AddLogging(logging =>
-{
-    logging.AddConsole();
-    logging.AddDebug();
 });
 
 var app = builder.Build();

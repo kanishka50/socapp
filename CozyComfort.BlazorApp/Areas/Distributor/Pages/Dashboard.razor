@@ -1,63 +1,56 @@
 ﻿@page "/distributor/dashboard"
-@using Microsoft.AspNetCore.Components.Authorization
-@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize(Roles = "Distributor")]
 
-<PageTitle>Distributor Dashboard</PageTitle>
+<PageTitle>Distributor Dashboard - Cozy Comfort</PageTitle>
 
-<AuthorizeView>
-    <Authorized>
-        <h3>Welcome to Distributor Dashboard!</h3>
+<div class="container mt-4">
+    <h1>Distributor Dashboard</h1>
 
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Products</h5>
-                        <p class="card-text display-4">0</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Pending Orders</h5>
-                        <p class="card-text display-4">0</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Revenue</h5>
-                        <p class="card-text display-4">$0</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Active Suppliers</h5>
-                        <p class="card-text display-4">0</p>
-                    </div>
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Products</h5>
+                    <p class="card-text">Manage your product inventory</p>
+                    <a href="/distributor/products" class="btn btn-primary">View Products</a>
                 </div>
             </div>
         </div>
 
-        <div class="mt-4">
-            <p>Welcome, @context.User.Identity?.Name!</p>
-            <p>Role: @context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Orders</h5>
+                    <p class="card-text">View and manage orders</p>
+                    <a href="/distributor/orders" class="btn btn-primary">View Orders</a>
+                </div>
+            </div>
         </div>
-    </Authorized>
-    <NotAuthorized>
-        <p>You are not authorized to view this page. Please <a href="/login">login</a>.</p>
-    </NotAuthorized>
-</AuthorizeView>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Inventory</h5>
+                    <p class="card-text">Check stock levels</p>
+                    <a href="/distributor/inventory" class="btn btn-primary">View Inventory</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        // Load dashboard data
-        await base.OnInitializedAsync();
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+
+        // You can access user claims here if needed
+        var userName = user.Identity?.Name;
     }
 }
