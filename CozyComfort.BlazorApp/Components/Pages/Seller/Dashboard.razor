@@ -3,9 +3,11 @@
 @using CozyComfort.Shared.DTOs.Distributor
 @using CozyComfort.Shared.DTOs
 @using CozyComfort.BlazorApp.Services.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
 @attribute [Authorize(Roles = "Seller,Administrator")]
 @inject ISellerService SellerService
 @inject IDistributorService DistributorService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Seller Dashboard</PageTitle>
 
@@ -178,9 +180,14 @@
 
     private bool isLoading = true;
     private bool isLoadingDistributorProducts = true;
+    private string? userEmail = null;  // ADDED: Define email variable
 
     protected override async Task OnInitializedAsync()
     {
+        // ADDED: Get the current user's email
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userEmail = authState.User.Identity?.Name ?? authState.User.FindFirst(c => c.Type.Contains("email"))?.Value ?? "seller@cozycomfort.com";
+
         await LoadData();
     }
 
@@ -242,10 +249,12 @@
     {
         try
         {
-            var response = await SellerService.GetOrdersAsync(new PagedRequest { PageSize = 10 });
-            if (response.Success && response.Data != null)
+            // FIXED: Use userEmail instead of undefined 'email'
+            var ordersResponse = await SellerService.GetCustomerOrdersAsync(userEmail!);
+            // FIXED: Use ordersResponse instead of undefined 'response'
+            if (ordersResponse.Success && ordersResponse.Data != null)
             {
-                customerOrders = response.Data.Items.ToList();
+                customerOrders = ordersResponse.Data;
             }
         }
         catch (Exception ex)
@@ -254,7 +263,7 @@
         }
     }
 
-    private async Task AddToShop(DistributorProductDto distributorProduct)
+    private void AddToShop(DistributorProductDto distributorProduct)
     {
         // This demonstrates adding product to shop
         // In real implementation, this would call a service to add the product

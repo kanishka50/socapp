@@ -187,5 +187,32 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 };
             }
         }
+
+
+
+        // File: CozyComfort.BlazorApp/Services/ApiServices/DistributorService.cs
+
+        public async Task<ApiResponse<DistributorProductDto>> AddProductFromManufacturerAsync(CreateDistributorProductDto dto)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/products/add-from-manufacturer", dto);
+                var content = await response.Content.ReadAsStringAsync();
+
+                return JsonSerializer.Deserialize<ApiResponse<DistributorProductDto>>(content,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                    ?? new ApiResponse<DistributorProductDto> { Success = false, Message = "Invalid response" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding product from manufacturer");
+                return new ApiResponse<DistributorProductDto>
+                {
+                    Success = false,
+                    Message = "Error adding product",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
     }
 }
