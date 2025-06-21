@@ -1,0 +1,251 @@
+﻿@page "/manufacturer/products/{ProductId:int}/stock"
+@attribute [Authorize(Roles = "Manufacturer")]
+@inject IManufacturerService ManufacturerService
+@inject NavigationManager Navigation
+@inject ILogger<StockManagement> Logger
+
+<PageTitle>Stock Management - Cozy Comfort</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/products/@ProductId">Product Details</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Stock Management</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 mb-4">Stock Management</h1>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (product != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">@product.Name - Stock Check</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Current Stock</h6>
+                                    <p class="h3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")">
+                                        @product.CurrentStock
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Available Stock</h6>
+                                    <p class="h3 text-primary">@product.AvailableStock</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Reserved Stock</h6>
+                                    <p class="h3 text-warning">@(product.CurrentStock - product.AvailableStock)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <h5 class="mb-3">Check Stock Availability</h5>
+                        
+                        @if (!string.IsNullOrEmpty(stockCheckMessage))
+                        {
+                            <div class="alert @(isStockAvailable ? "alert-success" : "alert-warning") alert-dismissible fade show" role="alert">
+                                @stockCheckMessage
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+
+                        <EditForm Model="stockCheckRequest" OnValidSubmit="HandleStockCheck">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="quantity" class="form-label">Quantity to Check</label>
+                                    <InputNumber id="quantity" class="form-control" @bind-Value="stockCheckRequest.QuantityRequested" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary d-block" disabled="@isChecking">
+                                        @if (isChecking)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        }
+                                        Check Availability
+                                    </button>
+                                </div>
+                            </div>
+                        </EditForm>
+
+                        @if (stockCheckResponse != null)
+                        {
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <h6>Stock Check Result</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Requested Quantity:</small>
+                                        <p class="mb-1">@stockCheckResponse.QuantityRequested units</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Available Stock:</small>
+                                        <p class="mb-1">@stockCheckResponse.AvailableStock units</p>
+                                    </div>
+                                </div>
+                                @if (stockCheckResponse.EstimatedProductionDays.HasValue)
+                                {
+                                    <div class="mt-2">
+                                        <small class="text-muted">Production Time:</small>
+                                        <p class="mb-1">@stockCheckResponse.EstimatedProductionDays days</p>
+                                        <small class="text-muted">Estimated Availability:</small>
+                                        <p>@stockCheckResponse.EstimatedAvailabilityDate?.ToString("MMM dd, yyyy")</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Stock Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-6">SKU:</dt>
+                            <dd class="col-6">@product.SKU</dd>
+                            
+                            <dt class="col-6">Category:</dt>
+                            <dd class="col-6">@product.Category</dd>
+                            
+                            <dt class="col-6">Min Stock Level:</dt>
+                            <dd class="col-6">@product.MinStockLevel</dd>
+                            
+                            <dt class="col-6">Status:</dt>
+                            <dd class="col-6">
+                                @if (product.CurrentStock <= product.MinStockLevel)
+                                {
+                                    <span class="badge bg-danger">Low Stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">In Stock</span>
+                                }
+                            </dd>
+                        </dl>
+
+                        <hr />
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" @onclick="@(() => Navigation.NavigateTo($"/manufacturer/products/{ProductId}"))">
+                                <i class="bi bi-arrow-left"></i> Back to Product
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+        <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/dashboard"))">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public int ProductId { get; set; }
+
+    private ProductDto? product;
+    private StockCheckRequest stockCheckRequest = new();
+    private StockCheckResponse? stockCheckResponse;
+    private bool isLoading = true;
+    private bool isChecking = false;
+    private string? errorMessage;
+    private string? stockCheckMessage;
+    private bool isStockAvailable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProduct();
+        stockCheckRequest.ProductId = ProductId;
+    }
+
+    private async Task LoadProduct()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var response = await ManufacturerService.GetProductByIdAsync(ProductId);
+            
+            if (response.Success && response.Data != null)
+            {
+                product = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load product";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading product {ProductId}", ProductId);
+            errorMessage = "An error occurred while loading product";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleStockCheck()
+    {
+        try
+        {
+            isChecking = true;
+            stockCheckMessage = null;
+
+            var response = await ManufacturerService.CheckStockAsync(stockCheckRequest);
+            
+            if (response.Success && response.Data != null)
+            {
+                stockCheckResponse = response.Data;
+                isStockAvailable = response.Data.IsAvailable;
+                stockCheckMessage = response.Data.Message;
+            }
+            else
+            {
+                stockCheckMessage = response.Message ?? "Failed to check stock";
+                isStockAvailable = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking stock for product {ProductId}", ProductId);
+            stockCheckMessage = "An error occurred while checking stock";
+            isStockAvailable = false;
+        }
+        finally
+        {
+            isChecking = false;
+        }
+    }
+}

@@ -1,0 +1,224 @@
+﻿@page "/manufacturer/products/{ProductId:int}/edit"
+@attribute [Authorize(Roles = "Manufacturer")]
+@inject IManufacturerService ManufacturerService
+@inject NavigationManager Navigation
+@inject ILogger<EditProduct> Logger
+
+<PageTitle>Edit Product - Cozy Comfort</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/products/@ProductId">Product Details</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Product</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 mb-4">Edit Product</h1>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (editProduct != null)
+    {
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-body">
+                <EditForm Model="editProduct" OnValidSubmit="HandleUpdateProduct">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="productName" class="form-label">Product Name</label>
+                            <InputText id="productName" class="form-control" @bind-Value="editProduct.Name" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">Category</label>
+                            <InputSelect id="category" class="form-control" @bind-Value="editProduct.Category">
+                                <option value="">Select category</option>
+                                <option value="Wool Blankets">Wool Blankets</option>
+                                <option value="Cotton Blankets">Cotton Blankets</option>
+                                <option value="Fleece Blankets">Fleece Blankets</option>
+                                <option value="Weighted Blankets">Weighted Blankets</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <label for="material" class="form-label">Material</label>
+                            <InputText id="material" class="form-control" @bind-Value="editProduct.Material" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="size" class="form-label">Size</label>
+                            <InputText id="size" class="form-control" @bind-Value="editProduct.Size" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="price" class="form-label">Base Price</label>
+                            <InputNumber id="price" class="form-control" @bind-Value="editProduct.Price" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <label for="minStock" class="form-label">Minimum Stock Level</label>
+                            <InputNumber id="minStock" class="form-control" @bind-Value="editProduct.MinStockLevel" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="prodCapacity" class="form-label">Production Capacity/Day</label>
+                            <InputNumber id="prodCapacity" class="form-control" @bind-Value="editProduct.ProductionCapacityPerDay" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="manufacturingCost" class="form-label">Manufacturing Cost</label>
+                            <InputNumber id="manufacturingCost" class="form-control" @bind-Value="editProduct.ManufacturingCost" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="leadTime" class="form-label">Lead Time (Days)</label>
+                            <InputNumber id="leadTime" class="form-control" @bind-Value="editProduct.LeadTimeDays" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description</label>
+                            <InputTextArea id="description" class="form-control" @bind-Value="editProduct.Description" rows="3" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-12">
+                            <label for="imageUrl" class="form-label">Image URL (Optional)</label>
+                            <InputText id="imageUrl" class="form-control" @bind-Value="editProduct.ImageUrl" />
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            }
+                            Save Changes
+                        </button>
+                        <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+        <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/dashboard"))">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public int ProductId { get; set; }
+
+    private UpdateProductDto? editProduct;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProduct();
+    }
+
+    private async Task LoadProduct()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var response = await ManufacturerService.GetProductByIdAsync(ProductId);
+            
+            if (response.Success && response.Data != null)
+            {
+                var product = response.Data;
+                editProduct = new UpdateProductDto
+                {
+                    Name = product.Name,
+                    Description = product.Description,
+                    Material = product.Material,
+                    Size = product.Size,
+                    Price = product.Price,
+                    Category = product.Category,
+                    MinStockLevel = product.MinStockLevel,
+                    ImageUrl = product.ImageUrl,
+                    // These fields need to be added to ProductDto or retrieved separately
+                    ProductionCapacityPerDay = 10, // Default values for now
+                    ManufacturingCost = 50,
+                    LeadTimeDays = 3
+                };
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load product";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading product {ProductId}", ProductId);
+            errorMessage = "An error occurred while loading product";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleUpdateProduct()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            var response = await ManufacturerService.UpdateProductAsync(ProductId, editProduct!);
+            
+            if (response.Success)
+            {
+                Navigation.NavigateTo($"/manufacturer/products/{ProductId}");
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to update product";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating product {ProductId}", ProductId);
+            errorMessage = "An error occurred while updating the product";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/manufacturer/products/{ProductId}");
+    }
+}

@@ -1,115 +1,158 @@
-﻿@inject ISellerService SellerService
-@inject SessionService SessionService
+﻿@implements IDisposable
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Cozy Comfort</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').checked = false">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="shop">
-                <span class="bi bi-shop" aria-hidden="true"></span> Shop
-            </NavLink>
-        </div>
-
-        <!-- Cart Link - Available to everyone -->
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="cart">
-                <span class="bi bi-cart" aria-hidden="true"></span> Cart
-                @if (cartItemCount > 0)
-                {
-                    <span class="badge bg-danger ms-1">@cartItemCount</span>
-                }
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
 
         <AuthorizeView>
             <Authorized>
+                @if (isManufacturer)
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="manufacturer/dashboard">
+                            <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="manufacturer/products">
+                            <span class="bi bi-box-seam" aria-hidden="true"></span> Products
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="manufacturer/orders">
+                            <span class="bi bi-clipboard-check" aria-hidden="true"></span> Orders
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="manufacturer/reports">
+                            <span class="bi bi-graph-up" aria-hidden="true"></span> Reports
+                        </NavLink>
+                    </div>
+                }
+                else if (isDistributor)
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="distributor/dashboard">
+                            <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="distributor/inventory">
+                            <span class="bi bi-box-seam" aria-hidden="true"></span> Inventory
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="distributor/orders">
+                            <span class="bi bi-truck" aria-hidden="true"></span> Orders
+                        </NavLink>
+                    </div>
+                }
+                else if (isSeller)
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="shop">
+                            <span class="bi bi-shop" aria-hidden="true"></span> Shop
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="cart">
+                            <span class="bi bi-cart3" aria-hidden="true"></span> Cart
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="orders">
+                            <span class="bi bi-bag-check" aria-hidden="true"></span> My Orders
+                        </NavLink>
+                    </div>
+                }
+            </Authorized>
+            <NotAuthorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="my-orders">
-                        <span class="bi bi-bag-check" aria-hidden="true"></span> My Orders
+                    <NavLink class="nav-link" href="shop">
+                        <span class="bi bi-shop" aria-hidden="true"></span> Shop
                     </NavLink>
                 </div>
-            </Authorized>
-        </AuthorizeView>
-
-        <AuthorizeView Roles="Administrator,Manufacturer">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="manufacturer/dashboard">
-                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Manufacturer Dashboard
-                </NavLink>
-            </div>
-        </AuthorizeView>
-
-        <AuthorizeView Roles="Administrator,Distributor">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="distributor/dashboard">
-                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Distributor Dashboard
-                </NavLink>
-            </div>
-        </AuthorizeView>
-
-        <AuthorizeView Roles="Administrator,Seller">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="seller/dashboard">
-                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Seller Dashboard
-                </NavLink>
-            </div>
+            </NotAuthorized>
         </AuthorizeView>
     </nav>
 </div>
 
+<style>
+    .bi {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        vertical-align: text-bottom;
+        margin-right: 0.5rem;
+    }
+
+    .nav-item {
+        font-size: 0.9rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .nav-link {
+        border-radius: 0.25rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+</style>
+
 @code {
-    private bool collapseNavMenu = true;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private int cartItemCount = 0;
-    private Timer? cartUpdateTimer;
+    private bool isManufacturer;
+    private bool isDistributor;
+    private bool isSeller;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCartCount();
-        cartUpdateTimer = new Timer(async _ => await LoadCartCount(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        UpdateUserRole(authState);
+
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
     }
 
-    private async Task LoadCartCount()
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
     {
-        try
+        if (task.IsCompletedSuccessfully)
         {
-            var sessionId = SessionService.GetSessionId();
-            if (!string.IsNullOrEmpty(sessionId))
-            {
-                var response = await SellerService.GetCartAsync(sessionId);
-                if (response.Success && response.Data != null)
-                {
-                    cartItemCount = response.Data.Items.Sum(i => i.Quantity);
-                    await InvokeAsync(StateHasChanged);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading cart count: {ex.Message}");
+            UpdateUserRole(task.Result);
+            InvokeAsync(StateHasChanged);
         }
     }
 
-    private void ToggleNavMenu()
+    private void UpdateUserRole(AuthenticationState authState)
     {
-        collapseNavMenu = !collapseNavMenu;
+        var user = authState.User;
+        isManufacturer = user.IsInRole("Manufacturer");
+        isDistributor = user.IsInRole("Distributor");
+        isSeller = user.IsInRole("Seller");
     }
 
     public void Dispose()
     {
-        cartUpdateTimer?.Dispose();
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }
