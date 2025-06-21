@@ -11,9 +11,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         private readonly HttpClient _httpClient;
         private readonly ILogger<SellerService> _logger;
 
-        public SellerService(IHttpClientFactory httpClientFactory, ILogger<SellerService> logger)
+        public SellerService(HttpClient httpClient, ILogger<SellerService> logger)
         {
-            _httpClient = httpClientFactory.CreateClient("SellerAPI");
+            _httpClient = httpClient;
             _logger = logger;
         }
 

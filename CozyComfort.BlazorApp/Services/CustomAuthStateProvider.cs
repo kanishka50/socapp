@@ -10,13 +10,16 @@ namespace CozyComfort.BlazorApp.Services
     {
         private readonly ILocalStorageService _localStorage;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<CustomAuthStateProvider> _logger;
 
         public CustomAuthStateProvider(
             ILocalStorageService localStorage,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            ILogger<CustomAuthStateProvider> logger)
         {
             _localStorage = localStorage;
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -27,18 +30,25 @@ namespace CozyComfort.BlazorApp.Services
 
                 if (string.IsNullOrWhiteSpace(token))
                 {
+                    _logger.LogInformation("No auth token found");
                     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
                 }
 
                 // Set token for all HTTP clients
                 SetAuthorizationHeader(token);
 
-                return new AuthenticationState(new ClaimsPrincipal(
-                    new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
+                var claims = ParseClaimsFromJwt(token);
+                var identity = new ClaimsIdentity(claims, "jwt");
+                var user = new ClaimsPrincipal(identity);
+
+                _logger.LogInformation($"User authenticated: {user.Identity?.IsAuthenticated}");
+                _logger.LogInformation($"User claims: {string.Join(", ", claims.Select(c => $"{c.Type}={c.Value}"))}");
+
+                return new AuthenticationState(user);
             }
             catch (Exception ex)
             {
-                // Return anonymous user on error
+                _logger.LogError(ex, "Error getting authentication state");
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
         }
@@ -57,7 +67,7 @@ namespace CozyComfort.BlazorApp.Services
             }
             catch (Exception ex)
             {
-                // Handle error silently or throw based on requirements
+                _logger.LogError(ex, "Error notifying user authentication");
             }
         }
 
@@ -78,26 +88,65 @@ namespace CozyComfort.BlazorApp.Services
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-            if (keyValuePairs.TryGetValue(ClaimTypes.Role, out object roles))
+            if (keyValuePairs != null)
             {
-                if (roles.ToString().Trim().StartsWith("["))
+                // Log all claims for debugging
+                _logger.LogInformation($"JWT Claims: {string.Join(", ", keyValuePairs.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+
+                // Check for role claim with different possible keys
+                var roleKeys = new[] { "role", "Role", "roles", "Roles", ClaimTypes.Role,
+                    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" };
+
+                foreach (var roleKey in roleKeys)
                 {
-                    var parsedRoles = JsonSerializer.Deserialize<string[]>(roles.ToString());
-                    foreach (var parsedRole in parsedRoles)
+                    if (keyValuePairs.TryGetValue(roleKey, out object? roles))
                     {
-                        claims.Add(new Claim(ClaimTypes.Role, parsedRole));
+                        if (roles != null)
+                        {
+                            var rolesString = roles.ToString() ?? "";
+
+                            if (rolesString.Trim().StartsWith("["))
+                            {
+                                var parsedRoles = JsonSerializer.Deserialize<string[]>(rolesString);
+                                if (parsedRoles != null)
+                                {
+                                    foreach (var parsedRole in parsedRoles)
+                                    {
+                                        claims.Add(new Claim(ClaimTypes.Role, parsedRole));
+                                        _logger.LogInformation($"Added role claim: {parsedRole}");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                claims.Add(new Claim(ClaimTypes.Role, rolesString));
+                                _logger.LogInformation($"Added role claim: {rolesString}");
+                            }
+                        }
+
+                        keyValuePairs.Remove(roleKey);
+                        break;
                     }
                 }
-                else
+
+                // Add other claims
+                foreach (var kvp in keyValuePairs)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, roles.ToString()));
+                    var key = kvp.Key;
+                    var value = kvp.Value?.ToString() ?? "";
+
+                    // Map common JWT claims to .NET claim types
+                    var claimType = key switch
+                    {
+                        "sub" => ClaimTypes.NameIdentifier,
+                        "name" => ClaimTypes.Name,
+                        "email" => ClaimTypes.Email,
+                        _ => key
+                    };
+
+                    claims.Add(new Claim(claimType, value));
                 }
-
-                keyValuePairs.Remove(ClaimTypes.Role);
             }
-
-            claims.AddRange(keyValuePairs.Select(kvp =>
-                new Claim(kvp.Key, kvp.Value.ToString())));
 
             return claims;
         }
@@ -129,7 +178,7 @@ namespace CozyComfort.BlazorApp.Services
             }
             catch (Exception ex)
             {
-                // Handle error silently
+                _logger.LogError(ex, "Error setting authorization headers");
             }
         }
 
@@ -147,7 +196,7 @@ namespace CozyComfort.BlazorApp.Services
             }
             catch (Exception ex)
             {
-                // Handle error silently
+                _logger.LogError(ex, "Error clearing authorization headers");
             }
         }
     }
