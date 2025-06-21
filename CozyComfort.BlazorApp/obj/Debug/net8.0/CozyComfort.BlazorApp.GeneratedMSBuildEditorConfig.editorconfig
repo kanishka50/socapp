@@ -99,6 +99,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQcm9kdWN0c1xDb21wb25lbnQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSZWRpcmVjdFRvTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Kanishka/source/repos/CozyComfort/CozyComfort.BlazorApp/Components/Shared/ErrorMessage.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcRXJyb3JNZXNzYWdlLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

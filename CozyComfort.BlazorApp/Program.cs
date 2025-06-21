@@ -5,12 +5,23 @@ using CozyComfort.BlazorApp.Services;
 using CozyComfort.BlazorApp.Services.ApiServices;
 using CozyComfort.BlazorApp.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Enable detailed errors for debugging
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<CircuitOptions>(options =>
+    {
+        options.DetailedErrors = true;
+    });
+}
 
 // Add Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
@@ -88,7 +99,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<SessionService>();
 
 // Add any additional services if needed
-//builder.Services.AddScoped<INotificationService, NotificationService>();
+// builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Add distributed memory cache for session
 builder.Services.AddDistributedMemoryCache();
@@ -102,11 +113,16 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
-// Add Logging
+// Add Logging with more detail in development
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();
     logging.AddDebug();
+
+    if (builder.Environment.IsDevelopment())
+    {
+        logging.SetMinimumLevel(LogLevel.Debug);
+    }
 });
 
 var app = builder.Build();
