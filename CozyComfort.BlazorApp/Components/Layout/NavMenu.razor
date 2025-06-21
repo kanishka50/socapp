@@ -47,12 +47,7 @@
         <AuthorizeView Roles="Administrator,Manufacturer">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="manufacturer/dashboard">
-                    <span class="bi bi-factory" aria-hidden="true"></span> Manufacturing
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="manufacturer/products">
-                    <span class="bi bi-box" aria-hidden="true"></span> Products
+                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Manufacturer Dashboard
                 </NavLink>
             </div>
         </AuthorizeView>
@@ -60,12 +55,7 @@
         <AuthorizeView Roles="Administrator,Distributor">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="distributor/dashboard">
-                    <span class="bi bi-truck" aria-hidden="true"></span> Distribution
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="distributor/orders">
-                    <span class="bi bi-clipboard" aria-hidden="true"></span> Orders
+                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Distributor Dashboard
                 </NavLink>
             </div>
         </AuthorizeView>
@@ -73,12 +63,7 @@
         <AuthorizeView Roles="Administrator,Seller">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="seller/dashboard">
-                    <span class="bi bi-shop-window" aria-hidden="true"></span> Sales Dashboard
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="seller/orders">
-                    <span class="bi bi-receipt" aria-hidden="true"></span> Manage Orders
+                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Seller Dashboard
                 </NavLink>
             </div>
         </AuthorizeView>
@@ -94,8 +79,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadCartCount();
-
-        // Set up a timer to update cart count every 30 seconds
         cartUpdateTimer = new Timer(async _ => await LoadCartCount(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
