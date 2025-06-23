@@ -58,7 +58,7 @@
                             <div class="col-md-6">
                                 <h6 class="text-muted">Profit Margin</h6>
                                 <p class="text-success fw-bold">
-                                    $@product.ProfitMargin.ToString("F2") 
+                                    $@product.ProfitMargin.ToString("F2")
                                     (@product.ProfitPercentage.ToString("F1")%)
                                 </p>
                             </div>
@@ -96,20 +96,20 @@
                         @if (product.CurrentStock <= product.MinStockLevel)
                         {
                             <div class="alert alert-warning mt-3">
-                                <i class="bi bi-exclamation-triangle"></i> 
+                                <i class="bi bi-exclamation-triangle"></i>
                                 Stock level is below minimum. Consider placing a reorder.
                             </div>
                         }
 
                         <div class="progress mt-3" style="height: 20px;">
                             @{
-                                var stockPercentage = product.MinStockLevel > 0 
-                                    ? (product.CurrentStock / (double)(product.MinStockLevel * 3)) * 100 
-                                    : 100;
-                                var progressClass = stockPercentage > 50 ? "bg-success" : 
-                                                   stockPercentage > 25 ? "bg-warning" : "bg-danger";
+                                var stockPercentage = product.MinStockLevel > 0
+                                ? (product.CurrentStock / (double)(product.MinStockLevel * 3)) * 100
+                                : 100;
+                                var progressClass = stockPercentage > 50 ? "bg-success" :
+                                stockPercentage > 25 ? "bg-warning" : "bg-danger";
                             }
-                            <div class="progress-bar @progressClass" role="progressbar" 
+                            <div class="progress-bar @progressClass" role="progressbar"
                                  style="width: @Math.Min(stockPercentage, 100)%">
                                 @product.CurrentStock units
                             </div>
@@ -135,7 +135,7 @@
                                     <i class="bi bi-arrow-repeat"></i> Create Reorder
                                 </button>
                             }
-                            <button class="btn btn-outline-secondary" @onclick="() => Navigation.NavigateTo("/distributor/inventory")">
+                            <button class="btn btn-outline-secondary" @onclick="NavigateToInventory">
                                 <i class="bi bi-arrow-left"></i> Back to Inventory
                             </button>
                         </div>
@@ -153,12 +153,12 @@
                             <dd class="col-5 text-end">
                                 $@((product.CurrentStock * product.PurchasePrice).ToString("N2"))
                             </dd>
-                            
+
                             <dt class="col-7">Potential Revenue:</dt>
                             <dd class="col-5 text-end">
                                 $@((product.CurrentStock * product.SellingPrice).ToString("N2"))
                             </dd>
-                            
+
                             <dt class="col-7">Potential Profit:</dt>
                             <dd class="col-5 text-end text-success">
                                 $@((product.CurrentStock * product.ProfitMargin).ToString("N2"))
@@ -174,7 +174,7 @@
         <div class="alert alert-danger">
             <i class="bi bi-exclamation-circle"></i> @errorMessage
         </div>
-        <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo("/distributor/inventory")">
+        <button class="btn btn-primary" @onclick="NavigateToInventory">
             <i class="bi bi-arrow-left"></i> Back to Inventory
         </button>
     }
@@ -195,17 +195,17 @@
                         <label class="form-label">Enter quantity to check:</label>
                         <input type="number" class="form-control" @bind="quantityToCheck" min="1" />
                     </div>
-                    
+
                     @if (stockCheckResponse != null)
                     {
                         <div class="alert @(stockCheckResponse.IsAvailable ? "alert-success" : "alert-warning")">
                             @stockCheckResponse.Message
                         </div>
-                        
+
                         @if (stockCheckResponse.NeedsReorder)
                         {
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> 
+                                <i class="bi bi-info-circle"></i>
                                 Suggested reorder quantity: @stockCheckResponse.SuggestedReorderQuantity units
                             </div>
                         }
@@ -232,7 +232,7 @@
     private DistributorProductDto? product;
     private bool isLoading = true;
     private string? errorMessage;
-    
+
     private bool showStockModal = false;
     private int quantityToCheck = 1;
     private bool isCheckingStock = false;
@@ -251,7 +251,7 @@
             errorMessage = null;
 
             var response = await DistributorService.GetProductByIdAsync(ProductId);
-            
+
             if (response.Success && response.Data != null)
             {
                 product = response.Data;
@@ -287,7 +287,7 @@
         try
         {
             isCheckingStock = true;
-            
+
             var request = new DistributorStockCheckRequest
             {
                 ProductId = product.Id,
@@ -295,7 +295,7 @@
             };
 
             var response = await DistributorService.CheckStockAsync(request);
-            
+
             if (response.Success && response.Data != null)
             {
                 stockCheckResponse = response.Data;
@@ -327,6 +327,14 @@
 
     private void NavigateToReorder()
     {
-        Navigation.NavigateTo($"/distributor/orders/create?productId={product?.ManufacturerProductId}");
+        if (product?.ManufacturerProductId != null)
+        {
+            Navigation.NavigateTo($"/distributor/orders/create?productId={product.ManufacturerProductId}");
+        }
+    }
+
+    private void NavigateToInventory()
+    {
+        Navigation.NavigateTo("/distributor/inventory");
     }
 }
