@@ -1,0 +1,347 @@
+﻿@page "/distributor/inventory"
+@attribute [Authorize(Roles = "Distributor")]
+@inject IDistributorService DistributorService
+@inject ILogger<DistributorInventory> Logger
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Inventory Management - Distributor</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Inventory Management</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 mb-4">Inventory Management</h1>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Search and Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search by product name or SKU..."
+                               @bind="searchTerm" @bind:event="oninput" @onkeyup="@(async (e) => { if (e.Key == "Enter") await SearchProducts(); })" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" @bind="sortBy">
+                        <option value="ProductName">Sort by Name</option>
+                        <option value="SKU">Sort by SKU</option>
+                        <option value="CurrentStock">Sort by Stock</option>
+                        <option value="SellingPrice">Sort by Price</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary w-100" @onclick="SearchProducts">
+                        <i class="bi bi-funnel"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Product Inventory</h5>
+            <button class="btn btn-sm btn-outline-primary" @onclick="RefreshInventory">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+        <div class="card-body">
+            @if (isLoading)
+            {
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (products != null && products.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>SKU</th>
+                                <th>Purchase Price</th>
+                                <th>Selling Price</th>
+                                <th>Profit Margin</th>
+                                <th>Current Stock</th>
+                                <th>Available Stock</th>
+                                <th>Min Level</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in products)
+                            {
+                                <tr>
+                                    <td>@product.ProductName</td>
+                                    <td>@product.SKU</td>
+                                    <td>$@product.PurchasePrice.ToString("F2")</td>
+                                    <td>$@product.SellingPrice.ToString("F2")</td>
+                                    <td>
+                                        <span class="text-success">
+                                            $@product.ProfitMargin.ToString("F2")
+                                            (@product.ProfitPercentage.ToString("F1")%)
+                                        </span>
+                                    </td>
+                                    <td>@product.CurrentStock</td>
+                                    <td>@product.AvailableStock</td>
+                                    <td>@product.MinStockLevel</td>
+                                    <td>
+                                        @if (product.CurrentStock <= product.MinStockLevel)
+                                        {
+                                            <span class="badge bg-danger">Low Stock</span>
+                                        }
+                                        else if (product.CurrentStock > product.MinStockLevel * 2)
+                                        {
+                                            <span class="badge bg-success">In Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Normal</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" @onclick="() => CheckStock(product.Id)" title="Check Stock">
+                                                <i class="bi bi-box-seam"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" @onclick="() => NavigateToReorder(product.Id)" title="Reorder">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" @onclick="() => NavigateToProductDetails(product.Id)" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (totalPages > 1)
+                {
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link" @onclick="@(() => LoadProducts(currentPage - 1))" disabled="@(currentPage == 1)">
+                                    Previous
+                                </button>
+                            </li>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                var pageNumber = i;
+                                <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                    <button class="page-link" @onclick="@(() => LoadProducts(pageNumber))">
+                                        @pageNumber
+                                    </button>
+                                </li>
+                            }
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <button class="page-link" @onclick="@(() => LoadProducts(currentPage + 1))" disabled="@(currentPage == totalPages)">
+                                    Next
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No products found.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Stock Check Modal -->
+@if (showStockModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Stock Check Result</h5>
+                    <button type="button" class="btn-close" @onclick="CloseStockModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (stockCheckResponse != null)
+                    {
+                        <div class="mb-3">
+                            <strong>Product:</strong> @stockCheckResponse.ProductName
+                        </div>
+                        <div class="mb-3">
+                            <strong>SKU:</strong> @stockCheckResponse.SKU
+                        </div>
+                        <div class="mb-3">
+                            <strong>Available Stock:</strong> @stockCheckResponse.AvailableStock units
+                        </div>
+                        <div class="alert @(stockCheckResponse.IsAvailable ? "alert-success" : "alert-warning")">
+                            @stockCheckResponse.Message
+                        </div>
+                        @if (stockCheckResponse.NeedsReorder)
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                Suggested reorder quantity: @stockCheckResponse.SuggestedReorderQuantity units
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseStockModal">Close</button>
+                    @if (stockCheckResponse?.NeedsReorder == true)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => NavigateToReorder(selectedProductId)">
+                            Create Reorder
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<DistributorProductDto> products = new();
+    private bool isLoading = false;
+    private string? errorMessage;
+    private string searchTerm = "";
+    private string sortBy = "ProductName";
+
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 1;
+    private int totalItems = 0;
+
+    private bool showStockModal = false;
+    private DistributorStockCheckResponse? stockCheckResponse;
+    private int selectedProductId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts(int page = 1)
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            currentPage = page;
+
+            var request = new PagedRequest
+            {
+                PageNumber = currentPage,
+                PageSize = pageSize,
+                SearchTerm = searchTerm,
+                SortBy = sortBy,
+                IsDescending = false
+            };
+
+            var response = await DistributorService.GetProductsAsync(request);
+
+            if (response.Success && response.Data != null)
+            {
+                products = response.Data.Items;
+                totalItems = response.Data.TotalCount;
+                totalPages = response.Data.TotalPages;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load products";
+                products = new List<DistributorProductDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading products");
+            errorMessage = "An error occurred while loading products";
+            products = new List<DistributorProductDto>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SearchProducts()
+    {
+        currentPage = 1;
+        await LoadProducts();
+    }
+
+    private async Task RefreshInventory()
+    {
+        await LoadProducts(currentPage);
+    }
+
+    private async Task CheckStock(int productId)
+    {
+        try
+        {
+            selectedProductId = productId;
+            var request = new DistributorStockCheckRequest
+            {
+                ProductId = productId,
+                QuantityRequested = 0 // Just checking current stock
+            };
+
+            var response = await DistributorService.CheckStockAsync(request);
+
+            if (response.Success && response.Data != null)
+            {
+                stockCheckResponse = response.Data;
+                showStockModal = true;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to check stock";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking stock for product {ProductId}", productId);
+            errorMessage = "An error occurred while checking stock";
+        }
+    }
+
+    private void CloseStockModal()
+    {
+        showStockModal = false;
+        stockCheckResponse = null;
+    }
+
+    private void NavigateToReorder(int productId)
+    {
+        Navigation.NavigateTo($"/distributor/orders/create?productId={productId}");
+    }
+
+    private void NavigateToProductDetails(int productId)
+    {
+        Navigation.NavigateTo($"/distributor/products/{productId}");
+    }
+}

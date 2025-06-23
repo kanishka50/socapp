@@ -1,0 +1,346 @@
+﻿@page "/distributor/orders/{OrderId:int}"
+@attribute [Authorize(Roles = "Distributor")]
+@inject IDistributorService DistributorService
+@inject NavigationManager Navigation
+@inject ILogger<OrderDetails> Logger
+
+<PageTitle>Order Details - Distributor</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/distributor/orders">Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Order Details</li>
+        </ol>
+    </nav>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (order != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">Order #@order.OrderNumber</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Order Type</h6>
+                                <p>
+                                    @if (order.OrderType == "Manufacturer")
+                                    {
+                                        <span class="badge bg-primary">From Manufacturer</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">From Seller</span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Status</h6>
+                                <p>
+                                    <span class="badge @GetStatusBadgeClass(order.Status)">
+                                        @order.Status
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Order Date</h6>
+                                <p>@order.OrderDate.ToString("MMMM dd, yyyy hh:mm tt")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Expected Delivery</h6>
+                                <p>
+                                    @if (order.ExpectedDeliveryDate.HasValue)
+                                    {
+                                        @order.ExpectedDeliveryDate.Value.ToString("MMMM dd, yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not specified</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6 class="text-muted">Customer/Supplier</h6>
+                            <p>@order.CustomerName</p>
+                        </div>
+
+                        <hr />
+
+                        <h5 class="mb-3">Order Items</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>SKU</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in order.Items)
+                                    {
+                                        <tr>
+                                            <td>@item.ProductName</td>
+                                            <td>@item.SKU</td>
+                                            <td>@item.Quantity</td>
+                                            <td>$@item.UnitPrice.ToString("F2")</td>
+                                            <td>$@item.TotalPrice.ToString("F2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" class="text-end">Order Total:</th>
+                                        <th>$@order.TotalAmount.ToString("F2")</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Order Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (CanUpdateStatus(order.Status))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Update Status</label>
+                                <select class="form-select" @bind="newStatus">
+                                    <option value="">Select new status</option>
+                                    @foreach (var status in GetAvailableStatuses(order.Status))
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                            </div>
+                            <button class="btn btn-primary w-100 mb-2" @onclick="UpdateStatus" disabled="@(string.IsNullOrEmpty(newStatus) || isUpdating)">
+                                @if (isUpdating)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                }
+                                Update Status
+                            </button>
+                        }
+
+                        @if (order.Status == "Pending")
+                        {
+                            <button class="btn btn-danger w-100 mb-2" @onclick="CancelOrder" disabled="@isUpdating">
+                                Cancel Order
+                            </button>
+                        }
+
+                        <button class="btn btn-secondary w-100" @onclick="() => Navigation.NavigateTo("/distributor/orders")">
+                            <i class="bi bi-arrow-left"></i> Back to Orders
+                        </button>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @successMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @errorMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+        <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo("/distributor/orders")">
+            <i class="bi bi-arrow-left"></i> Back to Orders
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    private OrderDto? order;
+    private bool isLoading = true;
+    private bool isUpdating = false;
+    private string? errorMessage;
+    private string? successMessage;
+    private string newStatus = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrder();
+    }
+
+    private async Task LoadOrder()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            // Since we don't have a GetOrderById method, we'll get all orders and find the one we need
+            var response = await DistributorService.GetOrdersAsync(1, 100);
+            
+            if (response.Success && response.Data != null)
+            {
+                order = response.Data.Items.FirstOrDefault(o => o.Id == OrderId);
+                if (order == null)
+                {
+                    errorMessage = "Order not found";
+                }
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load order details";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading order {OrderId}", OrderId);
+            errorMessage = "An error occurred while loading order details";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task UpdateStatus()
+    {
+        if (string.IsNullOrEmpty(newStatus) || order == null)
+            return;
+
+        try
+        {
+            isUpdating = true;
+            errorMessage = null;
+            successMessage = null;
+
+            var response = await DistributorService.UpdateOrderStatusAsync(order.Id, newStatus);
+            
+            if (response.Success)
+            {
+                successMessage = $"Order status updated to {newStatus}";
+                order.Status = newStatus;
+                newStatus = "";
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to update order status";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating order status");
+            errorMessage = "An error occurred while updating order status";
+        }
+        finally
+        {
+            isUpdating = false;
+        }
+    }
+
+    private async Task CancelOrder()
+    {
+        if (order == null)
+            return;
+
+        try
+        {
+            isUpdating = true;
+            errorMessage = null;
+            successMessage = null;
+
+            var response = await DistributorService.UpdateOrderStatusAsync(order.Id, "Cancelled");
+            
+            if (response.Success)
+            {
+                successMessage = "Order cancelled successfully";
+                order.Status = "Cancelled";
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to cancel order";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error cancelling order");
+            errorMessage = "An error occurred while cancelling the order";
+        }
+        finally
+        {
+            isUpdating = false;
+        }
+    }
+
+    private bool CanUpdateStatus(string currentStatus)
+    {
+        return currentStatus switch
+        {
+            "Pending" => true,
+            "Processing" => true,
+            "Confirmed" => true,
+            "Shipped" => true,
+            _ => false
+        };
+    }
+
+    private List<string> GetAvailableStatuses(string currentStatus)
+    {
+        return currentStatus switch
+        {
+            "Pending" => new List<string> { "Processing", "Cancelled" },
+            "Processing" => new List<string> { "Confirmed", "Cancelled" },
+            "Confirmed" => new List<string> { "Shipped" },
+            "Shipped" => new List<string> { "Delivered" },
+            _ => new List<string>()
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-warning",
+            "Processing" => "bg-info",
+            "Confirmed" => "bg-primary",
+            "Shipped" => "bg-secondary",
+            "Delivered" => "bg-success",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

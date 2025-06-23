@@ -1,0 +1,326 @@
+﻿@page "/distributor/orders/create"
+@attribute [Authorize(Roles = "Distributor")]
+@inject IDistributorService DistributorService
+@inject NavigationManager Navigation
+@inject ILogger<CreateManufacturerOrder> Logger
+
+<PageTitle>Create Manufacturer Order - Distributor</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/distributor/orders">Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Create Order</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 mb-4">Create Order from Manufacturer</h1>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Product Selection -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Select Products</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <select class="form-select" @bind="selectedProductId">
+                                <option value="0">Select a product to add</option>
+                                @foreach (var product in availableProducts)
+                                {
+                                    <option value="@product.ManufacturerProductId">
+                                        @product.ProductName - SKU: @product.SKU (Stock: @product.CurrentStock)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" placeholder="Quantity" @bind="quantityToAdd" min="1" />
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" @onclick="AddToOrder" disabled="@(selectedProductId == 0 || quantityToAdd <= 0)">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (orderItems.Any())
+                    {
+                        <h6 class="mb-3">Order Items</h6>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>SKU</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in orderItems)
+                                    {
+                                        <tr>
+                                            <td>@item.ProductName</td>
+                                            <td>@item.SKU</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" style="width: 80px;"
+                                                       @bind="item.Quantity" @bind:event="oninput" @onchange="UpdateOrderTotal" min="1" />
+                                            </td>
+                                            <td>$@item.UnitPrice.ToString("F2")</td>
+                                            <td>$@item.Total.ToString("F2")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger" @onclick="() => RemoveItem(item)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" class="text-end">Total:</th>
+                                        <th>$@orderTotal.ToString("F2")</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No items added to the order yet.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Shipping Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="shippingAddress" class="form-label">Shipping Address</label>
+                        <textarea id="shippingAddress" class="form-control" rows="3" @bind="orderDto.ShippingAddress"
+                                  placeholder="Enter shipping address"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Order Notes (Optional)</label>
+                        <textarea id="notes" class="form-control" rows="2" @bind="orderDto.Notes"
+                                  placeholder="Add any special instructions or notes"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Order Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-6">Items:</dt>
+                        <dd class="col-6">@orderItems.Count</dd>
+
+                        <dt class="col-6">Total Quantity:</dt>
+                        <dd class="col-6">@orderItems.Sum(i => i.Quantity)</dd>
+
+                        <dt class="col-6">Order Total:</dt>
+                        <dd class="col-6 fw-bold">$@orderTotal.ToString("F2")</dd>
+                    </dl>
+
+                    <hr />
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting)">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            }
+                            Submit Order
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CancelOrder">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? ProductId { get; set; }
+
+    private CreateManufacturerOrderDto orderDto = new();
+    private List<DistributorProductDto> availableProducts = new();
+    private List<OrderItemViewModel> orderItems = new();
+
+    private int selectedProductId = 0;
+    private int quantityToAdd = 1;
+    private decimal orderTotal = 0;
+
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableProducts();
+
+        // If productId is provided in query, pre-select it
+        if (ProductId.HasValue && ProductId.Value > 0)
+        {
+            selectedProductId = ProductId.Value;
+        }
+    }
+
+    private async Task LoadAvailableProducts()
+    {
+        try
+        {
+            var response = await DistributorService.GetProductsAsync(new PagedRequest
+            {
+                PageNumber = 1,
+                PageSize = 100
+            });
+
+            if (response.Success && response.Data != null)
+            {
+                availableProducts = response.Data.Items
+                    .Where(p => p.CurrentStock < p.MinStockLevel * 2) // Products that might need reordering
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading products");
+            errorMessage = "Failed to load available products";
+        }
+    }
+
+    private void AddToOrder()
+    {
+        if (selectedProductId == 0 || quantityToAdd <= 0)
+            return;
+
+        var product = availableProducts.FirstOrDefault(p => p.ManufacturerProductId == selectedProductId);
+        if (product == null)
+            return;
+
+        var existingItem = orderItems.FirstOrDefault(i => i.ProductId == selectedProductId);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += quantityToAdd;
+        }
+        else
+        {
+            orderItems.Add(new OrderItemViewModel
+            {
+                ProductId = product.ManufacturerProductId,
+                ProductName = product.ProductName,
+                SKU = product.SKU,
+                Quantity = quantityToAdd,
+                UnitPrice = product.PurchasePrice
+            });
+        }
+
+        UpdateOrderTotal();
+
+        // Reset selection
+        selectedProductId = 0;
+        quantityToAdd = 1;
+    }
+
+    private void RemoveItem(OrderItemViewModel item)
+    {
+        orderItems.Remove(item);
+        UpdateOrderTotal();
+    }
+
+    private void UpdateOrderTotal()
+    {
+        orderTotal = orderItems.Sum(i => i.Total);
+    }
+
+    private async Task SubmitOrder()
+    {
+        try
+        {
+            if (!orderItems.Any())
+            {
+                errorMessage = "Please add at least one item to the order";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(orderDto.ShippingAddress))
+            {
+                errorMessage = "Please enter a shipping address";
+                return;
+            }
+
+            isSubmitting = true;
+            errorMessage = null;
+
+            orderDto.Items = orderItems.Select(i => new OrderItemRequest
+            {
+                ManufacturerProductId = i.ProductId,
+                Quantity = i.Quantity
+            }).ToList();
+
+            var response = await DistributorService.CreateManufacturerOrderAsync(orderDto);
+
+            if (response.Success)
+            {
+                Navigation.NavigateTo($"/distributor/orders/{response.Data?.Id ?? 0}");
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to create order";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating order");
+            errorMessage = "An error occurred while creating the order";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void CancelOrder()
+    {
+        Navigation.NavigateTo("/distributor/orders");
+    }
+
+    private class OrderItemViewModel
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string SKU { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Total => Quantity * UnitPrice;
+    }
+}

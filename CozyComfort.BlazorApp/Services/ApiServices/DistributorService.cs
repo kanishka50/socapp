@@ -1,7 +1,8 @@
-﻿using CozyComfort.BlazorApp.Services.Interfaces;
-using CozyComfort.Shared.DTOs;
+﻿using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Distributor;
-using System.Net.Http.Json;
+using CozyComfort.BlazorApp.Services.Interfaces;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 
 namespace CozyComfort.BlazorApp.Services.ApiServices
@@ -9,42 +10,65 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
     public class DistributorService : IDistributorService
     {
         private readonly HttpClient _httpClient;
+        private readonly IAuthService _authService;
         private readonly ILogger<DistributorService> _logger;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        public DistributorService(IHttpClientFactory httpClientFactory, ILogger<DistributorService> logger)
+        public DistributorService(HttpClient httpClient, IAuthService authService, ILogger<DistributorService> logger)
         {
-            _httpClient = httpClientFactory.CreateClient("DistributorAPI");
+            _httpClient = httpClient;
+            _authService = authService;
             _logger = logger;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+        }
+
+        private async Task SetAuthorizationHeader()
+        {
+            var token = await _authService.GetTokenAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
         }
 
         public async Task<ApiResponse<PagedResult<DistributorProductDto>>> GetProductsAsync(PagedRequest request)
         {
             try
             {
-                var query = $"api/products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+                await SetAuthorizationHeader();
 
-                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                    query += $"&searchTerm={request.SearchTerm}";
-
-                if (!string.IsNullOrWhiteSpace(request.SortBy))
-                    query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
-
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<DistributorProductDto>>>(query);
-                return response ?? new ApiResponse<PagedResult<DistributorProductDto>>
+                var queryParams = new List<string>
                 {
-                    Success = false,
-                    Message = "No response from server"
+                    $"pageNumber={request.PageNumber}",
+                    $"pageSize={request.PageSize}"
                 };
+
+                if (!string.IsNullOrEmpty(request.SearchTerm))
+                    queryParams.Add($"searchTerm={Uri.EscapeDataString(request.SearchTerm)}");
+                if (!string.IsNullOrEmpty(request.SortBy))
+                    queryParams.Add($"sortBy={Uri.EscapeDataString(request.SortBy)}");
+                if (request.IsDescending)
+                    queryParams.Add($"isDescending=true");
+
+                var queryString = string.Join("&", queryParams);
+                var response = await _httpClient.GetAsync($"api/Products?{queryString}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<PagedResult<DistributorProductDto>>>(content, _jsonOptions);
+                    return result ?? ApiResponse<PagedResult<DistributorProductDto>>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<PagedResult<DistributorProductDto>>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching distributor products");
-                return new ApiResponse<PagedResult<DistributorProductDto>>
-                {
-                    Success = false,
-                    Message = "Error fetching products",
-                    Errors = new List<string> { ex.Message }
-                };
+                _logger.LogError(ex, "Error getting distributor products");
+                return ApiResponse<PagedResult<DistributorProductDto>>.FailureResult($"Error: {ex.Message}");
             }
         }
 
@@ -52,22 +76,22 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<DistributorProductDto>>($"api/products/{id}");
-                return response ?? new ApiResponse<DistributorProductDto>
+                await SetAuthorizationHeader();
+                var response = await _httpClient.GetAsync($"api/Products/{id}");
+
+                if (response.IsSuccessStatusCode)
                 {
-                    Success = false,
-                    Message = "Product not found"
-                };
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<DistributorProductDto>>(content, _jsonOptions);
+                    return result ?? ApiResponse<DistributorProductDto>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<DistributorProductDto>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching distributor product {ProductId}", id);
-                return new ApiResponse<DistributorProductDto>
-                {
-                    Success = false,
-                    Message = "Error fetching product",
-                    Errors = new List<string> { ex.Message }
-                };
+                _logger.LogError(ex, "Error getting distributor product {ProductId}", id);
+                return ApiResponse<DistributorProductDto>.FailureResult($"Error: {ex.Message}");
             }
         }
 
@@ -75,22 +99,28 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/orders/create-manufacturer-order", dto);
-                var content = await response.Content.ReadAsStringAsync();
+                await SetAuthorizationHeader();
 
-                return JsonSerializer.Deserialize<ApiResponse<OrderDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<OrderDto> { Success = false, Message = "Invalid response" };
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("api/Orders/manufacturer", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<OrderDto>>(responseContent, _jsonOptions);
+                    return result ?? ApiResponse<OrderDto>.FailureResult("Failed to deserialize response");
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Error creating manufacturer order. Status: {Status}, Content: {Content}", response.StatusCode, errorContent);
+                return ApiResponse<OrderDto>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating manufacturer order");
-                return new ApiResponse<OrderDto>
-                {
-                    Success = false,
-                    Message = "Error creating order",
-                    Errors = new List<string> { ex.Message }
-                };
+                return ApiResponse<OrderDto>.FailureResult($"Error: {ex.Message}");
             }
         }
 
@@ -98,22 +128,26 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/orders/process-seller-order", dto);
-                var content = await response.Content.ReadAsStringAsync();
+                await SetAuthorizationHeader();
 
-                return JsonSerializer.Deserialize<ApiResponse<OrderDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<OrderDto> { Success = false, Message = "Invalid response" };
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("api/Orders/seller", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<OrderDto>>(responseContent, _jsonOptions);
+                    return result ?? ApiResponse<OrderDto>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<OrderDto>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing seller order");
-                return new ApiResponse<OrderDto>
-                {
-                    Success = false,
-                    Message = "Error processing order",
-                    Errors = new List<string> { ex.Message }
-                };
+                return ApiResponse<OrderDto>.FailureResult($"Error: {ex.Message}");
             }
         }
 
@@ -121,22 +155,26 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/products/check-stock", request);
-                var content = await response.Content.ReadAsStringAsync();
+                await SetAuthorizationHeader();
 
-                return JsonSerializer.Deserialize<ApiResponse<DistributorStockCheckResponse>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<DistributorStockCheckResponse> { Success = false, Message = "Invalid response" };
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("api/Products/check-stock", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<DistributorStockCheckResponse>>(responseContent, _jsonOptions);
+                    return result ?? ApiResponse<DistributorStockCheckResponse>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<DistributorStockCheckResponse>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error checking stock");
-                return new ApiResponse<DistributorStockCheckResponse>
-                {
-                    Success = false,
-                    Message = "Error checking stock",
-                    Errors = new List<string> { ex.Message }
-                };
+                return ApiResponse<DistributorStockCheckResponse>.FailureResult($"Error: {ex.Message}");
             }
         }
 
@@ -144,24 +182,24 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<OrderDto>>>(
-                    $"api/orders?pageNumber={pageNumber}&pageSize={pageSize}");
+                await SetAuthorizationHeader();
 
-                return response ?? new ApiResponse<PagedResult<OrderDto>>
+                var queryString = $"pageNumber={pageNumber}&pageSize={pageSize}";
+                var response = await _httpClient.GetAsync($"api/Orders?{queryString}");
+
+                if (response.IsSuccessStatusCode)
                 {
-                    Success = false,
-                    Message = "No response from server"
-                };
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<PagedResult<OrderDto>>>(content, _jsonOptions);
+                    return result ?? ApiResponse<PagedResult<OrderDto>>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<PagedResult<OrderDto>>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching orders");
-                return new ApiResponse<PagedResult<OrderDto>>
-                {
-                    Success = false,
-                    Message = "Error fetching orders",
-                    Errors = new List<string> { ex.Message }
-                };
+                _logger.LogError(ex, "Error getting orders");
+                return ApiResponse<PagedResult<OrderDto>>.FailureResult($"Error: {ex.Message}");
             }
         }
 
@@ -169,49 +207,57 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"api/orders/{orderId}/update-status", new { Status = status });
-                var content = await response.Content.ReadAsStringAsync();
+                await SetAuthorizationHeader();
 
-                return JsonSerializer.Deserialize<ApiResponse<bool>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<bool> { Success = false, Message = "Invalid response" };
+                var dto = new UpdateOrderStatusDto { Status = status };
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"api/Orders/{orderId}/status", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<bool>>(responseContent, _jsonOptions);
+                    return result ?? ApiResponse<bool>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<bool>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating order status");
-                return new ApiResponse<bool>
-                {
-                    Success = false,
-                    Message = "Error updating order status",
-                    Errors = new List<string> { ex.Message }
-                };
+                return ApiResponse<bool>.FailureResult($"Error: {ex.Message}");
             }
         }
 
-
-
-        // File: CozyComfort.BlazorApp/Services/ApiServices/DistributorService.cs
 
         public async Task<ApiResponse<DistributorProductDto>> AddProductFromManufacturerAsync(CreateDistributorProductDto dto)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/products/add-from-manufacturer", dto);
-                var content = await response.Content.ReadAsStringAsync();
+                await SetAuthorizationHeader();
 
-                return JsonSerializer.Deserialize<ApiResponse<DistributorProductDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<DistributorProductDto> { Success = false, Message = "Invalid response" };
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("api/Products", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<DistributorProductDto>>(responseContent, _jsonOptions);
+                    return result ?? ApiResponse<DistributorProductDto>.FailureResult("Failed to deserialize response");
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Error adding product from manufacturer. Status: {Status}, Content: {Content}", response.StatusCode, errorContent);
+                return ApiResponse<DistributorProductDto>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding product from manufacturer");
-                return new ApiResponse<DistributorProductDto>
-                {
-                    Success = false,
-                    Message = "Error adding product",
-                    Errors = new List<string> { ex.Message }
-                };
+                return ApiResponse<DistributorProductDto>.FailureResult($"Error: {ex.Message}");
             }
         }
     }

@@ -1,0 +1,332 @@
+﻿@page "/distributor/products/{ProductId:int}"
+@attribute [Authorize(Roles = "Distributor")]
+@inject IDistributorService DistributorService
+@inject NavigationManager Navigation
+@inject ILogger<DistributorProductDetails> Logger
+
+<PageTitle>Product Details - Distributor</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/distributor/inventory">Inventory</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Product Details</li>
+        </ol>
+    </nav>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (product != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">@product.ProductName</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">SKU</h6>
+                                <p class="fw-bold">@product.SKU</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Manufacturer Product ID</h6>
+                                <p>@product.ManufacturerProductId</p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Purchase Price</h6>
+                                <p class="h5">$@product.PurchasePrice.ToString("F2")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Selling Price</h6>
+                                <p class="h5 text-primary">$@product.SellingPrice.ToString("F2")</p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Profit Margin</h6>
+                                <p class="text-success fw-bold">
+                                    $@product.ProfitMargin.ToString("F2") 
+                                    (@product.ProfitPercentage.ToString("F1")%)
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Minimum Stock Level</h6>
+                                <p>@product.MinStockLevel units</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Stock Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <h6 class="text-muted">Current Stock</h6>
+                                <p class="h3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")">
+                                    @product.CurrentStock
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h6 class="text-muted">Available Stock</h6>
+                                <p class="h3 text-primary">@product.AvailableStock</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h6 class="text-muted">Reserved</h6>
+                                <p class="h3 text-warning">@(product.CurrentStock - product.AvailableStock)</p>
+                            </div>
+                        </div>
+
+                        @if (product.CurrentStock <= product.MinStockLevel)
+                        {
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                Stock level is below minimum. Consider placing a reorder.
+                            </div>
+                        }
+
+                        <div class="progress mt-3" style="height: 20px;">
+                            @{
+                                var stockPercentage = product.MinStockLevel > 0 
+                                    ? (product.CurrentStock / (double)(product.MinStockLevel * 3)) * 100 
+                                    : 100;
+                                var progressClass = stockPercentage > 50 ? "bg-success" : 
+                                                   stockPercentage > 25 ? "bg-warning" : "bg-danger";
+                            }
+                            <div class="progress-bar @progressClass" role="progressbar" 
+                                 style="width: @Math.Min(stockPercentage, 100)%">
+                                @product.CurrentStock units
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" @onclick="CheckStock">
+                                <i class="bi bi-box-seam"></i> Check Stock Availability
+                            </button>
+                            @if (product.CurrentStock <= product.MinStockLevel)
+                            {
+                                <button class="btn btn-warning" @onclick="NavigateToReorder">
+                                    <i class="bi bi-arrow-repeat"></i> Create Reorder
+                                </button>
+                            }
+                            <button class="btn btn-outline-secondary" @onclick="() => Navigation.NavigateTo("/distributor/inventory")">
+                                <i class="bi bi-arrow-left"></i> Back to Inventory
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-7">Total Value:</dt>
+                            <dd class="col-5 text-end">
+                                $@((product.CurrentStock * product.PurchasePrice).ToString("N2"))
+                            </dd>
+                            
+                            <dt class="col-7">Potential Revenue:</dt>
+                            <dd class="col-5 text-end">
+                                $@((product.CurrentStock * product.SellingPrice).ToString("N2"))
+                            </dd>
+                            
+                            <dt class="col-7">Potential Profit:</dt>
+                            <dd class="col-5 text-end text-success">
+                                $@((product.CurrentStock * product.ProfitMargin).ToString("N2"))
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+        <button class="btn btn-primary" @onclick="() => Navigation.NavigateTo("/distributor/inventory")">
+            <i class="bi bi-arrow-left"></i> Back to Inventory
+        </button>
+    }
+</div>
+
+<!-- Stock Check Modal -->
+@if (showStockModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Stock Availability Check</h5>
+                    <button type="button" class="btn-close" @onclick="CloseStockModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Enter quantity to check:</label>
+                        <input type="number" class="form-control" @bind="quantityToCheck" min="1" />
+                    </div>
+                    
+                    @if (stockCheckResponse != null)
+                    {
+                        <div class="alert @(stockCheckResponse.IsAvailable ? "alert-success" : "alert-warning")">
+                            @stockCheckResponse.Message
+                        </div>
+                        
+                        @if (stockCheckResponse.NeedsReorder)
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> 
+                                Suggested reorder quantity: @stockCheckResponse.SuggestedReorderQuantity units
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @onclick="PerformStockCheck" disabled="@(quantityToCheck <= 0 || isCheckingStock)">
+                        @if (isCheckingStock)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Check
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseStockModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int ProductId { get; set; }
+
+    private DistributorProductDto? product;
+    private bool isLoading = true;
+    private string? errorMessage;
+    
+    private bool showStockModal = false;
+    private int quantityToCheck = 1;
+    private bool isCheckingStock = false;
+    private DistributorStockCheckResponse? stockCheckResponse;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProduct();
+    }
+
+    private async Task LoadProduct()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var response = await DistributorService.GetProductByIdAsync(ProductId);
+            
+            if (response.Success && response.Data != null)
+            {
+                product = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load product details";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading product {ProductId}", ProductId);
+            errorMessage = "An error occurred while loading product details";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CheckStock()
+    {
+        showStockModal = true;
+        stockCheckResponse = null;
+        quantityToCheck = 1;
+    }
+
+    private async Task PerformStockCheck()
+    {
+        if (product == null || quantityToCheck <= 0)
+            return;
+
+        try
+        {
+            isCheckingStock = true;
+            
+            var request = new DistributorStockCheckRequest
+            {
+                ProductId = product.Id,
+                QuantityRequested = quantityToCheck
+            };
+
+            var response = await DistributorService.CheckStockAsync(request);
+            
+            if (response.Success && response.Data != null)
+            {
+                stockCheckResponse = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to check stock";
+                CloseStockModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking stock");
+            errorMessage = "An error occurred while checking stock";
+            CloseStockModal();
+        }
+        finally
+        {
+            isCheckingStock = false;
+        }
+    }
+
+    private void CloseStockModal()
+    {
+        showStockModal = false;
+        stockCheckResponse = null;
+        quantityToCheck = 1;
+    }
+
+    private void NavigateToReorder()
+    {
+        Navigation.NavigateTo($"/distributor/orders/create?productId={product?.ManufacturerProductId}");
+    }
+}
