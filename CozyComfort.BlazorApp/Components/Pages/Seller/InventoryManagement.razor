@@ -1,0 +1,578 @@
+﻿@page "/seller/inventory"
+@attribute [Authorize(Roles = "Seller,Administrator")]
+@inject ISellerService SellerService
+@inject NavigationManager Navigation
+@inject ILogger<InventoryManagement> Logger
+@inject IJSRuntime JSRuntime
+@using OrderItemRequest = CozyComfort.Shared.DTOs.Seller.OrderItemRequest
+@using CozyComfort.Shared.DTOs.Seller
+
+<PageTitle>Inventory Management - Cozy Comfort</PageTitle>
+
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Inventory Management</h2>
+        <button class="btn btn-primary" @onclick="NavigateToDistributorOrders">
+            <i class="bi bi-truck"></i> View Distributor Orders
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading inventory...</span>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+    }
+    else
+    {
+        <!-- Search and Filter Bar -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Search by name, SKU, or category..."
+                                   @bind="searchTerm" @oninput="@((e) => SearchInventory(e.Value?.ToString()))" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" @bind="filterOption">
+                            <option value="">All Products</option>
+                            <option value="low-stock">Low Stock (≤ 10)</option>
+                            <option value="out-of-stock">Out of Stock</option>
+                            <option value="needs-reorder">Needs Reorder</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" @onclick="RefreshInventory">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="card">
+            <div class="card-body">
+                @if (inventoryItems?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>SKU</th>
+                                    <th>Category</th>
+                                    <th>Current Stock</th>
+                                    <th>Display Stock</th>
+                                    <th>Purchase Price</th>
+                                    <th>Selling Price</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in GetFilteredItems())
+                                {
+                                    <tr class="@GetRowClass(item)">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                                {
+                                                    <img src="@item.ImageUrl" alt="@item.ProductName"
+                                                         class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                }
+                                                <div>
+                                                    <div class="fw-bold">@item.ProductName</div>
+                                                    <small class="text-muted">ID: @item.Id</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>@item.SKU</td>
+                                        <td><span class="badge bg-secondary">@item.Category</span></td>
+                                        <td>
+                                            <span class="@GetStockBadgeClass(item.CurrentStock)">
+                                                @item.CurrentStock
+                                            </span>
+                                        </td>
+                                        <td>@item.DisplayStock</td>
+                                        <td>$@item.PurchasePrice.ToString("F2")</td>
+                                        <td>$@item.SellingPrice.ToString("F2")</td>
+                                        <td>
+                                            @if (item.CurrentStock == 0)
+                                            {
+                                                <span class="badge bg-danger">Out of Stock</span>
+                                            }
+                                            else if (item.NeedsReorder)
+                                            {
+                                                <span class="badge bg-warning">Low Stock</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">In Stock</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-info" @onclick="() => CheckDistributorStock(item)"
+                                                        title="Check Distributor Stock">
+                                                    <i class="bi bi-search"></i>
+                                                </button>
+                                                <button class="btn btn-outline-primary" @onclick="() => ShowOrderDialog(item)"
+                                                        title="Order from Distributor">
+                                                    <i class="bi bi-cart-plus"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" @onclick="() => ShowUpdateStockDialog(item)"
+                                                        title="Update Stock">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            Showing @((pagedRequest.PageNumber - 1) * pagedRequest.PageSize + 1) to
+                            @Math.Min(pagedRequest.PageNumber * pagedRequest.PageSize, totalCount) of @totalCount items
+                        </div>
+                        <nav>
+                            <ul class="pagination mb-0">
+                                <li class="page-item @(pagedRequest.PageNumber == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(pagedRequest.PageNumber - 1)">
+                                        Previous
+                                    </button>
+                                </li>
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    var pageNum = i;
+                                    <li class="page-item @(pagedRequest.PageNumber == pageNum ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(pageNum)">
+                                            @pageNum
+                                        </button>
+                                    </li>
+                                }
+                                <li class="page-item @(pagedRequest.PageNumber == totalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(pagedRequest.PageNumber + 1)">
+                                        Next
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">No inventory items found</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Stock Check Modal -->
+@if (showStockCheckModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Distributor Stock Check</h5>
+                    <button type="button" class="btn-close" @onclick="CloseStockCheckModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (isCheckingStock)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2">Checking distributor stock...</p>
+                        </div>
+                    }
+                    else if (stockCheckResult != null)
+                    {
+                        <div class="alert @(stockCheckResult.DistributorHasStock ? "alert-success" : "alert-warning")">
+                            <h6>@stockCheckResult.ProductName</h6>
+                            <p class="mb-1">Your Current Stock: @stockCheckResult.CurrentSellerStock</p>
+                            <p class="mb-1">Quantity Requested: @stockCheckResult.QuantityNeeded</p>
+                            <p class="mb-0">@stockCheckResult.Message</p>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseStockCheckModal">Close</button>
+                    @if (stockCheckResult?.DistributorHasStock == true)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => ShowOrderDialog(selectedItem!)">
+                            Place Order
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Order from Distributor Modal -->
+@if (showOrderModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order from Distributor</h5>
+                    <button type="button" class="btn-close" @onclick="CloseOrderModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (selectedItem != null)
+                    {
+                        <div class="mb-3">
+                            <h6>@selectedItem.ProductName</h6>
+                            <p class="text-muted mb-1">SKU: @selectedItem.SKU</p>
+                            <p class="text-muted">Current Stock: @selectedItem.CurrentStock</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quantity to Order</label>
+                            <input type="number" class="form-control" @bind="orderQuantity" min="1" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" @bind="orderNotes" rows="3"></textarea>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseOrderModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="PlaceDistributorOrder"
+                            disabled="@(orderQuantity <= 0 || isPlacingOrder)">
+                        @if (isPlacingOrder)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Update Stock Modal -->
+@if (showUpdateStockModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Stock</h5>
+                    <button type="button" class="btn-close" @onclick="CloseUpdateStockModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (selectedItem != null)
+                    {
+                        <div class="mb-3">
+                            <h6>@selectedItem.ProductName</h6>
+                            <p class="text-muted">Current Stock: @selectedItem.CurrentStock</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Stock Level</label>
+                            <input type="number" class="form-control" @bind="newStockLevel" min="0" />
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseUpdateStockModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="UpdateStock"
+                            disabled="@(newStockLevel < 0 || isUpdatingStock)">
+                        @if (isUpdatingStock)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Update Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string searchTerm = "";
+    private string filterOption = "";
+
+    private List<SellerInventoryDto>? inventoryItems;
+    private PagedRequest pagedRequest = new() { PageNumber = 1, PageSize = 10 };
+    private int totalCount = 0;
+    private int totalPages = 1;
+
+    // Modal states
+    private bool showStockCheckModal = false;
+    private bool showOrderModal = false;
+    private bool showUpdateStockModal = false;
+    private bool isCheckingStock = false;
+    private bool isPlacingOrder = false;
+    private bool isUpdatingStock = false;
+
+    private SellerInventoryDto? selectedItem;
+    private CheckStockResponseDto? stockCheckResult;
+    private int orderQuantity = 1;
+    private string orderNotes = "";
+    private int newStockLevel = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInventory();
+    }
+
+    private async Task LoadInventory()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var response = await SellerService.GetInventoryAsync(pagedRequest);
+
+            if (response.Success && response.Data != null)
+            {
+                inventoryItems = response.Data.Items.Cast<SellerInventoryDto>().ToList();
+                totalCount = response.Data.TotalCount;
+                totalPages = (int)Math.Ceiling((double)totalCount / pagedRequest.PageSize);
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load inventory";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading inventory");
+            errorMessage = "An error occurred while loading inventory";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SearchInventory(string? value)
+    {
+        searchTerm = value ?? "";
+        pagedRequest.SearchTerm = searchTerm;
+        pagedRequest.PageNumber = 1;
+        await LoadInventory();
+    }
+
+    private List<SellerInventoryDto> GetFilteredItems()
+    {
+        if (inventoryItems == null) return new List<SellerInventoryDto>();
+
+        return filterOption switch
+        {
+            "low-stock" => inventoryItems.Where(i => i.CurrentStock > 0 && i.CurrentStock <= 10).ToList(),
+            "out-of-stock" => inventoryItems.Where(i => i.CurrentStock == 0).ToList(),
+            "needs-reorder" => inventoryItems.Where(i => i.NeedsReorder).ToList(),
+            _ => inventoryItems
+        };
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        pagedRequest.PageNumber = page;
+        await LoadInventory();
+    }
+
+    private async Task RefreshInventory()
+    {
+        await LoadInventory();
+    }
+
+    private async Task CheckDistributorStock(SellerInventoryDto item)
+    {
+        selectedItem = item;
+        showStockCheckModal = true;
+        isCheckingStock = true;
+        stockCheckResult = null;
+
+        try
+        {
+            var response = await SellerService.CheckDistributorStockAsync(item.Id, 50); // Check for 50 units
+            if (response.Success && response.Data != null)
+            {
+                stockCheckResult = response.Data;
+            }
+            else
+            {
+                stockCheckResult = new CheckStockResponseDto
+                {
+                    ProductName = item.ProductName,
+                    CurrentSellerStock = item.CurrentStock,
+                    QuantityNeeded = 50,
+                    DistributorHasStock = false,
+                    Message = response.Message ?? "Failed to check stock"
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking distributor stock");
+            stockCheckResult = new CheckStockResponseDto
+            {
+                ProductName = item.ProductName,
+                Message = "Error checking distributor stock"
+            };
+        }
+        finally
+        {
+            isCheckingStock = false;
+        }
+    }
+
+    private void ShowOrderDialog(SellerInventoryDto item)
+    {
+        selectedItem = item;
+        orderQuantity = Math.Max(50, 100 - item.CurrentStock); // Suggest quantity to reach 100
+        orderNotes = "";
+        showOrderModal = true;
+        CloseStockCheckModal();
+    }
+
+    private async Task PlaceDistributorOrder()
+    {
+        if (selectedItem == null || orderQuantity <= 0) return;
+
+        isPlacingOrder = true;
+        try
+        {
+            var orderDto = new CreateDistributorOrderDto
+            {
+                Items = new List<OrderItemRequest>
+                {
+                    new OrderItemRequest
+                    {
+                        ProductId = selectedItem.Id,
+                        Quantity = orderQuantity
+                    }
+                },
+                Notes = orderNotes
+            };
+
+            var response = await SellerService.CreateDistributorOrderAsync(orderDto);
+
+            if (response.Success)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Order placed successfully with distributor!");
+                CloseOrderModal();
+                await LoadInventory(); // Refresh the list
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to place order: {response.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error placing distributor order");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while placing the order");
+        }
+        finally
+        {
+            isPlacingOrder = false;
+        }
+    }
+
+    private void ShowUpdateStockDialog(SellerInventoryDto item)
+    {
+        selectedItem = item;
+        newStockLevel = item.CurrentStock;
+        showUpdateStockModal = true;
+    }
+
+    private async Task UpdateStock()
+    {
+        if (selectedItem == null || newStockLevel < 0) return;
+
+        isUpdatingStock = true;
+        try
+        {
+            var response = await SellerService.UpdateStockAsync(selectedItem.Id, newStockLevel);
+
+            if (response.Success)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Stock updated successfully!");
+                CloseUpdateStockModal();
+                await LoadInventory(); // Refresh the list
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to update stock: {response.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating stock");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while updating stock");
+        }
+        finally
+        {
+            isUpdatingStock = false;
+        }
+    }
+
+    private void NavigateToDistributorOrders()
+    {
+        Navigation.NavigateTo("/seller/distributor-orders");
+    }
+
+    private void CloseStockCheckModal()
+    {
+        showStockCheckModal = false;
+        stockCheckResult = null;
+    }
+
+    private void CloseOrderModal()
+    {
+        showOrderModal = false;
+        selectedItem = null;
+    }
+
+    private void CloseUpdateStockModal()
+    {
+        showUpdateStockModal = false;
+        selectedItem = null;
+    }
+
+    private string GetRowClass(SellerInventoryDto item)
+    {
+        if (item.CurrentStock == 0) return "table-danger";
+        if (item.NeedsReorder) return "table-warning";
+        return "";
+    }
+
+    private string GetStockBadgeClass(int stock)
+    {
+        if (stock == 0) return "badge bg-danger";
+        if (stock <= 10) return "badge bg-warning";
+        return "badge bg-success";
+    }
+}

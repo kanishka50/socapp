@@ -1,8 +1,8 @@
 ﻿using System.Net.Http.Json;
-//using CozyComfort.Seller.API.Models.DTOs;
 using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
 
 namespace CozyComfort.Seller.API.Services.Implementations
 {
@@ -50,27 +50,80 @@ namespace CozyComfort.Seller.API.Services.Implementations
 
         public async Task<ApiResponse<bool>> CreateDistributorOrderAsync(List<DistributorOrderItem> items)
         {
-            // Implementation
-            throw new NotImplementedException();
+            try
+            {
+                var token = await GetAuthTokenAsync();
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                // Get seller ID from configuration or current context
+                var sellerId = _configuration.GetValue<int>("SellerInfo:SellerId", 1); // Default to 1 if not configured
+
+                var orderDto = new ProcessSellerOrderDto
+                {
+                    SellerId = sellerId,
+                    SellerOrderNumber = GenerateOrderNumber(),
+                    Items = items.Select(item => new SellerOrderItem
+                    {
+                        DistributorProductId = item.DistributorProductId,
+                        Quantity = item.Quantity,
+                        RequestedPrice = item.RequestedPrice
+                    }).ToList(),
+                    ShippingAddress = _configuration["SellerInfo:ShippingAddress"] ?? "Default Seller Warehouse"
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("api/orders/process-seller-order", orderDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<OrderDto>>();
+                    _logger.LogInformation($"Distributor order created successfully: {result?.Data?.OrderNumber}");
+                    return ApiResponse<bool>.SuccessResult(true, "Order placed successfully with distributor");
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Failed to create distributor order. Status: {response.StatusCode}, Content: {errorContent}");
+                return ApiResponse<bool>.FailureResult($"Failed to create distributor order: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating distributor order");
+                return ApiResponse<bool>.FailureResult($"Error creating distributor order: {ex.Message}");
+            }
         }
 
         public async Task<string> GetAuthTokenAsync()
         {
-            // Login to distributor API and get token
-            // This is simplified - in production, you'd cache the token
-            var loginResponse = await _httpClient.PostAsJsonAsync("api/auth/login", new
+            try
             {
-                Email = "seller-api@cozycomfort.com",
-                Password = "SellerAPI123!"
-            });
+                // Check if we have a cached token (in production, implement proper token caching)
+                // For now, we'll get a new token each time
 
-            if (loginResponse.IsSuccessStatusCode)
-            {
-                var result = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<TokenDto>>();
-                return result?.Data?.Token ?? string.Empty;
+                var loginResponse = await _httpClient.PostAsJsonAsync("api/auth/login", new
+                {
+                    Email = _configuration["DistributorApi:Email"] ?? "seller-api@cozycomfort.com",
+                    Password = _configuration["DistributorApi:Password"] ?? "SellerAPI123!"
+                });
+
+                if (loginResponse.IsSuccessStatusCode)
+                {
+                    var result = await loginResponse.Content.ReadFromJsonAsync<ApiResponse<TokenDto>>();
+                    return result?.Data?.Token ?? string.Empty;
+                }
+
+                _logger.LogError($"Failed to authenticate with distributor API: {loginResponse.StatusCode}");
+                throw new Exception("Failed to authenticate with distributor API");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting auth token from distributor API");
+                throw;
+            }
+        }
 
-            throw new Exception("Failed to authenticate with distributor API");
+        private string GenerateOrderNumber()
+        {
+            return $"SEL-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿//using CozyComfort.Seller.API.Models.DTOs;
 using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
+
 
 namespace CozyComfort.Seller.API.Services.Interfaces
 {

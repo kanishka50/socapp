@@ -473,6 +473,150 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
+
+        public async Task<ApiResponse<PagedResult<SellerInventoryDto>>> GetInventoryAsync(PagedRequest request)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var query = $"api/inventory?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    query += $"&searchTerm={Uri.EscapeDataString(request.SearchTerm)}";
+
+                if (!string.IsNullOrWhiteSpace(request.SortBy))
+                    query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
+
+                var response = await client.GetFromJsonAsync<ApiResponse<PagedResult<SellerInventoryDto>>>(query);
+                return response ?? new ApiResponse<PagedResult<SellerInventoryDto>>
+                {
+                    Success = false,
+                    Message = "No response from server"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching inventory");
+                return new ApiResponse<PagedResult<SellerInventoryDto>>
+                {
+                    Success = false,
+                    Message = "Error fetching inventory",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<CheckStockResponseDto>> CheckDistributorStockAsync(int productId, int quantityNeeded)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var checkRequest = new
+                {
+                    ProductId = productId,
+                    QuantityNeeded = quantityNeeded
+                };
+
+                var response = await client.PostAsJsonAsync("api/inventory/check-distributor-stock", checkRequest);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CheckStockResponseDto>>();
+                    return result ?? new ApiResponse<CheckStockResponseDto>
+                    {
+                        Success = false,
+                        Message = "Invalid response"
+                    };
+                }
+
+                return new ApiResponse<CheckStockResponseDto>
+                {
+                    Success = false,
+                    Message = $"Failed to check stock: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking distributor stock");
+                return new ApiResponse<CheckStockResponseDto>
+                {
+                    Success = false,
+                    Message = "Error checking distributor stock",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderDto request)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.PostAsJsonAsync("api/inventory/create-distributor-order", request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Failed to create distributor order: {response.StatusCode}, Content: {errorContent}");
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to create distributor order: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating distributor order");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Error creating distributor order",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> UpdateStockAsync(int productId, int newStock)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var updateDto = new { NewStock = newStock };
+                var response = await client.PutAsJsonAsync($"api/inventory/update-stock/{productId}", updateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to update stock: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stock");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Error updating stock",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
         #endregion
     }
 }
