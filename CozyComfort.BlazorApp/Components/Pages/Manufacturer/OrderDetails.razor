@@ -1,0 +1,372 @@
+﻿@page "/manufacturer/orders/{OrderId:int}"
+@attribute [Authorize(Roles = "Manufacturer")]
+@inject IManufacturerService ManufacturerService
+@inject NavigationManager Navigation
+@inject ILogger<OrderDetails> Logger
+
+<PageTitle>Order Details - Manufacturer</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/orders">Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@(order?.OrderNumber ?? "Order Details")</li>
+        </ol>
+    </nav>
+
+    @if (loading)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (order == null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> Order not found.
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @successMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Order Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Order Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Order Number:</strong><br />
+                                @order.OrderNumber
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Status:</strong><br />
+                                @switch (order.Status)
+                                {
+                                    case "Pending":
+                                        <span class="badge bg-warning">Pending</span>
+                                        break;
+                                    case "Accepted":
+                                        <span class="badge bg-success">Accepted</span>
+                                        break;
+                                    case "Cancelled":
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@order.Status</span>
+                                        break;
+                                }
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Distributor:</strong><br />
+                                @order.DistributorName
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Distributor Order #:</strong><br />
+                                @order.DistributorOrderNumber
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Order Date:</strong><br />
+                                @order.OrderDate.ToString("MMMM dd, yyyy HH:mm")
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Total Amount:</strong><br />
+                                <span class="text-primary fw-bold">$@order.TotalAmount.ToString("N2")</span>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(order.Notes))
+                        {
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong>Notes:</strong><br />
+                                    <p class="mb-0">@order.Notes</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Order Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>SKU</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th>Available Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in order.Items)
+                                    {
+                                        var stockInfo = stockLevels.FirstOrDefault(s => s.ProductId == item.ProductId);
+                                        <tr>
+                                            <td>@item.ProductName</td>
+                                            <td>@item.SKU</td>
+                                            <td>@item.Quantity</td>
+                                            <td>$@item.UnitPrice.ToString("N2")</td>
+                                            <td>$@item.TotalPrice.ToString("N2")</td>
+                                            <td>
+                                                @if (stockInfo != null)
+                                                {
+                                                    <span class="@(stockInfo.AvailableStock >= item.Quantity ? "text-success" : "text-danger")">
+                                                        @stockInfo.AvailableStock units
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Loading...</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" class="text-end">Total:</th>
+                                        <th>$@order.TotalAmount.ToString("N2")</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (order.Status == "Pending")
+                        {
+                            <div class="mb-3">
+                                <label for="statusNotes" class="form-label">Notes (Optional)</label>
+                                <textarea id="statusNotes" class="form-control" rows="3" @bind="statusNotes"
+                                          placeholder="Add any notes about this decision"></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" @onclick="() => UpdateOrderStatus(" Accepted")"
+                                        disabled="@(!CanAcceptOrder() || isProcessing)">
+                                    @if (isProcessing && processingAction == "Accepted")
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    <i class="bi bi-check-circle"></i> Accept Order
+                                </button>
+                                <button class="btn btn-danger" @onclick="() => UpdateOrderStatus(" Cancelled")"
+                                        disabled="@isProcessing">
+                                    @if (isProcessing && processingAction == "Cancelled")
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    <i class="bi bi-x-circle"></i> Cancel Order
+                                </button>
+                            </div>
+
+                            @if (!CanAcceptOrder())
+                            {
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Cannot accept order due to insufficient stock.
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                This order has already been @order.Status.ToLower().
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Stock Information -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Stock Impact</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-2">If accepted, stock levels will change:</p>
+                        @foreach (var item in order.Items)
+                        {
+                            var stockInfo = stockLevels.FirstOrDefault(s => s.ProductId == item.ProductId);
+                            if (stockInfo != null)
+                            {
+                                <div class="mb-2">
+                                    <strong>@item.ProductName</strong><br />
+                                    Current: @stockInfo.CurrentStock →
+                                    After: @(stockInfo.CurrentStock - item.Quantity)
+                                    @if (stockInfo.CurrentStock - item.Quantity < stockInfo.MinStockLevel)
+                                    {
+                                        <br />
+                        
+                                        <span class="text-warning small">⚠ Below minimum level</span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    private ManufacturerOrderDto? order;
+    private List<ManufacturerInventoryDto> stockLevels = new();
+    private bool loading = true;
+    private bool isProcessing = false;
+    private string processingAction = "";
+    private string statusNotes = "";
+    private string? successMessage;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrder();
+        await LoadStockLevels();
+    }
+
+    private async Task LoadOrder()
+    {
+        try
+        {
+            loading = true;
+            var response = await ManufacturerService.GetOrderByIdAsync(OrderId);
+
+            if (response.Success && response.Data != null)
+            {
+                order = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load order";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading order {OrderId}", OrderId);
+            errorMessage = "An error occurred while loading the order";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task LoadStockLevels()
+    {
+        try
+        {
+            var response = await ManufacturerService.GetInventoryAsync();
+            if (response.Success && response.Data != null)
+            {
+                stockLevels = response.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading stock levels");
+        }
+    }
+
+    private bool CanAcceptOrder()
+    {
+        if (order == null) return false;
+
+        foreach (var item in order.Items)
+        {
+            var stock = stockLevels.FirstOrDefault(s => s.ProductId == item.ProductId);
+            if (stock == null || stock.AvailableStock < item.Quantity)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async Task UpdateOrderStatus(string newStatus)
+    {
+        if (order == null || isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+            processingAction = newStatus;
+            errorMessage = null;
+            successMessage = null;
+
+            var updateDto = new UpdateOrderStatusDto
+            {
+                Status = newStatus,
+                Notes = statusNotes
+            };
+
+            var response = await ManufacturerService.UpdateOrderStatusAsync(order.Id, updateDto);
+
+            if (response.Success)
+            {
+                successMessage = $"Order has been {newStatus.ToLower()} successfully";
+                await LoadOrder(); // Reload to get updated status
+                await LoadStockLevels(); // Reload stock if accepted
+            }
+            else
+            {
+                errorMessage = response.Message ?? $"Failed to {newStatus.ToLower()} order";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating order status");
+            errorMessage = "An error occurred while updating the order";
+        }
+        finally
+        {
+            isProcessing = false;
+            processingAction = "";
+        }
+    }
+}

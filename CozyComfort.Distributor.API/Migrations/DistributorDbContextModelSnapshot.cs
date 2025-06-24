@@ -251,7 +251,7 @@ namespace CozyComfort.Distributor.API.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<int>("ManufacturerProductId")
+                    b.Property<int?>("ManufacturerProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("MinStockLevel")

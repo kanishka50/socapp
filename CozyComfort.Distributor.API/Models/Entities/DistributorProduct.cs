@@ -4,7 +4,7 @@ namespace CozyComfort.Distributor.API.Models.Entities
 {
     public class DistributorProduct : BaseEntity
     {
-        public int ManufacturerProductId { get; set; }
+        public int? ManufacturerProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string SKU { get; set; } = string.Empty;
         public decimal PurchasePrice { get; set; }

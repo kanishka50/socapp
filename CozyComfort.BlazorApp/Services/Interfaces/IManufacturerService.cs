@@ -11,5 +11,9 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         Task<ApiResponse<ProductDto>> UpdateProductAsync(int id, UpdateProductDto dto);
         Task<ApiResponse<bool>> DeleteProductAsync(int id);
         Task<ApiResponse<StockCheckResponse>> CheckStockAsync(StockCheckRequest request);
+        Task<ApiResponse<PagedResult<ManufacturerOrderDto>>> GetOrdersAsync(int pageNumber, int pageSize);
+        Task<ApiResponse<ManufacturerOrderDto>> GetOrderByIdAsync(int orderId);
+        Task<ApiResponse<ManufacturerOrderDto>> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusDto dto);
+        Task<ApiResponse<List<ManufacturerInventoryDto>>> GetInventoryAsync();
     }
 }

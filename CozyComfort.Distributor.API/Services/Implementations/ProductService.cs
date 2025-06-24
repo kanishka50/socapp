@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using CozyComfort.Distributor.API.Data;
-//using CozyComfort.Distributor.API.Models.DTOs;
-using CozyComfort.Shared.DTOs.Distributor;
+﻿using CozyComfort.Distributor.API.Data;
 using CozyComfort.Distributor.API.Models.Entities;
 using CozyComfort.Distributor.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
+//using CozyComfort.Distributor.API.Models.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
+using CozyComfort.Shared.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CozyComfort.Distributor.API.Services.Implementations
 {
@@ -40,7 +41,7 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                     .Select(p => new DistributorProductDto
                     {
                         Id = p.Id,
-                        ManufacturerProductId = p.ManufacturerProductId,
+                        ManufacturerProductId = p.ManufacturerProductId ?? 0,
                         ProductName = p.ProductName,
                         SKU = p.SKU,
                         PurchasePrice = p.PurchasePrice,

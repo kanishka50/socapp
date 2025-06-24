@@ -33,6 +33,9 @@ namespace CozyComfort.Distributor.API.Data
                 entity.Property(e => e.PurchasePrice).HasPrecision(18, 2);
                 entity.Property(e => e.SellingPrice).HasPrecision(18, 2);
 
+                // ADD THIS LINE for ManufacturerProductId
+                entity.Property(e => e.ManufacturerProductId).IsRequired(false);
+
                 // Add missing BaseEntity configurations
                 entity.Property(e => e.CreatedBy).HasMaxLength(100);
                 entity.Property(e => e.UpdatedBy).HasMaxLength(100);

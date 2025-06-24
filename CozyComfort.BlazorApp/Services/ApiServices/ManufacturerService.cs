@@ -200,5 +200,102 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 return ApiResponse<StockCheckResponse>.FailureResult($"Error: {ex.Message}");
             }
         }
+
+
+        public async Task<ApiResponse<PagedResult<ManufacturerOrderDto>>> GetOrdersAsync(int pageNumber, int pageSize)
+        {
+            try
+            {
+                await SetAuthorizationHeader();
+                var response = await _httpClient.GetAsync($"api/orders?pageNumber={pageNumber}&pageSize={pageSize}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<PagedResult<ManufacturerOrderDto>>>(content, _jsonOptions);
+                    return result ?? ApiResponse<PagedResult<ManufacturerOrderDto>>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<PagedResult<ManufacturerOrderDto>>.FailureResult($"Error: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting orders");
+                return ApiResponse<PagedResult<ManufacturerOrderDto>>.FailureResult($"Error: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<ManufacturerOrderDto>> GetOrderByIdAsync(int orderId)
+        {
+            try
+            {
+                await SetAuthorizationHeader();
+                var response = await _httpClient.GetAsync($"api/orders/{orderId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<ManufacturerOrderDto>>(content, _jsonOptions);
+                    return result ?? ApiResponse<ManufacturerOrderDto>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<ManufacturerOrderDto>.FailureResult($"Error: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting order {OrderId}", orderId);
+                return ApiResponse<ManufacturerOrderDto>.FailureResult($"Error: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<ManufacturerOrderDto>> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusDto dto)
+        {
+            try
+            {
+                await SetAuthorizationHeader();
+
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"api/orders/{orderId}/status", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<ManufacturerOrderDto>>(responseContent, _jsonOptions);
+                    return result ?? ApiResponse<ManufacturerOrderDto>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<ManufacturerOrderDto>.FailureResult($"Error: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating order status");
+                return ApiResponse<ManufacturerOrderDto>.FailureResult($"Error: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<List<ManufacturerInventoryDto>>> GetInventoryAsync()
+        {
+            try
+            {
+                await SetAuthorizationHeader();
+                var response = await _httpClient.GetAsync("api/orders/inventory");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<List<ManufacturerInventoryDto>>>(content, _jsonOptions);
+                    return result ?? ApiResponse<List<ManufacturerInventoryDto>>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<List<ManufacturerInventoryDto>>.FailureResult($"Error: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting inventory");
+                return ApiResponse<List<ManufacturerInventoryDto>>.FailureResult($"Error: {ex.Message}");
+            }
+        }
     }
 }

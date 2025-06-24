@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using CozyComfort.Distributor.API.Data;
+﻿using CozyComfort.Distributor.API.Data;
 using CozyComfort.Distributor.API.Models.Entities;
 using CozyComfort.Distributor.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.Enums;
+using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
 
 namespace CozyComfort.Distributor.API.Services.Implementations
 {
@@ -12,11 +13,13 @@ namespace CozyComfort.Distributor.API.Services.Implementations
     {
         private readonly DistributorDbContext _context;
         private readonly ILogger<OrderService> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public OrderService(DistributorDbContext context, ILogger<OrderService> logger)
+        public OrderService(DistributorDbContext context, ILogger<OrderService> logger , IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<ApiResponse<OrderDto>> ProcessSellerOrderAsync(ProcessSellerOrderDto dto)
@@ -267,8 +270,163 @@ namespace CozyComfort.Distributor.API.Services.Implementations
 
         public async Task<ApiResponse<OrderDto>> CreateManufacturerOrderAsync(CreateManufacturerOrderDto dto)
         {
-            // Not needed for current requirements
-            throw new NotImplementedException();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Create distributor's internal order record
+                var order = new DistributorOrder
+                {
+                    OrderNumber = $"DIST-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
+                    OrderType = OrderType.ToManufacturer,
+                    ManufacturerId = 1, // You might want to make this configurable
+                    CustomerName = "Cozy Comfort Manufacturing",
+                    Status = OrderStatus.Pending,
+                    OrderDate = DateTime.UtcNow,
+                    ShippingAddress = dto.ShippingAddress,
+                    Notes = dto.Notes,
+                    TotalAmount = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "System",
+                    IsActive = true
+                };
+
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+
+                decimal totalAmount = 0;
+
+                // Add order items
+                foreach (var item in dto.Items)
+                {
+                    // Find the distributor product
+                    var distributorProduct = await _context.Products
+                        .FirstOrDefaultAsync(p => p.ManufacturerProductId == item.ManufacturerProductId);
+
+                    if (distributorProduct == null)
+                    {
+                        throw new InvalidOperationException($"Product with manufacturer ID {item.ManufacturerProductId} not found");
+                    }
+
+                    var orderItem = new DistributorOrderItem
+                    {
+                        OrderId = order.Id,
+                        ProductId = distributorProduct.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = distributorProduct.PurchasePrice,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "System",
+                        IsActive = true
+                    };
+
+                    _context.OrderItems.Add(orderItem);
+                    totalAmount += orderItem.Quantity * orderItem.UnitPrice;
+                }
+
+                // Update order total
+                order.TotalAmount = totalAmount;
+                await _context.SaveChangesAsync();
+
+                // Call manufacturer API to create the order there
+                var manufacturerApiService = _httpClientFactory.CreateClient("ManufacturerAPI");
+
+                // Get authentication token for manufacturer API
+                var authToken = await GetManufacturerAuthToken();
+                if (!string.IsNullOrEmpty(authToken))
+                {
+                    manufacturerApiService.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+                }
+
+                // Prepare request for manufacturer
+                var manufacturerOrderRequest = new
+                {
+                    DistributorId = 1, // Your distributor ID
+                    DistributorName = "Central Distribution Ltd",
+                    DistributorOrderNumber = order.OrderNumber,
+                    Notes = dto.Notes,
+                    Items = dto.Items.Select(i => new
+                    {
+                        ProductId = i.ManufacturerProductId,
+                        Quantity = i.Quantity
+                    }).ToList()
+                };
+
+                var response = await manufacturerApiService.PostAsJsonAsync(
+                    "api/orders/from-distributor",
+                    manufacturerOrderRequest);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    // Rollback if manufacturer API call fails
+                    await transaction.RollbackAsync();
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("Failed to create order in manufacturer API: {Error}", error);
+                    return ApiResponse<OrderDto>.FailureResult("Failed to create order with manufacturer");
+                }
+
+                await transaction.CommitAsync();
+
+                // Return the created order
+                var orderDto = new OrderDto
+                {
+                    Id = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    CustomerName = order.CustomerName,
+                    Status = order.Status.ToString(),
+                    OrderDate = order.OrderDate,
+                    TotalAmount = order.TotalAmount,
+                    Items = await _context.OrderItems
+                        .Where(oi => oi.OrderId == order.Id)
+                        .Include(oi => oi.Product)
+                        .Select(oi => new OrderItemDto
+                        {
+                            ProductId = oi.ProductId,
+                            ProductName = oi.Product.ProductName,
+                            SKU = oi.Product.SKU,
+                            Quantity = oi.Quantity,
+                            UnitPrice = oi.UnitPrice,
+                            TotalPrice = oi.Quantity * oi.UnitPrice
+                        })
+                        .ToListAsync()
+                };
+
+                _logger.LogInformation("Manufacturer order {OrderNumber} created successfully", order.OrderNumber);
+                return ApiResponse<OrderDto>.SuccessResult(orderDto, "Order created successfully");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error creating manufacturer order");
+                return ApiResponse<OrderDto>.FailureResult($"Error creating order: {ex.Message}");
+            }
+        }
+
+        private async Task<string> GetManufacturerAuthToken()
+        {
+            try
+            {
+                var httpClient = _httpClientFactory.CreateClient("ManufacturerAPI");
+                var loginRequest = new
+                {
+                    Email = "distributor-api@cozycomfort.com",
+                    Password = "DistributorAPI123!"
+                };
+
+                var response = await httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<TokenDto>>();
+                    return result?.Data?.Token ?? string.Empty;
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting manufacturer auth token");
+                return string.Empty;
+            }
         }
     }
 }

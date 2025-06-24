@@ -1,0 +1,229 @@
+﻿@page "/manufacturer/inventory"
+@attribute [Authorize(Roles = "Manufacturer")]
+@inject IManufacturerService ManufacturerService
+@inject ILogger<Inventory> Logger
+
+<PageTitle>Inventory - Manufacturer</PageTitle>
+
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Inventory Management</h1>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Products</h6>
+                    <h3 class="card-title mb-0">@inventory.Count</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Stock Value</h6>
+                    <h3 class="card-title mb-0">$@totalStockValue.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Low Stock Items</h6>
+                    <h3 class="card-title mb-0 text-warning">@lowStockCount</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Out of Stock</h6>
+                    <h3 class="card-title mb-0 text-danger">@outOfStockCount</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Options -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" placeholder="Search by name or SKU" 
+                           @bind="searchTerm" @bind:event="oninput" @onkeyup="ApplyFilters" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Stock Status</label>
+                    <select class="form-select" @bind="stockFilter" @bind:event="onchange" @onchange="ApplyFilters">
+                        <option value="">All Items</option>
+                        <option value="low">Low Stock</option>
+                        <option value="out">Out of Stock</option>
+                        <option value="ok">Sufficient Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" @bind="sortBy" @bind:event="onchange" @onchange="ApplyFilters">
+                        <option value="name">Product Name</option>
+                        <option value="stock">Current Stock</option>
+                        <option value="available">Available Stock</option>
+                        <option value="value">Stock Value</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!filteredInventory.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No inventory items found matching your criteria.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Current Stock</th>
+                        <th>Reserved</th>
+                        <th>Available</th>
+                        <th>Min Level</th>
+                        <th>Unit Cost</th>
+                        <th>Stock Value</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in filteredInventory)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td>@item.SKU</td>
+                            <td>@item.CurrentStock</td>
+                            <td>@item.ReservedStock</td>
+                            <td class="@(item.AvailableStock <= 0 ? "text-danger" : item.AvailableStock < item.MinStockLevel ? "text-warning" : "")">
+                                @item.AvailableStock
+                            </td>
+                            <td>@item.MinStockLevel</td>
+                            <td>$@item.ManufacturingCost.ToString("N2")</td>
+                            <td>$@((item.CurrentStock * item.ManufacturingCost).ToString("N2"))</td>
+                            <td>
+                                @if (item.AvailableStock <= 0)
+                                {
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                }
+                                else if (item.NeedsProduction)
+                                {
+                                    <span class="badge bg-warning">Low Stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">OK</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ManufacturerInventoryDto> inventory = new();
+    private List<ManufacturerInventoryDto> filteredInventory = new();
+    private bool loading = true;
+
+    private string searchTerm = "";
+    private string stockFilter = "";
+    private string sortBy = "name";
+
+    private decimal totalStockValue = 0;
+    private int lowStockCount = 0;
+    private int outOfStockCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInventory();
+    }
+
+    private async Task LoadInventory()
+    {
+        try
+        {
+            loading = true;
+            var response = await ManufacturerService.GetInventoryAsync();
+
+            if (response.Success && response.Data != null)
+            {
+                inventory = response.Data;
+                CalculateMetrics();
+                ApplyFilters();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading inventory");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void CalculateMetrics()
+    {
+        totalStockValue = inventory.Sum(i => i.CurrentStock * i.ManufacturingCost);
+        lowStockCount = inventory.Count(i => i.NeedsProduction && i.AvailableStock > 0);
+        outOfStockCount = inventory.Count(i => i.AvailableStock <= 0);
+    }
+
+    private void ApplyFilters()
+    {
+        filteredInventory = inventory;
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredInventory = filteredInventory.Where(i =>
+                i.ProductName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                i.SKU.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+
+        // Apply stock status filter
+        filteredInventory = stockFilter switch
+        {
+            "low" => filteredInventory.Where(i => i.NeedsProduction && i.AvailableStock > 0).ToList(),
+            "out" => filteredInventory.Where(i => i.AvailableStock <= 0).ToList(),
+            "ok" => filteredInventory.Where(i => !i.NeedsProduction && i.AvailableStock > 0).ToList(),
+            _ => filteredInventory
+        };
+
+        // Apply sorting
+        filteredInventory = sortBy switch
+        {
+            "stock" => filteredInventory.OrderBy(i => i.CurrentStock).ToList(),
+            "available" => filteredInventory.OrderBy(i => i.AvailableStock).ToList(),
+            "value" => filteredInventory.OrderByDescending(i => i.CurrentStock * i.ManufacturingCost).ToList(),
+            _ => filteredInventory.OrderBy(i => i.ProductName).ToList()
+        };
+    }
+}

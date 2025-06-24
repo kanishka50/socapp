@@ -39,9 +39,12 @@
                                 <option value="0">Select a product to add</option>
                                 @foreach (var product in availableProducts)
                                 {
-                                    <option value="@product.ManufacturerProductId">
-                                        @product.ProductName - SKU: @product.SKU (Stock: @product.CurrentStock)
-                                    </option>
+                                    @if (product.ManufacturerProductId.HasValue)
+                                    {
+                                        <option value="@product.ManufacturerProductId.Value">
+                                            @product.ProductName - SKU: @product.SKU (Stock: @product.CurrentStock)
+                                        </option>
+                                    }
                                 }
                             </select>
                         </div>
@@ -207,6 +210,7 @@
             if (response.Success && response.Data != null)
             {
                 availableProducts = response.Data.Items
+                    .Where(p => p.ManufacturerProductId.HasValue) // Only show products linked to manufacturer
                     .Where(p => p.CurrentStock < p.MinStockLevel * 2) // Products that might need reordering
                     .ToList();
             }
@@ -223,7 +227,7 @@
         if (selectedProductId == 0 || quantityToAdd <= 0)
             return;
 
-        var product = availableProducts.FirstOrDefault(p => p.ManufacturerProductId == selectedProductId);
+        var product = availableProducts.FirstOrDefault(p => p.ManufacturerProductId.HasValue && p.ManufacturerProductId.Value == selectedProductId);
         if (product == null)
             return;
 
@@ -236,7 +240,7 @@
         {
             orderItems.Add(new OrderItemViewModel
             {
-                ProductId = product.ManufacturerProductId,
+                ProductId = selectedProductId, // This is already an int, not nullable
                 ProductName = product.ProductName,
                 SKU = product.SKU,
                 Quantity = quantityToAdd,
@@ -283,7 +287,7 @@
 
             orderDto.Items = orderItems.Select(i => new OrderItemRequest
             {
-                ManufacturerProductId = i.ProductId,
+                ManufacturerProductId = i.ProductId, // ProductId is already non-nullable int
                 Quantity = i.Quantity
             }).ToList();
 
@@ -316,7 +320,7 @@
 
     private class OrderItemViewModel
     {
-        public int ProductId { get; set; }
+        public int ProductId { get; set; }  // Keep this as non-nullable int
         public string ProductName { get; set; } = string.Empty;
         public string SKU { get; set; } = string.Empty;
         public int Quantity { get; set; }

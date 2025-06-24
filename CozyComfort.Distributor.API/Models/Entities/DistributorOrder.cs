@@ -30,6 +30,7 @@ namespace CozyComfort.Distributor.API.Models.Entities
     public enum OrderType
     {
         FromManufacturer = 1,
-        FromSeller = 2
+        FromSeller = 2,
+        ToManufacturer = 3
     }
 }

@@ -90,6 +90,7 @@ builder.Services.AddAuthorization(options =>
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 
 // Configure CORS
@@ -103,6 +104,12 @@ builder.Services.AddCors(options =>
                    .AllowAnyHeader()
                    .AllowCredentials();
         });
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ManufacturerOnly", policy =>
+        policy.RequireRole("Manufacturer", "Administrator"));
 });
 
 var app = builder.Build();
