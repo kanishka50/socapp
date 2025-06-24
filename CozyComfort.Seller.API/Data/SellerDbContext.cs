@@ -13,7 +13,7 @@ namespace CozyComfort.Seller.API.Data
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<SellerProduct> Products { get; set; }
+        public DbSet<SellerProduct> SellerProducts { get; set; }
         public DbSet<CustomerOrder> Orders { get; set; }
         public DbSet<CustomerOrderItem> OrderItems { get; set; }
 

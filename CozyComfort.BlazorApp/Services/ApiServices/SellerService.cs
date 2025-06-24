@@ -23,6 +23,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
+                // Add debugging
+                _logger.LogInformation("HttpClient BaseAddress: {BaseAddress}", _httpClient.BaseAddress);
+
                 var query = $"api/Products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -30,6 +33,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
 
                 if (!string.IsNullOrWhiteSpace(request.SortBy))
                     query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
+
+                // Add debugging
+                _logger.LogInformation("Full URL: {Url}", $"{_httpClient.BaseAddress}{query}");
 
                 var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<SellerProductDto>>>(query);
                 return response ?? new ApiResponse<PagedResult<SellerProductDto>>

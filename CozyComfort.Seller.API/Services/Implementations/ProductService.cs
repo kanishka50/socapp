@@ -21,7 +21,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
         {
             try
             {
-                var query = _context.Products.Where(p => p.IsActive && p.IsAvailable);
+                var query = _context.SellerProducts.Where(p => p.IsActive && p.IsAvailable);
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                 {
@@ -69,7 +69,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
         {
             try
             {
-                var product = await _context.Products
+                var product = await _context.SellerProducts
                     .Where(p => p.Id == id && p.IsActive && p.IsAvailable)
                     .Select(p => new SellerProductDto
                     {

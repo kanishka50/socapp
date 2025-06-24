@@ -39,7 +39,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
         {
             try
             {
-                var product = await _context.Products.FindAsync(dto.ProductId);
+                var product = await _context.SellerProducts.FindAsync(dto.ProductId);
                 if (product == null)
                 {
                     return ApiResponse<CartDto>.FailureResult("Product not found");

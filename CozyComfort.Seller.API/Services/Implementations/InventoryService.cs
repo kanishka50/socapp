@@ -20,7 +20,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
 
         public async Task<bool> CheckStockAvailabilityAsync(int productId, int quantity)
         {
-            var product = await _context.Products.FindAsync(productId);
+            var product = await _context.SellerProducts.FindAsync(productId);
             return product != null && product.CurrentStock >= quantity;
         }
     }
