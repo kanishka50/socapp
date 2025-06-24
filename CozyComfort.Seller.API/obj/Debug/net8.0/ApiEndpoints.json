@@ -90,6 +90,27 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CartController",
+    "Method": "UpdateCartItem",
+    "RelativePath": "api/Cart/{sessionId}/update",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "sessionId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "System.Object",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
     "Method": "GetAllOrders",
     "RelativePath": "api/Orders",

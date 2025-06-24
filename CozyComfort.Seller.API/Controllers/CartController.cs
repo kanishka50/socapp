@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using CozyComfort.Seller.API.Services.Interfaces;
-//using CozyComfort.Seller.API.Models.DTOs;
 using CozyComfort.Shared.DTOs.Seller;
 
 namespace CozyComfort.Seller.API.Controllers
@@ -27,6 +26,15 @@ namespace CozyComfort.Seller.API.Controllers
         public async Task<IActionResult> AddToCart(string sessionId, [FromBody] AddToCartDto dto)
         {
             var result = await _cartService.AddToCartAsync(sessionId, dto);
+            return Ok(result);
+        }
+
+        [HttpPut("{sessionId}/update")]
+        public async Task<IActionResult> UpdateCartItem(string sessionId, [FromBody] dynamic dto)
+        {
+            int productId = dto.ProductId;
+            int quantity = dto.Quantity;
+            var result = await _cartService.UpdateCartItemAsync(sessionId, productId, quantity);
             return Ok(result);
         }
 

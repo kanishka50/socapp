@@ -23,38 +23,45 @@ namespace CozyComfort.Seller.API.Data
 
             // Configure User entity
             modelBuilder.Entity<User>()
+                .ToTable("Users")
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
             // Configure SellerProduct entity
-            modelBuilder.Entity<SellerProduct>()
-                .Property(p => p.PurchasePrice)
-                .HasPrecision(18, 2);
+            modelBuilder.Entity<SellerProduct>(entity =>
+            {
+                entity.ToTable("SellerProducts");
+                entity.Property(p => p.PurchasePrice).HasPrecision(18, 2);
+                entity.Property(p => p.SellingPrice).HasPrecision(18, 2);
+            });
 
-            modelBuilder.Entity<SellerProduct>()
-                .Property(p => p.SellingPrice)
-                .HasPrecision(18, 2);
-
-            // Configure CustomerOrder entity
-            modelBuilder.Entity<CustomerOrder>()
-                .Property(o => o.TotalAmount)
-                .HasPrecision(18, 2);
+            // Configure CustomerOrder entity - THIS IS THE KEY FIX
+            modelBuilder.Entity<CustomerOrder>(entity =>
+            {
+                entity.ToTable("CustomerOrders"); // Explicitly set table name
+                entity.Property(o => o.SubTotal).HasPrecision(18, 2);
+                entity.Property(o => o.Tax).HasPrecision(18, 2);
+                entity.Property(o => o.ShippingCost).HasPrecision(18, 2);
+                entity.Property(o => o.TotalAmount).HasPrecision(18, 2);
+            });
 
             // Configure CustomerOrderItem entity
-            modelBuilder.Entity<CustomerOrderItem>()
-                .Property(oi => oi.UnitPrice)
-                .HasPrecision(18, 2);
+            modelBuilder.Entity<CustomerOrderItem>(entity =>
+            {
+                entity.ToTable("CustomerOrderItems"); // Explicitly set table name
+                entity.Property(oi => oi.UnitPrice).HasPrecision(18, 2);
 
-            // Configure relationships
-            modelBuilder.Entity<CustomerOrderItem>()
-                .HasOne(oi => oi.Order)
-                .WithMany(o => o.OrderItems)
-                .HasForeignKey(oi => oi.OrderId);
+                // Configure relationships
+                entity.HasOne(oi => oi.Order)
+                    .WithMany(o => o.OrderItems)
+                    .HasForeignKey(oi => oi.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<CustomerOrderItem>()
-                .HasOne(oi => oi.Product)
-                .WithMany(p => p.OrderItems)
-                .HasForeignKey(oi => oi.ProductId);
+                entity.HasOne(oi => oi.Product)
+                    .WithMany(p => p.OrderItems)
+                    .HasForeignKey(oi => oi.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // Seed initial data
             SeedData(modelBuilder);
@@ -73,7 +80,7 @@ namespace CozyComfort.Seller.API.Data
                     LastName = "Seller",
                     Role = UserRole.Administrator,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
                 new User
                 {
@@ -84,11 +91,11 @@ namespace CozyComfort.Seller.API.Data
                     LastName = "Seller",
                     Role = UserRole.Seller,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
 
-            // Seed sample products for sellers - using CurrentStock property
+            // Seed sample products for sellers
             modelBuilder.Entity<SellerProduct>().HasData(
                 new SellerProduct
                 {
@@ -100,11 +107,11 @@ namespace CozyComfort.Seller.API.Data
                     Category = "Chairs",
                     PurchasePrice = 250.00M,
                     SellingPrice = 399.99M,
-                    CurrentStock = 25,  // Changed from Stock to CurrentStock
+                    CurrentStock = 25,
                     DisplayStock = 25,
                     IsAvailable = true,
                     ImageUrl = "/images/office-chair-retail.jpg",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
                 new SellerProduct
                 {
@@ -116,11 +123,11 @@ namespace CozyComfort.Seller.API.Data
                     Category = "Desks",
                     PurchasePrice = 500.00M,
                     SellingPrice = 799.99M,
-                    CurrentStock = 15,  // Changed from Stock to CurrentStock
+                    CurrentStock = 15,
                     DisplayStock = 15,
                     IsAvailable = true,
                     ImageUrl = "/images/standing-desk-retail.jpg",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
         }
