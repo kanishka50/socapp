@@ -23,7 +23,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var query = $"api/products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+                var query = $"api/Products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                     query += $"&searchTerm={Uri.EscapeDataString(request.SearchTerm)}";
@@ -54,7 +54,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<SellerProductDto>>($"api/products/{id}");
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<SellerProductDto>>($"api/Products/{id}");
                 return response ?? new ApiResponse<SellerProductDto>
                 {
                     Success = false,
