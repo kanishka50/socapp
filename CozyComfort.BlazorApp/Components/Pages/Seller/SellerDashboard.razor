@@ -1,0 +1,376 @@
+﻿@page "/seller/dashboard"
+@attribute [Authorize(Roles = "Seller,Administrator")]
+@inject ISellerService SellerService
+@inject NavigationManager Navigation
+@inject ILogger<SellerDashboard> Logger
+
+<PageTitle>Seller Dashboard - Cozy Comfort</PageTitle>
+
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Seller Dashboard</h2>
+        <div class="text-muted">
+            <i class="bi bi-calendar3"></i> @DateTime.Now.ToString("MMMM dd, yyyy")
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading dashboard...</span>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+    }
+    else
+    {
+        <!-- Key Metrics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Orders</h6>
+                                <h3 class="mb-0">@totalOrders</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-clipboard-check fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Pending Orders</h6>
+                                <h3 class="mb-0">@pendingOrders</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-hourglass-split fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Products</h6>
+                                <h3 class="mb-0">@totalProducts</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-boxes fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Today's Revenue</h6>
+                                <h3 class="mb-0">$@todayRevenue.ToString("N2")</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-currency-dollar fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <button class="btn btn-primary w-100" @onclick="NavigateToOrders">
+                                    <i class="bi bi-clipboard-check"></i> Manage Orders
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <button class="btn btn-secondary w-100" @onclick="NavigateToInventory">
+                                    <i class="bi bi-boxes"></i> View Inventory
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <button class="btn btn-success w-100" @onclick="NavigateToShop">
+                                    <i class="bi bi-shop"></i> Customer Shop
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <button class="btn btn-info w-100" @onclick="RefreshDashboard">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Orders</h5>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="NavigateToOrders">
+                            View All Orders
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if (recentOrders?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Customer</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Amount</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var order in recentOrders.Take(5))
+                                        {
+                                            <tr>
+                                                <td>@order.OrderNumber</td>
+                                                <td>@order.CustomerName</td>
+                                                <td>@order.OrderDate.ToString("MM/dd/yyyy")</td>
+                                                <td>
+                                                    <span class="badge @GetStatusBadgeClass(order.Status)">
+                                                        @order.Status
+                                                    </span>
+                                                </td>
+                                                <td>$@order.TotalAmount.ToString("F2")</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-info"
+                                                            @onclick="() => ViewOrderDetails(order.Id)">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-3 text-muted">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-2">No recent orders found</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Order Status Summary -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Order Status Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Pending</span>
+                                <span class="badge bg-warning">@pendingOrders</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Processing</span>
+                                <span class="badge bg-info">@processingOrders</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Shipped</span>
+                                <span class="badge bg-primary">@shippedOrders</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Delivered</span>
+                                <span class="badge bg-success">@deliveredOrders</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Highlights -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Today's Highlights</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <small class="text-muted">New Orders Today</small>
+                            <h5 class="text-primary">@todayOrders</h5>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted">Revenue Today</small>
+                            <h5 class="text-success">$@todayRevenue.ToString("N2")</h5>
+                        </div>
+                        <div>
+                            <small class="text-muted">Average Order Value</small>
+                            <h5 class="text-info">$@averageOrderValue.ToString("N2")</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // Dashboard metrics
+    private int totalOrders = 0;
+    private int pendingOrders = 0;
+    private int processingOrders = 0;
+    private int shippedOrders = 0;
+    private int deliveredOrders = 0;
+    private int totalProducts = 0;
+    private int todayOrders = 0;
+    private decimal todayRevenue = 0;
+    private decimal averageOrderValue = 0;
+
+    private List<CustomerOrderDto>? recentOrders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            // Load orders for metrics
+            var ordersResponse = await SellerService.GetOrdersAsync(new PagedRequest
+            {
+                PageNumber = 1,
+                PageSize = 100
+            });
+
+            if (ordersResponse.Success && ordersResponse.Data != null)
+            {
+                var orders = ordersResponse.Data.Items;
+                recentOrders = orders.OrderByDescending(o => o.OrderDate).ToList();
+
+                // Calculate metrics
+                totalOrders = orders.Count;
+                pendingOrders = orders.Count(o => o.Status == "Pending");
+                processingOrders = orders.Count(o => o.Status == "Processing");
+                shippedOrders = orders.Count(o => o.Status == "Shipped");
+                deliveredOrders = orders.Count(o => o.Status == "Delivered");
+
+                var today = DateTime.Today;
+                var todayOrdersList = orders.Where(o => o.OrderDate.Date == today).ToList();
+                todayOrders = todayOrdersList.Count;
+                todayRevenue = todayOrdersList.Sum(o => o.TotalAmount);
+
+                if (orders.Any())
+                {
+                    averageOrderValue = orders.Average(o => o.TotalAmount);
+                }
+            }
+
+            // Load products for metrics
+            var productsResponse = await SellerService.GetProductsAsync(new PagedRequest
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            if (productsResponse.Success && productsResponse.Data != null)
+            {
+                totalProducts = productsResponse.Data.TotalCount;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading dashboard data");
+            errorMessage = "Failed to load dashboard data. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshDashboard()
+    {
+        await LoadDashboardData();
+    }
+
+    private void NavigateToOrders()
+    {
+        Navigation.NavigateTo("/seller/orders");
+    }
+
+    private void NavigateToInventory()
+    {
+        Navigation.NavigateTo("/seller/inventory");
+    }
+
+    private void NavigateToShop()
+    {
+        Navigation.NavigateTo("/shop");
+    }
+
+    private void ViewOrderDetails(int orderId)
+    {
+        Navigation.NavigateTo($"/seller/orders/{orderId}");
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-warning",
+            "Processing" => "bg-info",
+            "Confirmed" => "bg-primary",
+            "Shipped" => "bg-secondary",
+            "Delivered" => "bg-success",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

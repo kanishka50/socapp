@@ -94,8 +94,11 @@ builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
 // Add CascadingAuthenticationState
 builder.Services.AddCascadingAuthenticationState();
 
-// Register Services
+// Register Services - ALL SERVICES INCLUDING SELLER
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
+builder.Services.AddScoped<IDistributorService, DistributorService>();
+builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<SessionService>();
 
 // Add any additional services if needed

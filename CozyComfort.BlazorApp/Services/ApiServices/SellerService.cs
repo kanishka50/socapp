@@ -11,11 +11,13 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         private readonly HttpClient _httpClient;
         private readonly ILogger<SellerService> _logger;
 
-        public SellerService(HttpClient httpClient, ILogger<SellerService> logger)
+        public SellerService(IHttpClientFactory httpClientFactory, ILogger<SellerService> logger)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClientFactory.CreateClient("SellerAPI");
             _logger = logger;
         }
+
+        #region Products
 
         public async Task<ApiResponse<PagedResult<SellerProductDto>>> GetProductsAsync(PagedRequest request)
         {
@@ -24,7 +26,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 var query = $"api/products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
-                    query += $"&searchTerm={request.SearchTerm}";
+                    query += $"&searchTerm={Uri.EscapeDataString(request.SearchTerm)}";
 
                 if (!string.IsNullOrWhiteSpace(request.SortBy))
                     query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
@@ -38,7 +40,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching products");
+                _logger.LogError(ex, "Error fetching seller products");
                 return new ApiResponse<PagedResult<SellerProductDto>>
                 {
                     Success = false,
@@ -71,6 +73,156 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
+        #endregion
+
+        #region Orders
+
+        public async Task<ApiResponse<PagedResult<CustomerOrderDto>>> GetOrdersAsync(PagedRequest request)
+        {
+            try
+            {
+                var query = $"api/orders?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    query += $"&searchTerm={Uri.EscapeDataString(request.SearchTerm)}";
+
+                if (!string.IsNullOrWhiteSpace(request.SortBy))
+                    query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
+
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<CustomerOrderDto>>>(query);
+                return response ?? new ApiResponse<PagedResult<CustomerOrderDto>>
+                {
+                    Success = false,
+                    Message = "No response from server"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching orders");
+                return new ApiResponse<PagedResult<CustomerOrderDto>>
+                {
+                    Success = false,
+                    Message = "Error fetching orders",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<CustomerOrderDto>> GetOrderByIdAsync(int id)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<CustomerOrderDto>>($"api/orders/{id}");
+                return response ?? new ApiResponse<CustomerOrderDto>
+                {
+                    Success = false,
+                    Message = "Order not found"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching order {OrderId}", id);
+                return new ApiResponse<CustomerOrderDto>
+                {
+                    Success = false,
+                    Message = "Error fetching order",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> UpdateOrderStatusAsync(int orderId, string status)
+        {
+            try
+            {
+                var updateDto = new { Status = status };
+                var response = await _httpClient.PutAsJsonAsync($"api/orders/{orderId}/status", updateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to update order status: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating order status");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Error updating order status",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/orders/create", dto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CustomerOrderDto>>();
+                    return result ?? new ApiResponse<CustomerOrderDto>
+                    {
+                        Success = false,
+                        Message = "Invalid response"
+                    };
+                }
+
+                return new ApiResponse<CustomerOrderDto>
+                {
+                    Success = false,
+                    Message = $"Failed to create order: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating order");
+                return new ApiResponse<CustomerOrderDto>
+                {
+                    Success = false,
+                    Message = "Error creating order",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string customerEmail)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CustomerOrderDto>>>($"api/orders/customer/{Uri.EscapeDataString(customerEmail)}");
+                return response ?? new ApiResponse<List<CustomerOrderDto>>
+                {
+                    Success = false,
+                    Message = "No orders found"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching customer orders");
+                return new ApiResponse<List<CustomerOrderDto>>
+                {
+                    Success = false,
+                    Message = "Error fetching customer orders",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        #endregion
+
+        #region Cart
+
         public async Task<ApiResponse<CartDto>> GetCartAsync(string sessionId)
         {
             try
@@ -94,21 +246,28 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<CartDto>> AddToCartAsync(string sessionId, AddToCartDto dto)
+        public async Task<ApiResponse<bool>> AddToCartAsync(string sessionId, AddToCartDto dto)
         {
             try
             {
                 var response = await _httpClient.PostAsJsonAsync($"api/cart/{sessionId}/add", dto);
-                var content = await response.Content.ReadAsStringAsync();
 
-                return JsonSerializer.Deserialize<ApiResponse<CartDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<CartDto> { Success = false, Message = "Invalid response" };
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to add to cart: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding to cart");
-                return new ApiResponse<CartDto>
+                return new ApiResponse<bool>
                 {
                     Success = false,
                     Message = "Error adding to cart",
@@ -117,50 +276,63 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<CartDto>> UpdateCartItemAsync(string sessionId, int productId, int quantity)
+        public async Task<ApiResponse<bool>> RemoveFromCartAsync(string sessionId, int productId)
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync(
-                    $"api/cart/{sessionId}/update",
-                    new { ProductId = productId, Quantity = quantity });
+                var response = await _httpClient.DeleteAsync($"api/cart/{sessionId}/remove/{productId}");
 
-                var content = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
 
-                return JsonSerializer.Deserialize<ApiResponse<CartDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<CartDto> { Success = false, Message = "Invalid response" };
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to remove from cart: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating cart item");
-                return new ApiResponse<CartDto>
+                _logger.LogError(ex, "Error removing from cart");
+                return new ApiResponse<bool>
                 {
                     Success = false,
-                    Message = "Error updating cart item",
+                    Message = "Error removing from cart",
                     Errors = new List<string> { ex.Message }
                 };
             }
         }
 
-        public async Task<ApiResponse<CartDto>> RemoveFromCartAsync(string sessionId, int productId)
+        // Additional cart methods that might be called
+        public async Task<ApiResponse<bool>> UpdateCartItemAsync(string sessionId, int productId, int quantity)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/cart/{sessionId}/remove/{productId}");
-                var content = await response.Content.ReadAsStringAsync();
+                var updateDto = new { ProductId = productId, Quantity = quantity };
+                var response = await _httpClient.PutAsJsonAsync($"api/cart/{sessionId}/update", updateDto);
 
-                return JsonSerializer.Deserialize<ApiResponse<CartDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<CartDto> { Success = false, Message = "Invalid response" };
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to update cart item: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing from cart");
-                return new ApiResponse<CartDto>
+                _logger.LogError(ex, "Error updating cart item");
+                return new ApiResponse<bool>
                 {
                     Success = false,
-                    Message = "Error removing from cart",
+                    Message = "Error updating cart item",
                     Errors = new List<string> { ex.Message }
                 };
             }
@@ -171,11 +343,18 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             try
             {
                 var response = await _httpClient.DeleteAsync($"api/cart/{sessionId}/clear");
-                var content = await response.Content.ReadAsStringAsync();
 
-                return JsonSerializer.Deserialize<ApiResponse<bool>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<bool> { Success = false, Message = "Invalid response" };
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to clear cart: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
@@ -189,52 +368,40 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto)
+        #endregion
+
+        #region Authentication
+
+        public async Task<ApiResponse<bool>> RegisterCustomerAsync(RegisterCustomerDto dto)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/orders/create", dto);
-                var content = await response.Content.ReadAsStringAsync();
+                var response = await _httpClient.PostAsJsonAsync("api/auth/register-customer", dto);
 
-                return JsonSerializer.Deserialize<ApiResponse<CustomerOrderDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<CustomerOrderDto> { Success = false, Message = "Invalid response" };
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to register customer: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating order");
-                return new ApiResponse<CustomerOrderDto>
+                _logger.LogError(ex, "Error registering customer");
+                return new ApiResponse<bool>
                 {
                     Success = false,
-                    Message = "Error creating order",
+                    Message = "Error registering customer",
                     Errors = new List<string> { ex.Message }
                 };
             }
         }
 
-        public async Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string email)
-        {
-            try
-            {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CustomerOrderDto>>>(
-                    $"api/orders/customer/{email}");
-
-                return response ?? new ApiResponse<List<CustomerOrderDto>>
-                {
-                    Success = false,
-                    Message = "No orders found"
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching customer orders");
-                return new ApiResponse<List<CustomerOrderDto>>
-                {
-                    Success = false,
-                    Message = "Error fetching orders",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
-        }
+        #endregion
     }
 }

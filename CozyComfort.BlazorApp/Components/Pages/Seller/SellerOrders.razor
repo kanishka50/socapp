@@ -1,0 +1,455 @@
+﻿@page "/seller/orders"
+@attribute [Authorize(Roles = "Seller,Administrator")]
+@inject ISellerService SellerService
+@inject NavigationManager Navigation
+@inject ILogger<SellerOrders> Logger
+
+<PageTitle>Orders Management - Seller</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/seller/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Orders</li>
+        </ol>
+    </nav>
+
+    <!-- Header and Filters -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h3>Orders Management</h3>
+        </div>
+        <div class="col-md-6 text-end">
+            <button class="btn btn-secondary me-2" @onclick="RefreshOrders">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+            <button class="btn btn-primary" @onclick="ExportOrders">
+                <i class="bi bi-download"></i> Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Search Orders</label>
+                    <input type="text" class="form-control" placeholder="Search by order number, customer..."
+                           @bind="searchTerm" @bind:event="oninput" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status Filter</label>
+                    <select class="form-select" @bind="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" @bind="sortBy">
+                        <option value="OrderDate-desc">Date (Newest First)</option>
+                        <option value="OrderDate">Date (Oldest First)</option>
+                        <option value="TotalAmount-desc">Amount (High to Low)</option>
+                        <option value="TotalAmount">Amount (Low to High)</option>
+                        <option value="CustomerName">Customer Name</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="ApplyFilters">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading orders...</span>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+    }
+    else if (orders?.Items?.Any() == true)
+    {
+        <!-- Orders Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Orders (@orders.TotalCount total)</h5>
+                    <span class="text-muted">Page @currentPage of @orders.TotalPages</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Items</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in orders.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@order.OrderNumber</strong>
+                                        <br />
+                                        <small class="text-muted">ID: @order.Id</small>
+                                    </td>
+                                    <td>
+                                        <div>@order.CustomerName</div>
+                                        <small class="text-muted">@order.CustomerEmail</small>
+                                    </td>
+                                    <td>
+                                        <div>@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                                        <small class="text-muted">@order.OrderDate.ToString("HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(order.Status) fs-6">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td>@order.Items.Count items</td>
+                                    <td>
+                                        <strong>$@order.TotalAmount.ToString("N2")</strong>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-info"
+                                                    @onclick="() => ViewOrderDetails(order.Id)"
+                                                    title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            @if (CanUpdateStatus(order.Status))
+                                            {
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                        @onclick="() => ShowUpdateStatusModal(order)"
+                                                        title="Update Status">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            @if (orders.TotalPages > 1)
+            {
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(currentPage - 1)" disabled="@(currentPage == 1)">
+                                    Previous
+                                </button>
+                            </li>
+
+                            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(orders.TotalPages, currentPage + 2); i++)
+                            {
+                                var pageNumber = i;
+                                <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(pageNumber)">
+                                        @pageNumber
+                                    </button>
+                                </li>
+                            }
+
+                            <li class="page-item @(currentPage == orders.TotalPages ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(currentPage + 1)" disabled="@(currentPage == orders.TotalPages)">
+                                    Next
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <h5 class="mt-3">No Orders Found</h5>
+                <p class="text-muted">No orders match your current filters. Try adjusting your search criteria.</p>
+                <button class="btn btn-secondary" @onclick="ClearFilters">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Update Status Modal -->
+@if (showUpdateModal && selectedOrder != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Order Status</h5>
+                    <button type="button" class="btn-close" @onclick="CloseUpdateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Order:</strong> @selectedOrder.OrderNumber</p>
+                    <p><strong>Customer:</strong> @selectedOrder.CustomerName</p>
+                    <p><strong>Current Status:</strong> @selectedOrder.Status</p>
+
+                    <div class="mb-3">
+                        <label class="form-label">New Status</label>
+                        <select class="form-select" @bind="newStatus">
+                            <option value="">Select new status</option>
+                            @foreach (var status in GetAvailableStatuses(selectedOrder.Status))
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseUpdateModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="UpdateOrderStatus"
+                            disabled="@(string.IsNullOrEmpty(newStatus) || isUpdating)">
+                        @if (isUpdating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Update Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PagedResult<CustomerOrderDto>? orders;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // Filter and search
+    private string searchTerm = "";
+    private string statusFilter = "";
+    private string sortBy = "OrderDate-desc";
+    private int currentPage = 1;
+    private int pageSize = 10;
+
+    // Update status modal
+    private bool showUpdateModal = false;
+    private CustomerOrderDto? selectedOrder;
+    private string newStatus = "";
+    private bool isUpdating = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var searchCriteria = GetSearchCriteria();
+            var request = new PagedRequest
+            {
+                PageNumber = currentPage,
+                PageSize = pageSize,
+                SearchTerm = searchCriteria,
+                SortBy = GetSortField(),
+                IsDescending = sortBy.EndsWith("-desc")
+            };
+
+            var response = await SellerService.GetOrdersAsync(request);
+
+            if (response.Success)
+            {
+                orders = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load orders";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading orders");
+            errorMessage = "An error occurred while loading orders";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetSearchCriteria()
+    {
+        var criteria = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+            criteria.Add(searchTerm);
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+            criteria.Add($"status:{statusFilter}");
+
+        return string.Join(" ", criteria);
+    }
+
+    private string GetSortField()
+    {
+        return sortBy.Split('-')[0];
+    }
+
+    private async Task ApplyFilters()
+    {
+        currentPage = 1;
+        await LoadOrders();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = "";
+        statusFilter = "";
+        sortBy = "OrderDate-desc";
+        currentPage = 1;
+        await LoadOrders();
+    }
+
+    private async Task RefreshOrders()
+    {
+        await LoadOrders();
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page >= 1 && page <= (orders?.TotalPages ?? 1))
+        {
+            currentPage = page;
+            await LoadOrders();
+        }
+    }
+
+    private void ViewOrderDetails(int orderId)
+    {
+        Navigation.NavigateTo($"/seller/orders/{orderId}");
+    }
+
+    private void ShowUpdateStatusModal(CustomerOrderDto order)
+    {
+        selectedOrder = order;
+        newStatus = "";
+        showUpdateModal = true;
+    }
+
+    private void CloseUpdateModal()
+    {
+        showUpdateModal = false;
+        selectedOrder = null;
+        newStatus = "";
+        isUpdating = false;
+    }
+
+    private async Task UpdateOrderStatus()
+    {
+        if (selectedOrder == null || string.IsNullOrEmpty(newStatus))
+            return;
+
+        try
+        {
+            isUpdating = true;
+
+            var response = await SellerService.UpdateOrderStatusAsync(selectedOrder.Id, newStatus);
+
+            if (response.Success)
+            {
+                selectedOrder.Status = newStatus;
+                CloseUpdateModal();
+                await LoadOrders(); // Refresh the list
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to update order status";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating order status");
+            errorMessage = "An error occurred while updating order status";
+        }
+        finally
+        {
+            isUpdating = false;
+        }
+    }
+
+    private void ExportOrders()
+    {
+        // TODO: Implement export functionality
+        // This would typically generate a CSV or Excel file
+    }
+
+    private bool CanUpdateStatus(string currentStatus)
+    {
+        return currentStatus switch
+        {
+            "Pending" => true,
+            "Processing" => true,
+            "Confirmed" => true,
+            "Shipped" => true,
+            _ => false
+        };
+    }
+
+    private List<string> GetAvailableStatuses(string currentStatus)
+    {
+        return currentStatus switch
+        {
+            "Pending" => new List<string> { "Processing", "Cancelled" },
+            "Processing" => new List<string> { "Confirmed", "Cancelled" },
+            "Confirmed" => new List<string> { "Shipped" },
+            "Shipped" => new List<string> { "Delivered" },
+            _ => new List<string>()
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-warning",
+            "Processing" => "bg-info",
+            "Confirmed" => "bg-primary",
+            "Shipped" => "bg-secondary",
+            "Delivered" => "bg-success",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

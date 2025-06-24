@@ -1,5 +1,7 @@
-﻿@inject ISellerService SellerService
+﻿@using CozyComfort.BlazorApp.Services.Interfaces
+@inject ISellerService SellerService
 @inject SessionService SessionService
+@implements IDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -12,11 +14,14 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+        <!-- Home -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
             </NavLink>
         </div>
+
+        <!-- Shop -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="shop">
                 <span class="bi bi-shop" aria-hidden="true"></span> Shop
@@ -34,6 +39,7 @@
             </NavLink>
         </div>
 
+        <!-- Customer Features (for authenticated users) -->
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
@@ -44,10 +50,15 @@
             </Authorized>
         </AuthorizeView>
 
+        <!-- Manufacturer Section -->
         <AuthorizeView Roles="Administrator,Manufacturer">
+            <div class="nav-item px-3 mt-3">
+                <hr class="text-white-50" />
+                <h6 class="text-white-50 px-3 mb-2">MANUFACTURER</h6>
+            </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="manufacturer/dashboard">
-                    <span class="bi bi-factory" aria-hidden="true"></span> Manufacturing
+                    <span class="bi bi-factory" aria-hidden="true"></span> Dashboard
                 </NavLink>
             </div>
             <div class="nav-item px-3">
@@ -57,10 +68,15 @@
             </div>
         </AuthorizeView>
 
+        <!-- Distributor Section -->
         <AuthorizeView Roles="Administrator,Distributor">
+            <div class="nav-item px-3 mt-3">
+                <hr class="text-white-50" />
+                <h6 class="text-white-50 px-3 mb-2">DISTRIBUTOR</h6>
+            </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="distributor/dashboard">
-                    <span class="bi bi-truck" aria-hidden="true"></span> Distribution
+                    <span class="bi bi-truck" aria-hidden="true"></span> Dashboard
                 </NavLink>
             </div>
             <div class="nav-item px-3">
@@ -68,12 +84,22 @@
                     <span class="bi bi-clipboard" aria-hidden="true"></span> Orders
                 </NavLink>
             </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="distributor/inventory">
+                    <span class="bi bi-boxes" aria-hidden="true"></span> Inventory
+                </NavLink>
+            </div>
         </AuthorizeView>
 
+        <!-- Seller Section -->
         <AuthorizeView Roles="Administrator,Seller">
+            <div class="nav-item px-3 mt-3">
+                <hr class="text-white-50" />
+                <h6 class="text-white-50 px-3 mb-2">SELLER</h6>
+            </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="seller/dashboard">
-                    <span class="bi bi-shop-window" aria-hidden="true"></span> Sales Dashboard
+                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
                 </NavLink>
             </div>
             <div class="nav-item px-3">
@@ -81,6 +107,38 @@
                     <span class="bi bi-receipt" aria-hidden="true"></span> Manage Orders
                 </NavLink>
             </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="seller/inventory">
+                    <span class="bi bi-archive" aria-hidden="true"></span> Inventory
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        <!-- Authentication Links -->
+        <div class="nav-item px-3 mt-4">
+            <hr class="text-white-50" />
+        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <span class="nav-link text-white-50">
+                        <span class="bi bi-person" aria-hidden="true"></span> @context.User.Identity?.Name
+                    </span>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="register">
+                        <span class="bi bi-person-plus" aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
+            </NotAuthorized>
         </AuthorizeView>
     </nav>
 </div>
@@ -116,6 +174,7 @@
         }
         catch (Exception ex)
         {
+            // Log error silently - don't show cart errors in navigation
             Console.WriteLine($"Error loading cart count: {ex.Message}");
         }
     }
