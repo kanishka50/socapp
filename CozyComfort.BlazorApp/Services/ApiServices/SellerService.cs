@@ -246,7 +246,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<bool>> AddToCartAsync(string sessionId, AddToCartDto dto)
+        public async Task<ApiResponse<CartDto>> AddToCartAsync(string sessionId, AddToCartDto dto)
         {
             try
             {
@@ -254,11 +254,15 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
-                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CartDto>>();
+                    return result ?? new ApiResponse<CartDto>
+                    {
+                        Success = false,
+                        Message = "Invalid response"
+                    };
                 }
 
-                return new ApiResponse<bool>
+                return new ApiResponse<CartDto>
                 {
                     Success = false,
                     Message = $"Failed to add to cart: {response.StatusCode}"
@@ -267,7 +271,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding to cart");
-                return new ApiResponse<bool>
+                return new ApiResponse<CartDto>
                 {
                     Success = false,
                     Message = "Error adding to cart",
@@ -276,7 +280,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<bool>> RemoveFromCartAsync(string sessionId, int productId)
+        public async Task<ApiResponse<CartDto>> RemoveFromCartAsync(string sessionId, int productId)
         {
             try
             {
@@ -284,11 +288,15 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
-                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CartDto>>();
+                    return result ?? new ApiResponse<CartDto>
+                    {
+                        Success = false,
+                        Message = "Invalid response"
+                    };
                 }
 
-                return new ApiResponse<bool>
+                return new ApiResponse<CartDto>
                 {
                     Success = false,
                     Message = $"Failed to remove from cart: {response.StatusCode}"
@@ -297,7 +305,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error removing from cart");
-                return new ApiResponse<bool>
+                return new ApiResponse<CartDto>
                 {
                     Success = false,
                     Message = "Error removing from cart",
@@ -307,7 +315,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         }
 
         // Additional cart methods that might be called
-        public async Task<ApiResponse<bool>> UpdateCartItemAsync(string sessionId, int productId, int quantity)
+        public async Task<ApiResponse<CartDto>> UpdateCartItemAsync(string sessionId, int productId, int quantity)
         {
             try
             {
@@ -316,11 +324,15 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
-                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CartDto>>();
+                    return result ?? new ApiResponse<CartDto>
+                    {
+                        Success = false,
+                        Message = "Invalid response"
+                    };
                 }
 
-                return new ApiResponse<bool>
+                return new ApiResponse<CartDto>
                 {
                     Success = false,
                     Message = $"Failed to update cart item: {response.StatusCode}"
@@ -329,7 +341,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating cart item");
-                return new ApiResponse<bool>
+                return new ApiResponse<CartDto>
                 {
                     Success = false,
                     Message = "Error updating cart item",

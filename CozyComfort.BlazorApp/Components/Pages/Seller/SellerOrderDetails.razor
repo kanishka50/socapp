@@ -1,4 +1,8 @@
 ﻿@page "/seller/orders/{OrderId:int}"
+@using CozyComfort.Shared.DTOs.Seller
+@using CozyComfort.BlazorApp.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Logging
 @attribute [Authorize(Roles = "Seller,Administrator")]
 @inject ISellerService SellerService
 @inject NavigationManager Navigation
@@ -150,7 +154,7 @@
                                     }
                                 </select>
                             </div>
-                            <button class="btn btn-primary w-100 mb-2" @onclick="UpdateStatus" 
+                            <button class="btn btn-primary w-100 mb-2" @onclick="UpdateStatus"
                                     disabled="@(string.IsNullOrEmpty(newStatus) || isUpdating)">
                                 @if (isUpdating)
                                 {
@@ -274,19 +278,19 @@
         padding-bottom: 20px;
     }
 
-    .timeline-item:not(:last-child)::before {
-        content: '';
-        position: absolute;
-        left: -20px;
-        top: 20px;
-        width: 2px;
-        height: calc(100% - 10px);
-        background-color: #dee2e6;
-    }
+        .timeline-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 20px;
+            width: 2px;
+            height: calc(100% - 10px);
+            background-color: #dee2e6;
+        }
 
-    .timeline-item.completed:not(:last-child)::before {
-        background-color: #28a745;
-    }
+        .timeline-item.completed:not(:last-child)::before {
+            background-color: #28a745;
+        }
 
     .timeline-marker {
         position: absolute;
@@ -327,7 +331,7 @@
             errorMessage = null;
 
             var response = await SellerService.GetOrderByIdAsync(OrderId);
-            
+
             if (response.Success && response.Data != null)
             {
                 order = response.Data;
@@ -360,7 +364,7 @@
             successMessage = null;
 
             var response = await SellerService.UpdateOrderStatusAsync(order.Id, newStatus);
-            
+
             if (response.Success)
             {
                 successMessage = $"Order status updated to {newStatus}";
@@ -395,7 +399,7 @@
             successMessage = null;
 
             var response = await SellerService.UpdateOrderStatusAsync(order.Id, "Cancelled");
-            
+
             if (response.Success)
             {
                 successMessage = "Order cancelled successfully";
@@ -492,3 +496,4 @@
 
         return currentIndex >= targetIndex && targetIndex != -1;
     }
+}

@@ -16,11 +16,11 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto);
         Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string customerEmail);
 
-        // Cart
+        // Cart - Updated to return CartDto
         Task<ApiResponse<CartDto>> GetCartAsync(string sessionId);
-        Task<ApiResponse<bool>> AddToCartAsync(string sessionId, AddToCartDto dto);
-        Task<ApiResponse<bool>> RemoveFromCartAsync(string sessionId, int productId);
-        Task<ApiResponse<bool>> UpdateCartItemAsync(string sessionId, int productId, int quantity);
+        Task<ApiResponse<CartDto>> AddToCartAsync(string sessionId, AddToCartDto dto);
+        Task<ApiResponse<CartDto>> RemoveFromCartAsync(string sessionId, int productId);
+        Task<ApiResponse<CartDto>> UpdateCartItemAsync(string sessionId, int productId, int quantity);
         Task<ApiResponse<bool>> ClearCartAsync(string sessionId);
 
         // Authentication
