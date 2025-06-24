@@ -232,40 +232,94 @@ namespace CozyComfort.Seller.API.Services.Implementations
 
         public async Task<ApiResponse<bool>> UpdateOrderStatusAsync(int id, string status)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var order = await _context.Orders.FindAsync(id);
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
                 if (order == null)
                 {
                     return ApiResponse<bool>.FailureResult("Order not found");
                 }
 
-                // Parse the status string to OrderStatus enum
-                if (!Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
+                // Store the old status for comparison
+                var oldStatus = order.Status;
+
+                // Parse the string status to enum
+                if (!Enum.TryParse<OrderStatus>(status, true, out var newStatus))
                 {
-                    return ApiResponse<bool>.FailureResult("Invalid order status");
+                    return ApiResponse<bool>.FailureResult($"Invalid status: {status}");
                 }
 
-                order.Status = orderStatus;
+                // Validate status transition
+                if (!IsValidStatusTransition(oldStatus, newStatus))
+                {
+                    return ApiResponse<bool>.FailureResult($"Cannot change status from {oldStatus} to {newStatus}");
+                }
+
+                // Update order status
+                order.Status = newStatus;
                 order.UpdatedAt = DateTime.UtcNow;
 
-                // If status is changing to Delivered, mark as paid
-                if (orderStatus == OrderStatus.Delivered && !order.IsPaid)
+                // If status is changed to "Accepted", decrease inventory
+                if (newStatus == OrderStatus.Accepted && oldStatus != OrderStatus.Accepted)
                 {
-                    order.IsPaid = true;
-                    order.PaidAt = DateTime.UtcNow;
+                    foreach (var orderItem in order.OrderItems)
+                    {
+                        var product = await _context.SellerProducts.FindAsync(orderItem.ProductId);
+                        if (product == null)
+                        {
+                            await transaction.RollbackAsync();
+                            return ApiResponse<bool>.FailureResult($"Product with ID {orderItem.ProductId} not found");
+                        }
+
+                        // Check if we have enough stock
+                        if (product.CurrentStock < orderItem.Quantity)
+                        {
+                            await transaction.RollbackAsync();
+                            return ApiResponse<bool>.FailureResult($"Insufficient stock for product {product.ProductName}. Available: {product.CurrentStock}, Required: {orderItem.Quantity}");
+                        }
+
+                        // Decrease the inventory
+                        product.CurrentStock -= orderItem.Quantity;
+                        product.DisplayStock = Math.Min(product.DisplayStock, product.CurrentStock);
+                        product.UpdatedAt = DateTime.UtcNow;
+
+                        _logger.LogInformation($"Decreased stock for product {product.ProductName} by {orderItem.Quantity}. New stock: {product.CurrentStock}");
+                    }
                 }
 
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                return ApiResponse<bool>.SuccessResult(true, "Order status updated successfully");
+                _logger.LogInformation($"Order {order.OrderNumber} status updated from {oldStatus} to {newStatus}");
+                return ApiResponse<bool>.SuccessResult(true, $"Order status updated to {status}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating order status for order {OrderId}", id);
-                return ApiResponse<bool>.FailureResult("Error updating order status",
-                    new List<string> { ex.Message });
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error updating order status");
+                return ApiResponse<bool>.FailureResult("Error updating order status");
             }
+        }
+
+        private bool IsValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
+        {
+            // From Pending, can go to Accepted or Cancelled
+            if (currentStatus == OrderStatus.Pending)
+            {
+                return newStatus == OrderStatus.Accepted || newStatus == OrderStatus.Cancelled;
+            }
+
+            // Cannot change from Accepted or Cancelled to anything else
+            if (currentStatus == OrderStatus.Accepted || currentStatus == OrderStatus.Cancelled)
+            {
+                return false;
+            }
+
+            return false;
         }
 
         public async Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string customerEmail)
