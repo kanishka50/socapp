@@ -44,8 +44,8 @@
                     <select class="form-select" @bind="statusFilter">
                         <option value="">All Statuses</option>
                         <option value="Pending">Pending</option>
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Processing">Cancelled</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Cancelled">Cancelled</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -126,6 +126,8 @@
                                         <span class="badge @GetStatusBadgeClass(order.Status) fs-6">
                                             @GetDisplayStatus(order.Status)
                                         </span>
+                                        <!-- DEBUG: Remove this after testing -->
+                                        <br><small class="text-muted">Debug: "@order.Status"</small>
                                     </td>
                                     <td>@order.Items.Count items</td>
                                     <td>
@@ -138,18 +140,25 @@
                                                     title="View Details">
                                                 <i class="bi bi-eye"></i>
                                             </button>
-                                            @if (order.Status.ToLower() == "pending")
+
+                                            @* Show Accept/Cancel buttons ONLY for Pending orders *@
+                                            @if (IsOrderPending(order.Status))
                                             {
                                                 <button class="btn btn-sm btn-outline-success"
-                                                        @onclick="() => QuickUpdateStatus(order, 'Confirmed')"
-                                                        title="Confirm Order">
+                                                        @onclick='() => QuickUpdateStatus(order, "Accepted")'
+                                                        title="Accept Order">
                                                     <i class="bi bi-check-circle"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-danger"
-                                                        @onclick="() => QuickUpdateStatus(order, 'Processing')"
+                                                        @onclick='() => QuickUpdateStatus(order, "Cancelled")'
                                                         title="Cancel Order">
                                                     <i class="bi bi-x-circle"></i>
                                                 </button>
+                                            }
+                                            else
+                                            {
+                                                <!-- DEBUG: Remove this after testing -->
+                                                <small class="text-muted">Status: @order.Status</small>
                                             }
                                         </div>
                                     </td>
@@ -216,16 +225,16 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        @if (pendingStatus == "Confirmed")
+                        @if (pendingStatus == "Accepted")
                         {
                             <i class="bi bi-check-circle text-success"></i>
-                            Confirm Order
-                                            }
+                            <text>Accept Order</text>
+                        }
                         else
                         {
                             <i class="bi bi-x-circle text-danger"></i>
-                            Cancel Order
-                                        }
+                            <text>Cancel Order</text>
+                        }
                     </h5>
                     <button type="button" class="btn-close" @onclick="CloseConfirmModal"></button>
                 </div>
@@ -234,11 +243,11 @@
                     <p><strong>Customer:</strong> @selectedOrder.CustomerName</p>
                     <p><strong>Total Amount:</strong> $@selectedOrder.TotalAmount.ToString("N2")</p>
 
-                    @if (pendingStatus == "Confirmed")
+                    @if (pendingStatus == "Accepted")
                     {
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Important:</strong> Confirming this order will deduct the following items from your inventory:
+                            <strong>Important:</strong> Accepting this order will deduct the following items from your inventory:
                         </div>
                         <ul>
                             @foreach (var item in selectedOrder.Items)
@@ -246,7 +255,7 @@
                                 <li>@item.ProductName - Quantity: @item.Quantity</li>
                             }
                         </ul>
-                        <p class="text-muted">Make sure you have sufficient stock before confirming.</p>
+                        <p class="text-muted">Make sure you have sufficient stock before accepting.</p>
                     }
                     else
                     {
@@ -256,14 +265,14 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseConfirmModal">Close</button>
                     <button type="button"
-                            class="btn @(pendingStatus == "Confirmed" ? "btn-success" : "btn-danger")"
+                            class="btn @(pendingStatus == "Accepted" ? "btn-success" : "btn-danger")"
                             @onclick="ConfirmStatusUpdate"
                             disabled="@isUpdating">
                         @if (isUpdating)
                         {
                             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         }
-                        @(pendingStatus == "Confirmed" ? "Confirm Order" : "Cancel Order")
+                        @(pendingStatus == "Accepted" ? "Accept Order" : "Cancel Order")
                     </button>
                 </div>
             </div>
@@ -414,8 +423,8 @@
             if (response.Success)
             {
                 await JSRuntime.InvokeVoidAsync("alert",
-                    pendingStatus == "Confirmed"
-                        ? "Order confirmed successfully! Inventory has been updated."
+                    pendingStatus == "Accepted"
+                        ? "Order accepted successfully! Inventory has been updated."
                         : "Order cancelled successfully!");
 
                 CloseConfirmModal();
@@ -443,23 +452,44 @@
         // This would typically generate a CSV or Excel file
     }
 
+    // FIXED: Better method to check if order is pending
+    private bool IsOrderPending(string status)
+    {
+        if (string.IsNullOrEmpty(status))
+            return false;
+
+        // Handle both string names and enum integer values
+        return status.Trim().Equals("Pending", StringComparison.OrdinalIgnoreCase) ||
+               status.Trim() == "0";
+    }
+
+    // FIXED: Proper status badge mapping
     private string GetStatusBadgeClass(string status)
     {
-        return status?.ToLower() switch
+        if (string.IsNullOrEmpty(status))
+            return "bg-secondary";
+
+        return status.Trim().ToLower() switch
         {
-            "pending" => "bg-warning text-dark",
-            "confirmed" => "bg-success",
-            "processing" => "bg-danger", // Using Processing as Cancelled
-            _ => "bg-secondary"
+            "pending" or "0" => "bg-warning text-dark",
+            "accepted" or "1" => "bg-success text-white",
+            "cancelled" or "2" => "bg-danger text-white",
+            _ => "bg-secondary text-white"
         };
     }
 
+    // Helper method to display proper status name
     private string GetDisplayStatus(string status)
     {
-        return status?.ToLower() switch
+        if (string.IsNullOrEmpty(status))
+            return "Unknown";
+
+        return status.Trim() switch
         {
-            "processing" => "Cancelled", // Display Processing as Cancelled
-            _ => status ?? ""
+            "0" => "Pending",
+            "1" => "Accepted",
+            "2" => "Cancelled",
+            _ => status
         };
     }
 }
