@@ -111,6 +111,95 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.InventoryController",
+    "Method": "GetInventory",
+    "RelativePath": "api/Inventory",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "PageNumber",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "PageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "SearchTerm",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SortBy",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "IsDescending",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.InventoryController",
+    "Method": "CheckDistributorStock",
+    "RelativePath": "api/Inventory/check-distributor-stock",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CheckStockRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.InventoryController",
+    "Method": "CreateDistributorOrder",
+    "RelativePath": "api/Inventory/create-distributor-order",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CreateDistributorOrderDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.InventoryController",
+    "Method": "UpdateStock",
+    "RelativePath": "api/Inventory/update-stock/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.UpdateStockDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
     "Method": "GetAllOrders",
     "RelativePath": "api/Orders",

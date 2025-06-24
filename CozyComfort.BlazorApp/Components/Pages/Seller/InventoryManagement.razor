@@ -4,7 +4,6 @@
 @inject NavigationManager Navigation
 @inject ILogger<InventoryManagement> Logger
 @inject IJSRuntime JSRuntime
-@using OrderItemRequest = CozyComfort.Shared.DTOs.Seller.OrderItemRequest
 @using CozyComfort.Shared.DTOs.Seller
 
 <PageTitle>Inventory Management - Cozy Comfort</PageTitle>
@@ -466,9 +465,9 @@
         {
             var orderDto = new CreateDistributorOrderDto
             {
-                Items = new List<OrderItemRequest>
+                Items = new List<DistributorOrderItemRequest>
                 {
-                    new OrderItemRequest
+                    new DistributorOrderItemRequest
                     {
                         ProductId = selectedItem.Id,
                         Quantity = orderQuantity

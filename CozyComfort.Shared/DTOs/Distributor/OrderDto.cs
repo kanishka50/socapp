@@ -51,12 +51,6 @@
         public decimal RequestedPrice { get; set; }
     }
 
-    public class DistributorOrderItem
-    {
-        public int DistributorProductId { get; set; }
-        public int Quantity { get; set; }
-    }
-
     public class UpdateOrderStatusDto
     {
         public string Status { get; set; } = string.Empty;

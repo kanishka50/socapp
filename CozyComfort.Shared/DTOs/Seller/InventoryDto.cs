@@ -29,11 +29,11 @@
 
     public class CreateDistributorOrderDto
     {
-        public List<OrderItemRequest> Items { get; set; } = new();
+        public List<DistributorOrderItemRequest> Items { get; set; } = new();
         public string Notes { get; set; } = string.Empty;
     }
 
-    public class OrderItemRequest
+    public class DistributorOrderItemRequest
     {
         public int ProductId { get; set; }
         public int Quantity { get; set; }
