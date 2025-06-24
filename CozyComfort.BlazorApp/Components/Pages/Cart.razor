@@ -3,7 +3,7 @@
 @using CozyComfort.BlazorApp.Services.Interfaces
 @inject ISellerService SellerService
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject SimpleSessionService SessionService
 
 <PageTitle>Shopping Cart - CozyComfort</PageTitle>
 
@@ -135,19 +135,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        sessionId = await GetOrCreateSessionId();
+        // Get the shared session ID
+        sessionId = SessionService.GetSessionId();
+        Console.WriteLine($"Cart using session ID: {sessionId}");
         await LoadCart();
-    }
-
-    private async Task<string> GetOrCreateSessionId()
-    {
-        var sessionId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "sessionId");
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            sessionId = Guid.NewGuid().ToString();
-            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sessionId", sessionId);
-        }
-        return sessionId;
     }
 
     private async Task LoadCart()
@@ -159,6 +150,11 @@
             if (response.Success)
             {
                 cart = response.Data;
+                Console.WriteLine($"Loaded cart with {cart?.Items?.Count ?? 0} items");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to load cart: {response.Message}");
             }
         }
         catch (Exception ex)

@@ -1,13 +1,8 @@
 ﻿@page "/shop"
 @inject ISellerService SellerService
-@inject SessionService SessionService
 @inject IJSRuntime JSRuntime
-@using CozyComfort.Shared.DTOs
-@using CozyComfort.Shared.DTOs.Seller
-@using CozyComfort.BlazorApp.Services
-@using CozyComfort.BlazorApp.Services.Interfaces
-@using CozyComfort.BlazorApp.Components.Shared
-@using CozyComfort.BlazorApp.Components.Products
+@inject SimpleSessionService SessionService
+@rendermode InteractiveServer
 
 <PageTitle>Shop - Cozy Comfort</PageTitle>
 
@@ -23,7 +18,7 @@
                     <!-- Search -->
                     <div class="mb-3">
                         <label class="form-label">Search</label>
-                        <input type="text" class="form-control" placeholder="Search products..." 
+                        <input type="text" class="form-control" placeholder="Search products..."
                                @bind="searchTerm" @bind:event="oninput" />
                     </div>
 
@@ -74,11 +69,17 @@
 
             @if (loading)
             {
-                <LoadingSpinner Message="Loading products..." />
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
             }
             else if (errorMessage != null)
             {
-                <ErrorMessage Message="@errorMessage" />
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> @errorMessage
+                </div>
             }
             else if (products == null || !products.Items.Any())
             {
@@ -92,7 +93,50 @@
                     @foreach (var product in products.Items)
                     {
                         <div class="col-md-4 col-lg-3">
-                            <ProductCard Product="product" OnAddToCart="AddToCart" />
+                            <div class="card h-100 shadow-sm">
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" class="card-img-top" alt="@product.ProductName"
+                                         style="height: 200px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                                         style="height: 200px;">
+                                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                }
+
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">@product.ProductName</h5>
+
+                                    @if (!string.IsNullOrEmpty(product.Category))
+                                    {
+                                        <span class="badge bg-secondary mb-2">@product.Category</span>
+                                    }
+
+                                    <p class="card-text flex-grow-1">
+                                        @(string.IsNullOrEmpty(product.Description) ? "No description available" : product.Description)
+                                    </p>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <strong class="text-primary">$@product.Price.ToString("F2")</strong>
+
+                                        @if (product.IsAvailable)
+                                        {
+                                            <button class="btn btn-primary btn-sm" @onclick="() => AddToCart(product)">
+                                                <i class="bi bi-cart-plus"></i> Add to Cart
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-secondary btn-sm" disabled>
+                                                Out of Stock
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     }
                 </div>
@@ -107,7 +151,7 @@
                                     Previous
                                 </button>
                             </li>
-                            
+
                             @for (int i = 1; i <= Math.Min(products.TotalPages, 10); i++)
                             {
                                 var pageNumber = i;
@@ -117,7 +161,7 @@
                                     </button>
                                 </li>
                             }
-                            
+
                             @if (products.TotalPages > 10)
                             {
                                 <li class="page-item disabled">
@@ -129,7 +173,7 @@
                                     </button>
                                 </li>
                             }
-                            
+
                             <li class="page-item @(currentPage == products.TotalPages ? "disabled" : "")">
                                 <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">
                                     Next
@@ -180,14 +224,16 @@
     private string sortBy = "";
     private int currentPage = 1;
     private int pageSize = 12;
-    
+
     private bool showCartModal = false;
     private string cartMessage = "";
-    private string? sessionId;
+    private string sessionId = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        // Get the shared session ID
         sessionId = SessionService.GetSessionId();
+        Console.WriteLine($"Shop using session ID: {sessionId}");
         await LoadProducts();
     }
 
@@ -210,13 +256,13 @@
             // Add category filter to search term if selected
             if (!string.IsNullOrEmpty(selectedCategory))
             {
-                request.SearchTerm = string.IsNullOrEmpty(request.SearchTerm) 
-                    ? selectedCategory 
+                request.SearchTerm = string.IsNullOrEmpty(request.SearchTerm)
+                    ? selectedCategory
                     : $"{request.SearchTerm} {selectedCategory}";
             }
 
             var response = await SellerService.GetProductsAsync(request);
-            
+
             if (response.Success)
             {
                 products = response.Data;
@@ -280,20 +326,24 @@
                 Quantity = 1
             };
 
-            var response = await SellerService.AddToCartAsync(sessionId!, addToCartDto);
-            
+            Console.WriteLine($"Adding product {product.Id} to cart with session {sessionId}");
+            var response = await SellerService.AddToCartAsync(sessionId, addToCartDto);
+
             if (response.Success)
             {
                 cartMessage = $"{product.ProductName} has been added to your cart!";
                 showCartModal = true;
+                Console.WriteLine($"Successfully added to cart");
             }
             else
             {
+                Console.WriteLine($"Failed to add to cart: {response.Message}");
                 await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Failed to add item to cart");
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Exception adding to cart: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("alert", "An error occurred. Please try again.");
         }
     }

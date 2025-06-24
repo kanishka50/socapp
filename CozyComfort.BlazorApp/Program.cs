@@ -99,7 +99,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
-builder.Services.AddScoped<SessionService>();
+
+// UPDATED: Replace SessionService with SimpleSessionService
+// builder.Services.AddScoped<SessionService>(); // REMOVE THIS LINE
+builder.Services.AddSingleton<SimpleSessionService>(); // ADD THIS LINE
 
 // Add any additional services if needed
 // builder.Services.AddScoped<INotificationService, NotificationService>();
