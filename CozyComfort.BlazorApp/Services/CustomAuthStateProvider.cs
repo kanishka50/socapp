@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Components;
 
 namespace CozyComfort.BlazorApp.Services
 {
@@ -11,21 +12,43 @@ namespace CozyComfort.BlazorApp.Services
         private readonly ILocalStorageService _localStorage;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CustomAuthStateProvider> _logger;
+        private readonly NavigationManager _navigation;
+        private bool _isInitialized = false;
 
         public CustomAuthStateProvider(
             ILocalStorageService localStorage,
             IHttpClientFactory httpClientFactory,
-            ILogger<CustomAuthStateProvider> logger)
+            ILogger<CustomAuthStateProvider> logger,
+            NavigationManager navigation)
         {
             _localStorage = localStorage;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
+            _navigation = navigation;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
             {
+                // During prerendering, localStorage is not available
+                if (!_isInitialized)
+                {
+                    // Check if we're in a browser context
+                    try
+                    {
+                        // This will throw during prerendering
+                        var test = await _localStorage.GetItemAsync<string>("test");
+                        _isInitialized = true;
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // We're prerendering, return empty auth state
+                        _logger.LogDebug("Prerendering detected, returning anonymous auth state");
+                        return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                    }
+                }
+
                 var token = await _localStorage.GetItemAsync<string>("authToken");
 
                 if (string.IsNullOrWhiteSpace(token))
@@ -42,9 +65,14 @@ namespace CozyComfort.BlazorApp.Services
                 var user = new ClaimsPrincipal(identity);
 
                 _logger.LogInformation($"User authenticated: {user.Identity?.IsAuthenticated}");
-                _logger.LogInformation($"User claims: {string.Join(", ", claims.Select(c => $"{c.Type}={c.Value}"))}");
 
                 return new AuthenticationState(user);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("JavaScript interop"))
+            {
+                // This happens during prerendering
+                _logger.LogDebug("JavaScript interop not available (prerendering)");
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
             catch (Exception ex)
             {
@@ -64,6 +92,7 @@ namespace CozyComfort.BlazorApp.Services
 
                 // Set headers after authentication
                 SetAuthorizationHeader(token);
+                _isInitialized = true;
             }
             catch (Exception ex)
             {
@@ -84,22 +113,19 @@ namespace CozyComfort.BlazorApp.Services
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
-            var payload = jwt.Split('.')[1];
-            var jsonBytes = ParseBase64WithoutPadding(payload);
-            var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-            if (keyValuePairs != null)
+            try
             {
-                // Log all claims for debugging
-                _logger.LogInformation($"JWT Claims: {string.Join(", ", keyValuePairs.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+                var payload = jwt.Split('.')[1];
+                var jsonBytes = ParseBase64WithoutPadding(payload);
+                var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-                // Check for role claim with different possible keys
-                var roleKeys = new[] { "role", "Role", "roles", "Roles", ClaimTypes.Role,
-                    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" };
-
-                foreach (var roleKey in roleKeys)
+                if (keyValuePairs != null)
                 {
-                    if (keyValuePairs.TryGetValue(roleKey, out object? roles))
+                    _logger.LogInformation($"JWT Claims: {string.Join(", ", keyValuePairs.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+
+                    // Check for role claim
+                    if (keyValuePairs.TryGetValue("role", out object? roles))
                     {
                         if (roles != null)
                         {
@@ -124,28 +150,33 @@ namespace CozyComfort.BlazorApp.Services
                             }
                         }
 
-                        keyValuePairs.Remove(roleKey);
-                        break;
+                        keyValuePairs.Remove("role");
+                    }
+
+                    // Add other claims
+                    foreach (var kvp in keyValuePairs)
+                    {
+                        var key = kvp.Key;
+                        var value = kvp.Value?.ToString() ?? "";
+
+                        // Map common JWT claims to .NET claim types
+                        var claimType = key switch
+                        {
+                            "sub" => ClaimTypes.NameIdentifier,
+                            "nameid" => ClaimTypes.NameIdentifier,
+                            "name" => ClaimTypes.Name,
+                            "unique_name" => ClaimTypes.Name,
+                            "email" => ClaimTypes.Email,
+                            _ => key
+                        };
+
+                        claims.Add(new Claim(claimType, value));
                     }
                 }
-
-                // Add other claims
-                foreach (var kvp in keyValuePairs)
-                {
-                    var key = kvp.Key;
-                    var value = kvp.Value?.ToString() ?? "";
-
-                    // Map common JWT claims to .NET claim types
-                    var claimType = key switch
-                    {
-                        "sub" => ClaimTypes.NameIdentifier,
-                        "name" => ClaimTypes.Name,
-                        "email" => ClaimTypes.Email,
-                        _ => key
-                    };
-
-                    claims.Add(new Claim(claimType, value));
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parsing JWT claims");
             }
 
             return claims;
@@ -175,6 +206,8 @@ namespace CozyComfort.BlazorApp.Services
                     new AuthenticationHeaderValue("Bearer", token);
                 sellerClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", token);
+
+                _logger.LogDebug("Authorization headers set for all API clients");
             }
             catch (Exception ex)
             {

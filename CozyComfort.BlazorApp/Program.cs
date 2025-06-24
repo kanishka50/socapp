@@ -26,32 +26,18 @@ if (builder.Environment.IsDevelopment())
 // Add Blazored LocalStorage
 builder.Services.AddBlazoredLocalStorage();
 
-// Add HttpContext accessor
-builder.Services.AddHttpContextAccessor();
+// Add Authorization Core
+builder.Services.AddAuthorizationCore();
 
-// Configure HttpClient for each API with proper DI registration
-builder.Services.AddHttpClient<IManufacturerService, ManufacturerService>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7001/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+// Add CascadingAuthenticationState
+builder.Services.AddCascadingAuthenticationState();
 
-builder.Services.AddHttpClient<IDistributorService, DistributorService>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7002/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+// Register CustomAuthStateProvider
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CustomAuthStateProvider>());
 
-builder.Services.AddHttpClient<ISellerService, SellerService>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7003/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
-
-// Also register named HttpClients for backward compatibility
+// Configure HttpClient for each API
 builder.Services.AddHttpClient("ManufacturerAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7001/");
@@ -70,56 +56,28 @@ builder.Services.AddHttpClient("SellerAPI", client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-// Add Authentication and Authorization
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = "Cookies";
-    options.DefaultChallengeScheme = "Cookies";
-})
-.AddCookie("Cookies", options =>
-{
-    options.LoginPath = "/login";
-    options.LogoutPath = "/logout";
-    options.AccessDeniedPath = "/access-denied";
-    options.ExpireTimeSpan = TimeSpan.FromHours(1);
-});
-
-builder.Services.AddAuthorizationCore();
-
-// Register CustomAuthStateProvider as Scoped
-builder.Services.AddScoped<CustomAuthStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
-    provider.GetRequiredService<CustomAuthStateProvider>());
-
-// Add CascadingAuthenticationState
-builder.Services.AddCascadingAuthenticationState();
-
-// Register Services - ALL SERVICES INCLUDING SELLER
+// Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IManufacturerService, ManufacturerService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 
-// UPDATED: Replace SessionService with SimpleSessionService
-// builder.Services.AddScoped<SessionService>(); // REMOVE THIS LINE
-builder.Services.AddSingleton<SimpleSessionService>(); // ADD THIS LINE
-
-// Add any additional services if needed
-// builder.Services.AddScoped<INotificationService, NotificationService>();
-
-// Add distributed memory cache for session
+// Add Session support for cart
 builder.Services.AddDistributedMemoryCache();
-
-// Add Session
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
-// Add Logging with more detail in development
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// Add SimpleSessionService
+builder.Services.AddSingleton<SimpleSessionService>();
+
+// Add Logging
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();
@@ -146,15 +104,14 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting();
 
-// Add authentication middleware
-app.UseAuthentication();
-app.UseAuthorization();
-
-// Use session before antiforgery
+// Session must come before authorization
 app.UseSession();
 
-// Use antiforgery
+// ADD THIS LINE - THIS IS WHAT'S MISSING!
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()

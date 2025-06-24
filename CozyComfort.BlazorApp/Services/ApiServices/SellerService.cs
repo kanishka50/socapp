@@ -3,18 +3,40 @@ using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Seller;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Blazored.LocalStorage;
+using System.Net.Http.Headers;
 
 namespace CozyComfort.BlazorApp.Services.ApiServices
 {
     public class SellerService : ISellerService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<SellerService> _logger;
+        private readonly ILocalStorageService _localStorage;
 
-        public SellerService(IHttpClientFactory httpClientFactory, ILogger<SellerService> logger)
+        public SellerService(IHttpClientFactory httpClientFactory, ILogger<SellerService> logger, ILocalStorageService localStorage)
         {
-            _httpClient = httpClientFactory.CreateClient("SellerAPI");
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
+            _localStorage = localStorage;
+        }
+
+        private async Task<HttpClient> GetAuthenticatedClientAsync()
+        {
+            var client = _httpClientFactory.CreateClient("SellerAPI");
+            var token = await _localStorage.GetItemAsync<string>("authToken");
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                _logger.LogInformation("Token set for request: {Token}", token.Substring(0, 20) + "...");
+            }
+            else
+            {
+                _logger.LogWarning("No auth token found in localStorage");
+            }
+
+            return client;
         }
 
         #region Products
@@ -23,8 +45,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                // Add debugging
-                _logger.LogInformation("HttpClient BaseAddress: {BaseAddress}", _httpClient.BaseAddress);
+                var client = await GetAuthenticatedClientAsync();
 
                 var query = $"api/Products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
 
@@ -34,10 +55,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 if (!string.IsNullOrWhiteSpace(request.SortBy))
                     query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
 
-                // Add debugging
-                _logger.LogInformation("Full URL: {Url}", $"{_httpClient.BaseAddress}{query}");
-
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<SellerProductDto>>>(query);
+                var response = await client.GetFromJsonAsync<ApiResponse<PagedResult<SellerProductDto>>>(query);
                 return response ?? new ApiResponse<PagedResult<SellerProductDto>>
                 {
                     Success = false,
@@ -60,7 +78,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<SellerProductDto>>($"api/Products/{id}");
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.GetFromJsonAsync<ApiResponse<SellerProductDto>>($"api/Products/{id}");
                 return response ?? new ApiResponse<SellerProductDto>
                 {
                     Success = false,
@@ -87,6 +107,8 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
+                var client = await GetAuthenticatedClientAsync();
+
                 var query = $"api/orders?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -95,11 +117,23 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 if (!string.IsNullOrWhiteSpace(request.SortBy))
                     query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
 
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<CustomerOrderDto>>>(query);
+                _logger.LogInformation("Fetching orders from: {Query}", query);
+
+                var response = await client.GetFromJsonAsync<ApiResponse<PagedResult<CustomerOrderDto>>>(query);
                 return response ?? new ApiResponse<PagedResult<CustomerOrderDto>>
                 {
                     Success = false,
                     Message = "No response from server"
+                };
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error fetching orders: {StatusCode}", httpEx.StatusCode);
+                return new ApiResponse<PagedResult<CustomerOrderDto>>
+                {
+                    Success = false,
+                    Message = $"Error fetching orders: {httpEx.Message}",
+                    Errors = new List<string> { httpEx.Message }
                 };
             }
             catch (Exception ex)
@@ -118,7 +152,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<CustomerOrderDto>>($"api/orders/{id}");
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.GetFromJsonAsync<ApiResponse<CustomerOrderDto>>($"api/orders/{id}");
                 return response ?? new ApiResponse<CustomerOrderDto>
                 {
                     Success = false,
@@ -141,8 +177,10 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
+                var client = await GetAuthenticatedClientAsync();
+
                 var updateDto = new { Status = status };
-                var response = await _httpClient.PutAsJsonAsync($"api/orders/{orderId}/status", updateDto);
+                var response = await client.PutAsJsonAsync($"api/orders/{orderId}/status", updateDto);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -172,7 +210,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/orders/create", dto);
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.PostAsJsonAsync("api/orders/create", dto);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -206,7 +246,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<CustomerOrderDto>>>($"api/orders/customer/{Uri.EscapeDataString(customerEmail)}");
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.GetFromJsonAsync<ApiResponse<List<CustomerOrderDto>>>($"api/orders/customer/{Uri.EscapeDataString(customerEmail)}");
                 return response ?? new ApiResponse<List<CustomerOrderDto>>
                 {
                     Success = false,
@@ -233,7 +275,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<CartDto>>($"api/cart/{sessionId}");
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.GetFromJsonAsync<ApiResponse<CartDto>>($"api/cart/{sessionId}");
                 return response ?? new ApiResponse<CartDto>
                 {
                     Success = false,
@@ -256,7 +300,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync($"api/cart/{sessionId}/add", dto);
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.PostAsJsonAsync($"api/cart/{sessionId}/add", dto);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -290,7 +336,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/cart/{sessionId}/remove/{productId}");
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.DeleteAsync($"api/cart/{sessionId}/remove/{productId}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -320,13 +368,14 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        // Additional cart methods that might be called
         public async Task<ApiResponse<CartDto>> UpdateCartItemAsync(string sessionId, int productId, int quantity)
         {
             try
             {
+                var client = await GetAuthenticatedClientAsync();
+
                 var updateDto = new { ProductId = productId, Quantity = quantity };
-                var response = await _httpClient.PutAsJsonAsync($"api/cart/{sessionId}/update", updateDto);
+                var response = await client.PutAsJsonAsync($"api/cart/{sessionId}/update", updateDto);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -360,7 +409,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"api/cart/{sessionId}/clear");
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.DeleteAsync($"api/cart/{sessionId}/clear");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -394,7 +445,9 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/auth/register-customer", dto);
+                var client = _httpClientFactory.CreateClient("SellerAPI");
+
+                var response = await client.PostAsJsonAsync("api/auth/register-customer", dto);
 
                 if (response.IsSuccessStatusCode)
                 {

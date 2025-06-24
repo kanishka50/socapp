@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CozyComfort.Seller.API.Data;
-//using CozyComfort.Seller.API.Models.DTOs;
 using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Seller.API.Models.Entities;
 using CozyComfort.Seller.API.Services.Interfaces;
@@ -83,7 +82,8 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     Status = order.Status.ToString(),
                     OrderDate = order.OrderDate,
                     TotalAmount = order.TotalAmount,
-                    ShippingAddress = order.ShippingAddress
+                    ShippingAddress = order.ShippingAddress,
+                    IsPaid = order.IsPaid
                 };
 
                 return ApiResponse<CustomerOrderDto>.SuccessResult(orderDto, "Order created successfully");
@@ -98,26 +98,217 @@ namespace CozyComfort.Seller.API.Services.Implementations
 
         public async Task<ApiResponse<PagedResult<CustomerOrderDto>>> GetOrdersAsync(PagedRequest request)
         {
-            // Implementation
-            throw new NotImplementedException();
+            try
+            {
+                var query = _context.Orders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .AsQueryable();
+
+                // Apply search filter
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                {
+                    query = query.Where(o =>
+                        o.OrderNumber.Contains(request.SearchTerm) ||
+                        o.CustomerName.Contains(request.SearchTerm) ||
+                        o.CustomerEmail.Contains(request.SearchTerm));
+                }
+
+                // Get total count before pagination
+                var totalCount = await query.CountAsync();
+
+                // Apply sorting
+                query = request.SortBy?.ToLower() switch
+                {
+                    "ordernumber" => request.IsDescending ?
+                        query.OrderByDescending(o => o.OrderNumber) :
+                        query.OrderBy(o => o.OrderNumber),
+                    "customername" => request.IsDescending ?
+                        query.OrderByDescending(o => o.CustomerName) :
+                        query.OrderBy(o => o.CustomerName),
+                    "totalamount" => request.IsDescending ?
+                        query.OrderByDescending(o => o.TotalAmount) :
+                        query.OrderBy(o => o.TotalAmount),
+                    "status" => request.IsDescending ?
+                        query.OrderByDescending(o => o.Status) :
+                        query.OrderBy(o => o.Status),
+                    _ => request.IsDescending ?
+                        query.OrderByDescending(o => o.OrderDate) :
+                        query.OrderBy(o => o.OrderDate)
+                };
+
+                // Apply pagination
+                var orders = await query
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToListAsync();
+
+                // Map to DTOs
+                var orderDtos = orders.Select(o => new CustomerOrderDto
+                {
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    CustomerName = o.CustomerName,
+                    CustomerEmail = o.CustomerEmail,
+                    Status = o.Status.ToString(),
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    ShippingAddress = o.ShippingAddress,
+                    IsPaid = o.IsPaid,
+                    Items = o.OrderItems.Select(oi => new OrderItemDto
+                    {
+                        ProductId = oi.ProductId,
+                        ProductName = oi.Product?.ProductName ?? "Unknown",
+                        SKU = oi.Product?.SKU ?? "N/A",
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice
+                    }).ToList()
+                }).ToList();
+
+                var pagedResult = new PagedResult<CustomerOrderDto>
+                {
+                    Items = orderDtos,
+                    TotalCount = totalCount,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize
+                };
+
+                return ApiResponse<PagedResult<CustomerOrderDto>>.SuccessResult(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching orders");
+                return ApiResponse<PagedResult<CustomerOrderDto>>.FailureResult("Error fetching orders",
+                    new List<string> { ex.Message });
+            }
         }
 
         public async Task<ApiResponse<CustomerOrderDto>> GetOrderByIdAsync(int id)
         {
-            // Implementation
-            throw new NotImplementedException();
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (order == null)
+                {
+                    return ApiResponse<CustomerOrderDto>.FailureResult("Order not found");
+                }
+
+                var orderDto = new CustomerOrderDto
+                {
+                    Id = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    CustomerName = order.CustomerName,
+                    CustomerEmail = order.CustomerEmail,
+                    Status = order.Status.ToString(),
+                    OrderDate = order.OrderDate,
+                    TotalAmount = order.TotalAmount,
+                    ShippingAddress = order.ShippingAddress,
+                    IsPaid = order.IsPaid,
+                    Items = order.OrderItems.Select(oi => new OrderItemDto
+                    {
+                        ProductId = oi.ProductId,
+                        ProductName = oi.Product?.ProductName ?? "Unknown",
+                        SKU = oi.Product?.SKU ?? "N/A",
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice
+                    }).ToList()
+                };
+
+                return ApiResponse<CustomerOrderDto>.SuccessResult(orderDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching order {OrderId}", id);
+                return ApiResponse<CustomerOrderDto>.FailureResult("Error fetching order",
+                    new List<string> { ex.Message });
+            }
         }
 
         public async Task<ApiResponse<bool>> UpdateOrderStatusAsync(int id, string status)
         {
-            // Implementation
-            throw new NotImplementedException();
+            try
+            {
+                var order = await _context.Orders.FindAsync(id);
+                if (order == null)
+                {
+                    return ApiResponse<bool>.FailureResult("Order not found");
+                }
+
+                // Parse the status string to OrderStatus enum
+                if (!Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
+                {
+                    return ApiResponse<bool>.FailureResult("Invalid order status");
+                }
+
+                order.Status = orderStatus;
+                order.UpdatedAt = DateTime.UtcNow;
+
+                // If status is changing to Delivered, mark as paid
+                if (orderStatus == OrderStatus.Delivered && !order.IsPaid)
+                {
+                    order.IsPaid = true;
+                    order.PaidAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return ApiResponse<bool>.SuccessResult(true, "Order status updated successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating order status for order {OrderId}", id);
+                return ApiResponse<bool>.FailureResult("Error updating order status",
+                    new List<string> { ex.Message });
+            }
         }
 
         public async Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string customerEmail)
         {
-            // Implementation
-            throw new NotImplementedException();
+            try
+            {
+                var orders = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .Where(o => o.CustomerEmail == customerEmail)
+                    .OrderByDescending(o => o.OrderDate)
+                    .ToListAsync();
+
+                var orderDtos = orders.Select(o => new CustomerOrderDto
+                {
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    CustomerName = o.CustomerName,
+                    CustomerEmail = o.CustomerEmail,
+                    Status = o.Status.ToString(),
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    ShippingAddress = o.ShippingAddress,
+                    IsPaid = o.IsPaid,
+                    Items = o.OrderItems.Select(oi => new OrderItemDto
+                    {
+                        ProductId = oi.ProductId,
+                        ProductName = oi.Product?.ProductName ?? "Unknown",
+                        SKU = oi.Product?.SKU ?? "N/A",
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice
+                    }).ToList()
+                }).ToList();
+
+                return ApiResponse<List<CustomerOrderDto>>.SuccessResult(orderDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching customer orders for {CustomerEmail}", customerEmail);
+                return ApiResponse<List<CustomerOrderDto>>.FailureResult("Error fetching customer orders",
+                    new List<string> { ex.Message });
+            }
         }
     }
 }
