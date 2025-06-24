@@ -4,6 +4,7 @@
 @inject ISellerService SellerService
 @inject NavigationManager Navigation
 @inject SimpleSessionService SessionService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Shopping Cart - CozyComfort</PageTitle>
 
@@ -201,9 +202,58 @@
         }
     }
 
-    private void ProceedToCheckout()
+    private async Task ProceedToCheckout()
     {
-        Navigation.NavigateTo("/checkout");
+        try
+        {
+            if (cart?.Items?.Any() != true)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Your cart is empty!");
+                return;
+            }
+
+            // Create order using your existing DTOs
+            var createOrderDto = new CreateCustomerOrderDto
+            {
+                SessionId = sessionId,
+                CustomerName = "Demo Customer",
+                CustomerEmail = "customer@demo.com",
+                CustomerPhone = "+1234567890",
+                ShippingAddress = "123 Demo Street, Demo City, Demo State 12345",
+                BillingAddress = "123 Demo Street, Demo City, Demo State 12345",
+                PaymentMethod = "Credit Card"
+            };
+
+            Console.WriteLine($"Creating order for session {sessionId} with {cart.Items.Count} items, total: ${cart.Total:F2}");
+
+            var response = await SellerService.CreateOrderAsync(createOrderDto);
+
+            if (response.Success)
+            {
+                await JSRuntime.InvokeVoidAsync("alert",
+                    $"Order #{response.Data.OrderNumber} placed successfully!\n" +
+                    $"Order Total: ${response.Data.TotalAmount:F2}\n" +
+                    $"Items: {response.Data.Items.Count}\n\n" +
+                    $"This order will now appear in the Seller's order management system.");
+
+                // Clear the cart after successful order
+                cart = new CartDto { SessionId = sessionId };
+                StateHasChanged();
+
+                // Navigate to shop
+                Navigation.NavigateTo("/shop");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error creating order: {response.Message}");
+                Console.WriteLine($"Order creation failed: {response.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error placing order. Please try again.");
+            Console.WriteLine($"Error in checkout: {ex.Message}");
+        }
     }
 
     private void ContinueShopping()
