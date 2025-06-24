@@ -44,7 +44,9 @@ namespace CozyComfort.Seller.API.Services.Implementations
                         Category = p.Category,
                         Price = p.SellingPrice,
                         ImageUrl = p.ImageUrl,
-                        InStock = p.DisplayStock > 0
+                        InStock = p.DisplayStock > 0,
+                        IsAvailable = p.IsAvailable,  
+                        CurrentStock = p.CurrentStock
                     })
                     .ToListAsync();
 
