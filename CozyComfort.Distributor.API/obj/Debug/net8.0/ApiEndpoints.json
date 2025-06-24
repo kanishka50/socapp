@@ -211,6 +211,48 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Distributor.API.Controllers.TestController",
+    "Method": "CheckUsers",
+    "RelativePath": "api/Test/check-users",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Distributor.API.Controllers.TestController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/Test/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Distributor.API.Controllers.ResetPasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Distributor.API.Controllers.TestController",
+    "Method": "TestLogin",
+    "RelativePath": "api/Test/test-login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Distributor.API.Controllers.TestLoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Distributor.API.Controllers.WeatherForecastController",
     "Method": "Get",
     "RelativePath": "WeatherForecast",

@@ -41,6 +41,14 @@
                                        type="password" class="form-control" />
                         </div>
 
+                        <div class="alert alert-info">
+                            <strong>DEBUG INFO:</strong><br>
+                            Selected Role: '@selectedRole'<br>
+                            Email: '@loginModel.Email'<br>
+                            Password Length: @(loginModel.Password?.Length ?? 0)<br>
+                            Form Valid: @(string.IsNullOrEmpty(selectedRole) ? "NO" : "YES")
+                        </div>
+
                         <button type="submit" class="btn btn-primary" disabled="@loading">
                             @if (loading)
                             {
