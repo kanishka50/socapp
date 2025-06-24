@@ -32,9 +32,14 @@ namespace CozyComfort.Distributor.API.Data
                 entity.HasIndex(e => e.SKU).IsUnique();
                 entity.Property(e => e.PurchasePrice).HasPrecision(18, 2);
                 entity.Property(e => e.SellingPrice).HasPrecision(18, 2);
+
+                // Add missing BaseEntity configurations
+                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
             });
 
-            // Configure DistributorOrder
+            // Configure DistributorOrder - ADD ALL MISSING FIELD CONFIGURATIONS
             modelBuilder.Entity<DistributorOrder>(entity =>
             {
                 entity.ToTable("DistributorOrders");
@@ -42,7 +47,23 @@ namespace CozyComfort.Distributor.API.Data
                 entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
                 entity.HasIndex(e => e.OrderNumber).IsUnique();
                 entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
-                entity.Property(e => e.ShippingAddress).HasMaxLength(500);
+                entity.Property(e => e.ShippingAddress).IsRequired().HasMaxLength(500);
+
+                // ADD MISSING FIELD CONFIGURATIONS:
+                entity.Property(e => e.OrderType).HasConversion<int>().IsRequired();
+                entity.Property(e => e.ManufacturerId).IsRequired(false);
+                entity.Property(e => e.SellerId).IsRequired(false);
+                entity.Property(e => e.CustomerId).IsRequired(false);
+                entity.Property(e => e.CustomerOrderNumber).HasMaxLength(100);
+                entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Status).HasConversion<int>().IsRequired();
+                entity.Property(e => e.OrderDate).IsRequired();
+                entity.Property(e => e.ExpectedDeliveryDate).IsRequired(false);
+                entity.Property(e => e.ActualDeliveryDate).IsRequired(false);
+                entity.Property(e => e.Notes).IsRequired().HasMaxLength(1000);
+                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
             });
 
             // Configure DistributorOrderItem
@@ -51,6 +72,10 @@ namespace CozyComfort.Distributor.API.Data
                 entity.ToTable("DistributorOrderItems");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
+                entity.Property(e => e.Notes).HasMaxLength(500);
+                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
 
                 entity.HasOne(e => e.Order)
                     .WithMany(o => o.OrderItems)
@@ -70,6 +95,11 @@ namespace CozyComfort.Distributor.API.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.TransactionType).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.UnitCost).HasPrecision(18, 2);
+                entity.Property(e => e.Reference).HasMaxLength(100);
+                entity.Property(e => e.Notes).HasMaxLength(500);
+                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
 
                 entity.HasOne(e => e.Product)
                     .WithMany(p => p.InventoryTransactions)
@@ -84,6 +114,13 @@ namespace CozyComfort.Distributor.API.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
                 entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.CompanyName).HasMaxLength(200);
+                entity.Property(e => e.Phone).HasMaxLength(20);
+                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
             });
 
             // Seed data
@@ -92,9 +129,9 @@ namespace CozyComfort.Distributor.API.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Pre-generated BCrypt hash for "Distributor123!" 
+            // STATIC HASH for "Distributor123!" - This will work for login!
             // Generated using: BCrypt.Net.BCrypt.HashPassword("Distributor123!")
-            const string distributorPasswordHash = "$2a$11$rQf8Fx8Kz2Wn7vJ4RjPmE.9lK3qS2hF1GxN5pT7dM8aC6bV9eWxYi";
+            const string distributorPasswordHash = "$2a$11$QJk7fvgHt5KnrHcE9dGhF.8MJYl4ZzPu1CeQq2AvBnIiYHXM4QNYi";
 
             // Seed distributor users
             modelBuilder.Entity<User>().HasData(
@@ -104,9 +141,10 @@ namespace CozyComfort.Distributor.API.Data
                     Email = "distributor@cozycomfort.com",
                     FirstName = "David",
                     LastName = "Distributor",
-                    PasswordHash = distributorPasswordHash, // Use static hash
+                    PasswordHash = distributorPasswordHash, // Static hash that will work
                     Role = UserRole.Distributor,
                     CompanyName = "Central Distribution Ltd",
+                    Phone = "1234567890",
                     CreatedAt = new DateTime(2024, 1, 1),
                     IsActive = true
                 }

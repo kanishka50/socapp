@@ -4,6 +4,7 @@ using CozyComfort.Distributor.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CozyComfort.Distributor.API.Migrations
 {
     [DbContext(typeof(DistributorDbContext))]
-    partial class DistributorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250624161337_FixedDistributorDatabase")]
+    partial class FixedDistributorDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

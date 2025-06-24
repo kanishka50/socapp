@@ -4,6 +4,7 @@ using CozyComfort.Distributor.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CozyComfort.Distributor.API.Migrations
 {
     [DbContext(typeof(DistributorDbContext))]
-    partial class DistributorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250624155920_InitialCreateComplete")]
+    partial class InitialCreateComplete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -407,7 +410,7 @@ namespace CozyComfort.Distributor.API.Migrations
                             FirstName = "David",
                             IsActive = true,
                             LastName = "Distributor",
-                            PasswordHash = "$2a$11$QJk7fvgHt5KnrHcE9dGhF.8MJYl4ZzPu1CeQq2AvBnIiYHXM4QNYi",
+                            PasswordHash = "$2a$11$rQf8Fx8Kz2Wn7vJ4RjPmE.9lK3qS2hF1GxN5pT7dM8aC6bV9eWxYi",
                             Phone = "1234567890",
                             Role = 3
                         });
