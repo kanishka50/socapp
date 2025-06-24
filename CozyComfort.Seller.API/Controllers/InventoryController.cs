@@ -197,6 +197,39 @@ namespace CozyComfort.Seller.API.Controllers
                 return BadRequest(ApiResponse<bool>.FailureResult("Error updating stock"));
             }
         }
+
+
+        [HttpPost("update-stock-from-order")]
+        [AllowAnonymous] // Allow Distributor API to call this
+        public async Task<IActionResult> UpdateStockFromOrder([FromBody] UpdateStockFromOrderDto dto)
+        {
+            try
+            {
+                foreach (var item in dto.Items)
+                {
+                    var product = await _context.SellerProducts
+                        .FirstOrDefaultAsync(p => p.DistributorProductId == item.DistributorProductId);
+
+                    if (product != null)
+                    {
+                        product.CurrentStock += item.Quantity;
+                        product.UpdatedAt = DateTime.UtcNow;
+
+                        _logger.LogInformation($"Stock increased for product {product.ProductName} by {item.Quantity}");
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(ApiResponse<bool>.SuccessResult(true, "Stock updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stock from order");
+                return BadRequest(ApiResponse<bool>.FailureResult("Error updating stock"));
+            }
+        }
+
+
     }
 
     

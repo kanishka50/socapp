@@ -92,6 +92,10 @@ namespace CozyComfort.Distributor.API.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
+            // Pre-generated BCrypt hash for "Distributor123!" 
+            // Generated using: BCrypt.Net.BCrypt.HashPassword("Distributor123!")
+            const string distributorPasswordHash = "$2a$11$rQf8Fx8Kz2Wn7vJ4RjPmE.9lK3qS2hF1GxN5pT7dM8aC6bV9eWxYi";
+
             // Seed distributor users
             modelBuilder.Entity<User>().HasData(
                 new User
@@ -100,10 +104,10 @@ namespace CozyComfort.Distributor.API.Data
                     Email = "distributor@cozycomfort.com",
                     FirstName = "David",
                     LastName = "Distributor",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Distributor123!"),
+                    PasswordHash = distributorPasswordHash, // Use static hash
                     Role = UserRole.Distributor,
                     CompanyName = "Central Distribution Ltd",
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = new DateTime(2024, 1, 1),
                     IsActive = true
                 }
             );
@@ -123,7 +127,7 @@ namespace CozyComfort.Distributor.API.Data
                     MinStockLevel = 10,
                     ReorderPoint = 15,
                     ReorderQuantity = 30,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = new DateTime(2024, 1, 1),
                     IsActive = true
                 },
                 new DistributorProduct
@@ -139,7 +143,7 @@ namespace CozyComfort.Distributor.API.Data
                     MinStockLevel = 15,
                     ReorderPoint = 20,
                     ReorderQuantity = 40,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = new DateTime(2024, 1, 1),
                     IsActive = true
                 }
             );

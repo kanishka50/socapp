@@ -1,236 +1,147 @@
 ﻿@page "/distributor/orders"
-@attribute [Authorize(Roles = "Distributor")]
+@using CozyComfort.Shared.DTOs
+@using CozyComfort.Shared.DTOs.Distributor
+@using CozyComfort.BlazorApp.Services
 @inject IDistributorService DistributorService
-@inject ILogger<DistributorOrders> Logger
-@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Orders Management - Distributor</PageTitle>
+<h3>Distributor Orders</h3>
 
-<div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Orders</li>
-        </ol>
-    </nav>
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">Orders Management</h1>
-        <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo("/distributor/orders/create"))">
-            <i class="bi bi-plus-circle"></i> Create New Order
-        </button>
+@if (isLoading)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
     </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
+}
+else
+{
+    @if (orders?.Items?.Any() == true)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Order Number</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in orders.Items)
+                {
+                    <tr>
+                        <td>@order.OrderNumber</td>
+                        <td>@order.CustomerName</td>
+                        <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>$@order.TotalAmount.ToString("F2")</td>
+                        <td>
+                            <span class="badge @GetStatusBadgeClass(order.Status)">
+                                @order.Status
+                            </span>
+                        </td>
+                        <td>
+                            @if (order.Status == "Pending")
+                            {
+                                <button class="btn btn-sm btn-success"
+                                        @onclick="@(() => UpdateOrderStatus(order.Id, "Accepted"))">
+                                    Accept
+                                </button>
+                                <button class="btn btn-sm btn-danger"
+                                        @onclick="@(() => UpdateOrderStatus(order.Id, "Cancelled"))">
+                                    Cancel
+                                </button>
+                            }
+                            <button class="btn btn-sm btn-info"
+                                    @onclick="@(() => ViewOrderDetails(order))">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
-
-    @if (!string.IsNullOrEmpty(successMessage))
+    else
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <div class="alert alert-info">No orders found.</div>
     }
+}
 
-    <!-- Orders Tabs -->
-    <ul class="nav nav-tabs mb-4" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link @(activeTab == "all" ? "active" : "")" @onclick="@(() => SetActiveTab("all"))">
-                All Orders
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link @(activeTab == "manufacturer" ? "active" : "")" @onclick="@(() => SetActiveTab("manufacturer"))">
-                Manufacturer Orders
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link @(activeTab == "seller" ? "active" : "")" @onclick="@(() => SetActiveTab("seller"))">
-                Seller Orders
-            </button>
-        </li>
-    </ul>
-
-    <!-- Orders Table -->
-    <div class="card">
-        <div class="card-body">
-            @if (isLoading)
-            {
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+<!-- Order Details Modal -->
+@if (selectedOrder != null)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order Details - @selectedOrder.OrderNumber</h5>
+                    <button type="button" class="btn-close" @onclick="@(() => selectedOrder = null)"></button>
                 </div>
-            }
-            else if (filteredOrders != null && filteredOrders.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover">
+                <div class="modal-body">
+                    <table class="table">
                         <thead>
                             <tr>
-                                <th>Order Number</th>
-                                <th>Type</th>
-                                <th>Customer/Supplier</th>
-                                <th>Order Date</th>
-                                <th>Delivery Date</th>
-                                <th>Total Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var order in filteredOrders)
+                            @foreach (var item in selectedOrder.Items)
                             {
                                 <tr>
-                                    <td>
-                                        <a href="/distributor/orders/@order.Id" class="text-decoration-none">
-                                            @order.OrderNumber
-                                        </a>
-                                    </td>
-                                    <td>
-                                        @if (order.OrderType == "Manufacturer")
-                                        {
-                                            <span class="badge bg-primary">From Manufacturer</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-info">From Seller</span>
-                                        }
-                                    </td>
-                                    <td>@order.CustomerName</td>
-                                    <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
-                                    <td>
-                                        @if (order.ExpectedDeliveryDate.HasValue)
-                                        {
-                                            @order.ExpectedDeliveryDate.Value.ToString("MMM dd, yyyy")
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-                                    <td class="fw-bold">$@order.TotalAmount.ToString("N2")</td>
-                                    <td>
-                                        <span class="badge @GetStatusBadgeClass(order.Status)">
-                                            @order.Status
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button class="btn btn-outline-primary" @onclick="() => ViewOrderDetails(order.Id)" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            @if (CanUpdateStatus(order.Status))
-                                            {
-                                                <button class="btn btn-outline-success" @onclick="() => UpdateOrderStatus(order)" title="Update Status">
-                                                    <i class="bi bi-check-circle"></i>
-                                                </button>
-                                            }
-                                            @if (order.Status == "Pending")
-                                            {
-                                                <button class="btn btn-outline-danger" @onclick="() => CancelOrder(order.Id)" title="Cancel Order">
-                                                    <i class="bi bi-x-circle"></i>
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.SKU</td>
+                                    <td>@item.Quantity</td>
+                                    <td>$@item.UnitPrice.ToString("F2")</td>
+                                    <td>$@item.TotalPrice.ToString("F2")</td>
                                 </tr>
                             }
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4">Total</th>
+                                <th>$@selectedOrder.TotalAmount.ToString("F2")</th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
-
-                <!-- Pagination -->
-                @if (totalPages > 1)
-                {
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                <button class="page-link" @onclick="@(() => LoadOrders(currentPage - 1))" disabled="@(currentPage == 1)">
-                                    Previous
-                                </button>
-                            </li>
-                            @for (int i = 1; i <= totalPages; i++)
-                            {
-                                var pageNumber = i;
-                                <li class="page-item @(currentPage == pageNumber ? "active" : "")">
-                                    <button class="page-link" @onclick="@(() => LoadOrders(pageNumber))">
-                                        @pageNumber
-                                    </button>
-                                </li>
-                            }
-                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                <button class="page-link" @onclick="@(() => LoadOrders(currentPage + 1))" disabled="@(currentPage == totalPages)">
-                                    Next
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
-                }
-            }
-            else
-            {
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> No orders found.
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="@(() => selectedOrder = null)">Close</button>
                 </div>
-            }
+            </div>
         </div>
     </div>
-</div>
+}
 
 @code {
-    private List<OrderDto> orders = new();
-    private List<OrderDto> filteredOrders = new();
+    private PagedResult<OrderDto>? orders;
     private bool isLoading = false;
-    private string? errorMessage;
-    private string? successMessage;
-    private string activeTab = "all";
-
-    private int currentPage = 1;
-    private int pageSize = 10;
-    private int totalPages = 1;
-    private int totalItems = 0;
+    private OrderDto? selectedOrder;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadOrders();
     }
 
-    private async Task LoadOrders(int page = 1)
+    private async Task LoadOrders()
     {
+        isLoading = true;
         try
         {
-            isLoading = true;
-            errorMessage = null;
-            currentPage = page;
-
-            var response = await DistributorService.GetOrdersAsync(currentPage, pageSize);
-
+            var response = await DistributorService.GetOrdersAsync(1, 20);
             if (response.Success && response.Data != null)
             {
-                orders = response.Data.Items;
-                totalItems = response.Data.TotalCount;
-                totalPages = response.Data.TotalPages;
-                FilterOrders();
-            }
-            else
-            {
-                errorMessage = response.Message ?? "Failed to load orders";
-                orders = new List<OrderDto>();
-                filteredOrders = new List<OrderDto>();
+                orders = response.Data;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading orders");
-            errorMessage = "An error occurred while loading orders";
-            orders = new List<OrderDto>();
-            filteredOrders = new List<OrderDto>();
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading orders: {ex.Message}");
         }
         finally
         {
@@ -238,110 +149,37 @@
         }
     }
 
-    private void SetActiveTab(string tab)
-    {
-        activeTab = tab;
-        currentPage = 1;
-        FilterOrders();
-    }
-
-    private void FilterOrders()
-    {
-        filteredOrders = activeTab switch
-        {
-            "manufacturer" => orders.Where(o => o.OrderType == "Manufacturer").ToList(),
-            "seller" => orders.Where(o => o.OrderType == "Seller").ToList(),
-            _ => orders
-        };
-    }
-
-    private void ViewOrderDetails(int orderId)
-    {
-        Navigation.NavigateTo($"/distributor/orders/{orderId}");
-    }
-
-    private async Task UpdateOrderStatus(OrderDto order)
+    private async Task UpdateOrderStatus(int orderId, string newStatus)
     {
         try
         {
-            var nextStatus = GetNextStatus(order.Status);
-            if (string.IsNullOrEmpty(nextStatus))
+            var confirmMessage = newStatus == "Accepted"
+                ? "Are you sure you want to accept this order? This will decrease your inventory."
+                : "Are you sure you want to cancel this order?";
+
+            if (!await JSRuntime.InvokeAsync<bool>("confirm", confirmMessage))
                 return;
 
-            var response = await DistributorService.UpdateOrderStatusAsync(order.Id, nextStatus);
-
+            var response = await DistributorService.UpdateOrderStatusAsync(orderId, newStatus);
             if (response.Success)
             {
-                successMessage = $"Order status updated to {nextStatus}";
-                await LoadOrders(currentPage);
-
-                // Clear success message after 3 seconds
-                await Task.Delay(3000);
-                successMessage = null;
-                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("alert", $"Order {newStatus.ToLower()} successfully!");
+                await LoadOrders(); // Refresh the list
             }
             else
             {
-                errorMessage = response.Message ?? "Failed to update order status";
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to update order: {response.Message}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating order status");
-            errorMessage = "An error occurred while updating order status";
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
         }
     }
 
-    private async Task CancelOrder(int orderId)
+    private void ViewOrderDetails(OrderDto order)
     {
-        try
-        {
-            var response = await DistributorService.UpdateOrderStatusAsync(orderId, "Cancelled");
-
-            if (response.Success)
-            {
-                successMessage = "Order cancelled successfully";
-                await LoadOrders(currentPage);
-
-                // Clear success message after 3 seconds
-                await Task.Delay(3000);
-                successMessage = null;
-                StateHasChanged();
-            }
-            else
-            {
-                errorMessage = response.Message ?? "Failed to cancel order";
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error cancelling order");
-            errorMessage = "An error occurred while cancelling the order";
-        }
-    }
-
-    private bool CanUpdateStatus(string currentStatus)
-    {
-        return currentStatus switch
-        {
-            "Pending" => true,
-            "Processing" => true,
-            "Confirmed" => true,
-            "Shipped" => true,
-            _ => false
-        };
-    }
-
-    private string GetNextStatus(string currentStatus)
-    {
-        return currentStatus switch
-        {
-            "Pending" => "Processing",
-            "Processing" => "Confirmed",
-            "Confirmed" => "Shipped",
-            "Shipped" => "Delivered",
-            _ => ""
-        };
+        selectedOrder = order;
     }
 
     private string GetStatusBadgeClass(string status)
@@ -349,10 +187,7 @@
         return status switch
         {
             "Pending" => "bg-warning",
-            "Processing" => "bg-info",
-            "Confirmed" => "bg-primary",
-            "Shipped" => "bg-secondary",
-            "Delivered" => "bg-success",
+            "Accepted" => "bg-success",
             "Cancelled" => "bg-danger",
             _ => "bg-secondary"
         };

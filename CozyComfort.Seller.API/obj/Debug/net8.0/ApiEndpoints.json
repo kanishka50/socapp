@@ -180,6 +180,22 @@
   },
   {
     "ContainingType": "CozyComfort.Seller.API.Controllers.InventoryController",
+    "Method": "UpdateStockFromOrder",
+    "RelativePath": "api/Inventory/update-stock-from-order",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.UpdateStockFromOrderDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.InventoryController",
     "Method": "UpdateStock",
     "RelativePath": "api/Inventory/update-stock/{id}",
     "HttpMethod": "PUT",

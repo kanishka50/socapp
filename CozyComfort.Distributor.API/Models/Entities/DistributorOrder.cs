@@ -9,6 +9,11 @@ namespace CozyComfort.Distributor.API.Models.Entities
         public OrderType OrderType { get; set; } // FROM_MANUFACTURER or FROM_SELLER
         public int? ManufacturerId { get; set; }
         public int? SellerId { get; set; }
+
+        // Add these two properties
+        public int? CustomerId { get; set; }  // Generic customer ID (can be Seller or Manufacturer)
+        public string? CustomerOrderNumber { get; set; } // To store the original order number from customer
+
         public string CustomerName { get; set; } = string.Empty;
         public OrderStatus Status { get; set; }
         public DateTime OrderDate { get; set; }

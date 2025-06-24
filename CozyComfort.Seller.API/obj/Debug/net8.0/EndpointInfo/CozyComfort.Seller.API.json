@@ -371,6 +371,37 @@
         }
       }
     },
+    "/api/Inventory/update-stock-from-order": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStockFromOrderDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStockFromOrderDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStockFromOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Orders/create": {
       "post": {
         "tags": [
@@ -798,6 +829,20 @@
         },
         "additionalProperties": false
       },
+      "StockUpdateItem": {
+        "type": "object",
+        "properties": {
+          "distributorProductId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateStatusDto": {
         "type": "object",
         "properties": {
@@ -814,6 +859,23 @@
           "newStock": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateStockFromOrderDto": {
+        "type": "object",
+        "properties": {
+          "orderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockUpdateItem"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

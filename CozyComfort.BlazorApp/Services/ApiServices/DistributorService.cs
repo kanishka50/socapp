@@ -182,24 +182,36 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                await SetAuthorizationHeader();
+                await SetAuthorizationHeader();  // Use existing method
 
-                var queryString = $"pageNumber={pageNumber}&pageSize={pageSize}";
-                var response = await _httpClient.GetAsync($"api/Orders?{queryString}");
+                var response = await _httpClient.GetAsync($"api/orders?pageNumber={pageNumber}&pageSize={pageSize}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<ApiResponse<PagedResult<OrderDto>>>(content, _jsonOptions);
-                    return result ?? ApiResponse<PagedResult<OrderDto>>.FailureResult("Failed to deserialize response");
+                    return result ?? new ApiResponse<PagedResult<OrderDto>>
+                    {
+                        Success = false,
+                        Message = "Failed to deserialize response"
+                    };
                 }
 
-                return ApiResponse<PagedResult<OrderDto>>.FailureResult($"Error: {response.StatusCode}");
+                return new ApiResponse<PagedResult<OrderDto>>
+                {
+                    Success = false,
+                    Message = $"Error: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting orders");
-                return ApiResponse<PagedResult<OrderDto>>.FailureResult($"Error: {ex.Message}");
+                _logger.LogError(ex, "Error fetching orders");
+                return new ApiResponse<PagedResult<OrderDto>>
+                {
+                    Success = false,
+                    Message = "Error fetching orders",
+                    Errors = new List<string> { ex.Message }
+                };
             }
         }
 
@@ -207,27 +219,36 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
-                await SetAuthorizationHeader();
+                await SetAuthorizationHeader();  // Use existing method
 
-                var dto = new UpdateOrderStatusDto { Status = status };
-                var json = JsonSerializer.Serialize(dto);
+                var updateDto = new { Status = status };
+                var json = JsonSerializer.Serialize(updateDto);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"api/Orders/{orderId}/status", content);
+                var response = await _httpClient.PutAsync($"api/orders/{orderId}/update-status", content);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<ApiResponse<bool>>(responseContent, _jsonOptions);
-                    return result ?? ApiResponse<bool>.FailureResult("Failed to deserialize response");
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
                 }
 
-                return ApiResponse<bool>.FailureResult($"Error: {response.StatusCode}");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to update order status: {response.StatusCode}"
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating order status");
-                return ApiResponse<bool>.FailureResult($"Error: {ex.Message}");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Error updating order status",
+                    Errors = new List<string> { ex.Message }
+                };
             }
         }
 

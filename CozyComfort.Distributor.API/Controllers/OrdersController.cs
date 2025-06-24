@@ -47,6 +47,7 @@ namespace CozyComfort.Distributor.API.Controllers
         }
 
         [HttpPost("process-seller-order")]
+        [Authorize(Policy = "SystemOrDistributor")]
         public async Task<IActionResult> ProcessSellerOrder([FromBody] ProcessSellerOrderDto dto)
         {
             if (!ModelState.IsValid)

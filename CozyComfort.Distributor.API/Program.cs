@@ -77,11 +77,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add Authorization
+// Add Authorization - UPDATED to include System role
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("DistributorOnly", policy =>
         policy.RequireRole("Distributor", "Administrator"));
+
+    options.AddPolicy("SystemOrDistributor", policy =>
+        policy.RequireRole("System", "Distributor", "Administrator"));
 });
 
 // Configure HttpClient for Manufacturer API
@@ -130,11 +133,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
+// Ensure database is created and initialized - UPDATED
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<DistributorDbContext>();
-    dbContext.Database.EnsureCreated();
+    await DistributorDbInitializer.InitializeAsync(dbContext);
 }
 
 app.Run();
