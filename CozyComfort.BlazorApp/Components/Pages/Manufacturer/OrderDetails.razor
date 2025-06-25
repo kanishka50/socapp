@@ -183,7 +183,7 @@
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button class="btn btn-success" @onclick="() => UpdateOrderStatus(" Accepted")"
+                                <button class="btn btn-success" @onclick="AcceptOrder"
                                         disabled="@(!CanAcceptOrder() || isProcessing)">
                                     @if (isProcessing && processingAction == "Accepted")
                                     {
@@ -191,7 +191,7 @@
                                     }
                                     <i class="bi bi-check-circle"></i> Accept Order
                                 </button>
-                                <button class="btn btn-danger" @onclick="() => UpdateOrderStatus(" Cancelled")"
+                                <button class="btn btn-danger" @onclick="CancelOrder"
                                         disabled="@isProcessing">
                                     @if (isProcessing && processingAction == "Cancelled")
                                     {
@@ -328,6 +328,16 @@
         return true;
     }
 
+    private async Task AcceptOrder()
+    {
+        await UpdateOrderStatus("Accepted");
+    }
+
+    private async Task CancelOrder()
+    {
+        await UpdateOrderStatus("Cancelled");
+    }
+
     private async Task UpdateOrderStatus(string newStatus)
     {
         if (order == null || isProcessing) return;
@@ -339,7 +349,7 @@
             errorMessage = null;
             successMessage = null;
 
-            var updateDto = new UpdateOrderStatusDto
+            var updateDto = new CozyComfort.Shared.DTOs.Manufacturer.UpdateOrderStatusDto  // ✅ Fully qualified
             {
                 Status = newStatus,
                 Notes = statusNotes

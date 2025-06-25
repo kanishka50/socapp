@@ -16,6 +16,90 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.OrdersController",
+    "Method": "GetOrders",
+    "RelativePath": "api/Orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "pageNumber",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.OrdersController",
+    "Method": "GetOrder",
+    "RelativePath": "api/Orders/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.OrdersController",
+    "Method": "UpdateOrderStatus",
+    "RelativePath": "api/Orders/{id}/status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Shared.DTOs.Manufacturer.UpdateOrderStatusDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.OrdersController",
+    "Method": "CreateOrderFromDistributor",
+    "RelativePath": "api/Orders/from-distributor",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Shared.DTOs.Manufacturer.CreateManufacturerOrderFromDistributorDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.OrdersController",
+    "Method": "GetInventory",
+    "RelativePath": "api/Orders/inventory",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Manufacturer.API.Controllers.ProductsController",
     "Method": "GetProducts",
     "RelativePath": "api/Products",
@@ -94,6 +178,90 @@
       {
         "Name": "request",
         "Type": "CozyComfort.Shared.DTOs.Manufacturer.StockCheckRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.TestController",
+    "Method": "CheckUsers",
+    "RelativePath": "api/Test/check-users",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.TestController",
+    "Method": "CreateManufacturer",
+    "RelativePath": "api/Test/create-manufacturer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Manufacturer.API.Controllers.CreateManufacturerRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.TestController",
+    "Method": "GetDatabaseInfo",
+    "RelativePath": "api/Test/db-info",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.TestController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/Test/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Manufacturer.API.Controllers.ResetPasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.TestController",
+    "Method": "TestLogin",
+    "RelativePath": "api/Test/test-login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Manufacturer.API.Controllers.TestLoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Manufacturer.API.Controllers.TestController",
+    "Method": "ToggleUserStatus",
+    "RelativePath": "api/Test/toggle-user-status",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Manufacturer.API.Controllers.ToggleUserStatusRequest",
         "IsRequired": true
       }
     ],

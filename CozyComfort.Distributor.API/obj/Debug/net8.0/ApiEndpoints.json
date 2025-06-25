@@ -67,7 +67,7 @@
       },
       {
         "Name": "dto",
-        "Type": "CozyComfort.Distributor.API.Controllers.UpdateOrderStatusDto",
+        "Type": "CozyComfort.Shared.DTOs.Distributor.UpdateOrderStatusDto",
         "IsRequired": true
       }
     ],

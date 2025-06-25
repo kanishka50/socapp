@@ -248,7 +248,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<ManufacturerOrderDto>> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusDto dto)
+        public async Task<ApiResponse<bool>> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusDto dto)
         {
             try
             {
@@ -261,17 +261,15 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<ApiResponse<ManufacturerOrderDto>>(responseContent, _jsonOptions);
-                    return result ?? ApiResponse<ManufacturerOrderDto>.FailureResult("Failed to deserialize response");
+                    return ApiResponse<bool>.SuccessResult(true, "Order status updated successfully");
                 }
 
-                return ApiResponse<ManufacturerOrderDto>.FailureResult($"Error: {response.StatusCode}");
+                return ApiResponse<bool>.FailureResult($"Error: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating order status");
-                return ApiResponse<ManufacturerOrderDto>.FailureResult($"Error: {ex.Message}");
+                return ApiResponse<bool>.FailureResult($"Error: {ex.Message}");
             }
         }
 
