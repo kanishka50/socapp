@@ -14,48 +14,49 @@
     </div>
 
     <!-- Status Filter Tabs -->
-    <ul class="nav nav-tabs mb-4">
-        <li class="nav-item">
-            <a class="nav-link @(statusFilter == "" ? "active" : "")"
-               href="#" @onclick="() => FilterByStatus(string.Empty)" @onclick:preventDefault="true">
-                All Orders
-                @if (totalOrders > 0)
-                {
-                    <span class="badge bg-secondary ms-1">@totalOrders</span>
-                }
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @(statusFilter == "Pending" ? "active" : "")"
-               href="#" @onclick="() => FilterByStatus(" Pending")" @onclick:preventDefault="true">
-                Pending
-                @if (pendingCount > 0)
-                {
-                    <span class="badge bg-warning ms-1">@pendingCount</span>
-                }
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @(statusFilter == "Accepted" ? "active" : "")"
-               href="#" @onclick="() => FilterByStatus(" Accepted")" @onclick:preventDefault="true">
-                Accepted
-                @if (acceptedCount > 0)
-                {
-                    <span class="badge bg-success ms-1">@acceptedCount</span>
-                }
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @(statusFilter == "Cancelled" ? "active" : "")"
-               href="#" @onclick="() => FilterByStatus(" Cancelled")" @onclick:preventDefault="true">
-                Cancelled
-                @if (cancelledCount > 0)
-                {
-                    <span class="badge bg-danger ms-1">@cancelledCount</span>
-                }
-            </a>
-        </li>
-    </ul>
+    <!-- Status Filter Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(statusFilter == "" ? "active" : "")"
+           href="#" @onclick="() => FilterByStatus(string.Empty)" @onclick:preventDefault="true">
+            All Orders
+            @if (totalOrders > 0)
+            {
+                <span class="badge bg-secondary ms-1">@totalOrders</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(statusFilter == "Pending" ? "active" : "")"
+               href="#" @onclick="() => FilterByStatus(\" Pending\")" @onclick:preventDefault="true">
+            Pending
+            @if (pendingCount > 0)
+            {
+                <span class="badge bg-warning ms-1">@pendingCount</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(statusFilter == "Accepted" ? "active" : "")"
+           href="#" @onclick="() => FilterByStatus(\"Accepted\")" @onclick:preventDefault="true">
+            Accepted
+            @if (acceptedCount > 0)
+            {
+                <span class="badge bg-success ms-1">@acceptedCount</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(statusFilter == "Cancelled" ? "active" : "")"
+           href="#" @onclick="() => FilterByStatus(\"Cancelled\")" @onclick:preventDefault="true">
+            Cancelled
+            @if (cancelledCount > 0)
+            {
+                <span class="badge bg-danger ms-1">@cancelledCount</span>
+            }
+        </a>
+    </li>
+</ul>
 
     @if (loading)
     {

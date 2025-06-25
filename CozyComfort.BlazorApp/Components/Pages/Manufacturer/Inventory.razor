@@ -48,36 +48,36 @@
         </div>
     </div>
 
-    <!-- Filter Options -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <label class="form-label">Search</label>
-                    <input type="text" class="form-control" placeholder="Search by name or SKU" 
-                           @bind="searchTerm" @bind:event="oninput" @onkeyup="ApplyFilters" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Stock Status</label>
-                    <select class="form-select" @bind="stockFilter" @bind:event="onchange" @onchange="ApplyFilters">
-                        <option value="">All Items</option>
-                        <option value="low">Low Stock</option>
-                        <option value="out">Out of Stock</option>
-                        <option value="ok">Sufficient Stock</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Sort By</label>
-                    <select class="form-select" @bind="sortBy" @bind:event="onchange" @onchange="ApplyFilters">
-                        <option value="name">Product Name</option>
-                        <option value="stock">Current Stock</option>
-                        <option value="available">Available Stock</option>
-                        <option value="value">Stock Value</option>
-                    </select>
-                </div>
+   <!-- Filter Options -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" placeholder="Search by name or SKU" 
+                       @bind="searchTerm" @bind:event="oninput" @onkeyup="ApplyFilters" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Stock Status</label>
+                <select class="form-select" @bind="stockFilter" @onchange="ApplyFilters">
+                    <option value="">All Items</option>
+                    <option value="low">Low Stock</option>
+                    <option value="out">Out of Stock</option>
+                    <option value="ok">Sufficient Stock</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Sort By</label>
+                <select class="form-select" @bind="sortBy" @onchange="ApplyFilters">
+                    <option value="name">Product Name</option>
+                    <option value="stock">Current Stock</option>
+                    <option value="available">Available Stock</option>
+                    <option value="value">Stock Value</option>
+                </select>
             </div>
         </div>
     </div>
+</div>
 
     @if (loading)
     {
