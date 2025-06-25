@@ -1,6 +1,7 @@
 ﻿// File: CozyComfort.BlazorApp/Services/Interfaces/IDistributorService.cs
 using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Distributor;
+using CozyComfort.Shared.DTOs.Manufacturer;
 
 namespace CozyComfort.BlazorApp.Services.Interfaces
 {
@@ -16,5 +17,11 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
 
         // ADD THIS METHOD
         Task<ApiResponse<DistributorProductDto>> AddProductFromManufacturerAsync(CreateDistributorProductDto dto);
+
+
+        // Manufacturer Products for Order Creation
+        Task<ApiResponse<PagedResult<ProductDto>>> GetManufacturerProductsAsync(PagedRequest request);
+        Task<ApiResponse<ProductDto>> GetManufacturerProductByIdAsync(int id);
+        Task<ApiResponse<StockCheckResponse>> CheckManufacturerStockAsync(StockCheckRequest request);
     }
 }

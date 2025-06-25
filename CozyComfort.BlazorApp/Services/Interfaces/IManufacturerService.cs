@@ -15,5 +15,7 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         Task<ApiResponse<ManufacturerOrderDto>> GetOrderByIdAsync(int orderId);
         Task<ApiResponse<bool>> UpdateOrderStatusAsync(int orderId, UpdateOrderStatusDto dto);  // ← Returns bool
         Task<ApiResponse<List<ManufacturerInventoryDto>>> GetInventoryAsync();
+
+
     }
 }

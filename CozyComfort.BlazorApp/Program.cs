@@ -37,43 +37,48 @@ builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<CustomAuthStateProvider>());
 
-// Configure HttpClient for each API
+// Configure Named HttpClients for each API
 builder.Services.AddHttpClient("ManufacturerAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7001/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
 builder.Services.AddHttpClient("DistributorAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7002/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
 builder.Services.AddHttpClient("SellerAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7003/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Register ManufacturerService - expects HttpClient, IAuthService, ILogger
+// Register ManufacturerService with typed HttpClient
 builder.Services.AddHttpClient<IManufacturerService, ManufacturerService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7001/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
-// Register DistributorService - expects HttpClient, IAuthService, ILogger
+// Register DistributorService with typed HttpClient AND IHttpClientFactory access
 builder.Services.AddHttpClient<IDistributorService, DistributorService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7002/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 });
 
-// Register SellerService - expects IHttpClientFactory, ILogger, ILocalStorageService
+// Register SellerService
 builder.Services.AddScoped<ISellerService, SellerService>();
 
 // Add Session support for cart

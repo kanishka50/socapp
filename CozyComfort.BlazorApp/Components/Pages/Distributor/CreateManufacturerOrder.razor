@@ -25,42 +25,155 @@
         </div>
     }
 
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="row">
         <div class="col-md-8">
             <!-- Product Selection -->
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Select Products</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Select Manufacturer Products</h5>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="LoadManufacturerProducts" disabled="@loadingProducts">
+                        @if (loadingProducts)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
                 </div>
                 <div class="card-body">
+                    <!-- Search and Filter -->
                     <div class="row mb-3">
-                        <div class="col-md-8">
-                            <select class="form-select" @bind="selectedProductId">
-                                <option value="0">Select a product to add</option>
-                                @foreach (var product in availableProducts)
-                                {
-                                    @if (product.ManufacturerProductId.HasValue)
-                                    {
-                                        <option value="@product.ManufacturerProductId.Value">
-                                            @product.ProductName - SKU: @product.SKU (Stock: @product.CurrentStock)
-                                        </option>
-                                    }
-                                }
-                            </select>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" placeholder="Search manufacturer products..."
+                                   @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearchKeyUp" />
                         </div>
-                        <div class="col-md-2">
-                            <input type="number" class="form-control" placeholder="Quantity" @bind="quantityToAdd" min="1" />
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" @onclick="LoadManufacturerProducts" disabled="@loadingProducts">
+                                <i class="bi bi-search"></i> Search
+                            </button>
                         </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary w-100" @onclick="AddToOrder" disabled="@(selectedProductId == 0 || quantityToAdd <= 0)">
-                                Add
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100" @onclick="ToggleProductList">
+                                <i class="bi bi-list"></i> @(showProductList ? "Hide" : "Show") Products
                             </button>
                         </div>
                     </div>
 
+                    @if (showProductList)
+                    {
+                        @if (loadingProducts)
+                        {
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-primary"></div>
+                                <p class="mt-2">Loading manufacturer products...</p>
+                            </div>
+                        }
+                        else if (manufacturerProducts == null || !manufacturerProducts.Items.Any())
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> No manufacturer products found.
+                                <button class="btn btn-sm btn-outline-primary ms-2" @onclick="LoadManufacturerProducts">
+                                    Try Again
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Product Name</th>
+                                            <th>Price</th>
+                                            <th>Available Stock</th>
+                                            <th>Quantity</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var product in manufacturerProducts.Items)
+                                        {
+                                            <tr>
+                                                <td><small class="text-muted">@product.SKU</small></td>
+                                                <td>
+                                                    <strong>@product.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(product.Description))
+                                                    {
+                                                        <br>
+                                        
+                                                        <small class="text-muted">@product.Description.Substring(0, Math.Min(50, product.Description.Length))...</small>
+                                                    }
+                                                </td>
+                                                <td><span class="badge bg-info">$@product.Price.ToString("F2")</span></td>
+                                                <td>
+                                                    @if (product.AvailableStock > 0)
+                                                    {
+                                                        <span class="badge bg-success">@product.AvailableStock</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Out of Stock</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm" style="width: 80px;"
+                                                           min="1" max="@product.AvailableStock" value="1"
+                                                           @onchange="@((ChangeEventArgs e) => SetTempQuantity(product.Id, e))" />
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary"
+                                                            @onclick="() => AddManufacturerProductToOrder(product)"
+                                                            disabled="@(product.AvailableStock <= 0)">
+                                                        <i class="bi bi-plus"></i> Add
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            @if (manufacturerProducts.TotalPages > 1)
+                            {
+                                <nav class="mt-3">
+                                    <ul class="pagination pagination-sm justify-content-center">
+                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">Previous</button>
+                                        </li>
+
+                                        @for (int i = 1; i <= Math.Min(manufacturerProducts.TotalPages, 5); i++)
+                                        {
+                                            var pageNumber = i;
+                                            <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                                                <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                                            </li>
+                                        }
+
+                                        <li class="page-item @(currentPage == manufacturerProducts.TotalPages ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">Next</button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            }
+                        }
+                    }
+
+                    <hr />
+
                     @if (orderItems.Any())
                     {
-                        <h6 class="mb-3">Order Items</h6>
+                        <h6 class="mb-3">
+                            <i class="bi bi-cart"></i> Order Items (@orderItems.Count)
+                        </h6>
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
@@ -78,13 +191,13 @@
                                     {
                                         <tr>
                                             <td>@item.ProductName</td>
-                                            <td>@item.SKU</td>
+                                            <td><small class="text-muted">@item.SKU</small></td>
                                             <td>
                                                 <input type="number" class="form-control form-control-sm" style="width: 80px;"
                                                        @bind="item.Quantity" @bind:event="oninput" @onchange="UpdateOrderTotal" min="1" />
                                             </td>
                                             <td>$@item.UnitPrice.ToString("F2")</td>
-                                            <td>$@item.Total.ToString("F2")</td>
+                                            <td><strong>$@item.Total.ToString("F2")</strong></td>
                                             <td>
                                                 <button class="btn btn-sm btn-danger" @onclick="() => RemoveItem(item)">
                                                     <i class="bi bi-trash"></i>
@@ -94,9 +207,9 @@
                                     }
                                 </tbody>
                                 <tfoot>
-                                    <tr>
-                                        <th colspan="4" class="text-end">Total:</th>
-                                        <th>$@orderTotal.ToString("F2")</th>
+                                    <tr class="table-info">
+                                        <th colspan="4" class="text-end">Order Total:</th>
+                                        <th><h5 class="mb-0">$@orderTotal.ToString("F2")</h5></th>
                                         <th></th>
                                     </tr>
                                 </tfoot>
@@ -106,7 +219,7 @@
                     else
                     {
                         <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> No items added to the order yet.
+                            <i class="bi bi-info-circle"></i> No items added to the order yet. Select products from the manufacturer catalog above.
                         </div>
                     }
                 </div>
@@ -119,14 +232,14 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="shippingAddress" class="form-label">Shipping Address</label>
+                        <label for="shippingAddress" class="form-label">Shipping Address <span class="text-danger">*</span></label>
                         <textarea id="shippingAddress" class="form-control" rows="3" @bind="orderDto.ShippingAddress"
-                                  placeholder="Enter shipping address"></textarea>
+                                  placeholder="Enter your complete shipping address"></textarea>
                     </div>
                     <div class="mb-3">
                         <label for="notes" class="form-label">Order Notes (Optional)</label>
                         <textarea id="notes" class="form-control" rows="2" @bind="orderDto.Notes"
-                                  placeholder="Add any special instructions or notes"></textarea>
+                                  placeholder="Add any special instructions or notes for the manufacturer"></textarea>
                     </div>
                 </div>
             </div>
@@ -147,23 +260,50 @@
                         <dd class="col-6">@orderItems.Sum(i => i.Quantity)</dd>
 
                         <dt class="col-6">Order Total:</dt>
-                        <dd class="col-6 fw-bold">$@orderTotal.ToString("F2")</dd>
+                        <dd class="col-6 fw-bold text-success">$@orderTotal.ToString("F2")</dd>
                     </dl>
 
                     <hr />
 
                     <div class="d-grid gap-2">
-                        <button class="btn btn-primary" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting)">
+                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting || string.IsNullOrWhiteSpace(orderDto.ShippingAddress))">
                             @if (isSubmitting)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                             }
-                            Submit Order
+                            <i class="bi bi-check-circle"></i> Submit Order
                         </button>
-                        <button class="btn btn-secondary" @onclick="CancelOrder">
-                            Cancel
+                        <button class="btn btn-secondary" @onclick="CancelOrder" disabled="@isSubmitting">
+                            <i class="bi bi-x-circle"></i> Cancel
                         </button>
                     </div>
+
+                    @if (!orderItems.Any())
+                    {
+                        <small class="text-muted">Add products to enable order submission</small>
+                    }
+                    else if (string.IsNullOrWhiteSpace(orderDto.ShippingAddress))
+                    {
+                        <small class="text-warning">Enter shipping address to enable order submission</small>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Available Products</h6>
+                </div>
+                <div class="card-body">
+                    @if (manufacturerProducts != null)
+                    {
+                        <p class="mb-1"><strong>@manufacturerProducts.TotalCount</strong> products available</p>
+                        <p class="mb-0 text-muted">Page @currentPage of @manufacturerProducts.TotalPages</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Loading product information...</p>
+                    }
                 </div>
             </div>
         </div>
@@ -176,89 +316,156 @@
     public int? ProductId { get; set; }
 
     private CreateManufacturerOrderDto orderDto = new();
-    private List<DistributorProductDto> availableProducts = new();
+    private PagedResult<ProductDto>? manufacturerProducts; // Changed to use manufacturer products
     private List<OrderItemViewModel> orderItems = new();
+    private Dictionary<int, int> tempQuantities = new(); // Store temporary quantities for each product
 
-    private int selectedProductId = 0;
-    private int quantityToAdd = 1;
+    private string searchTerm = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private bool showProductList = true;
+    private bool loadingProducts = false;
+
     private decimal orderTotal = 0;
-
     private bool isSubmitting = false;
     private string? errorMessage;
+    private string? successMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAvailableProducts();
+        await LoadManufacturerProducts();
+    }
 
-        // If productId is provided in query, pre-select it
-        if (ProductId.HasValue && ProductId.Value > 0)
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
         {
-            selectedProductId = ProductId.Value;
+            currentPage = 1; // Reset to first page when searching
+            await LoadManufacturerProducts();
         }
     }
 
-    private async Task LoadAvailableProducts()
+    private async Task LoadManufacturerProducts()
     {
         try
         {
-            var response = await DistributorService.GetProductsAsync(new PagedRequest
+            loadingProducts = true;
+            errorMessage = null;
+
+            var request = new PagedRequest
             {
-                PageNumber = 1,
-                PageSize = 100
-            });
+                PageNumber = currentPage,
+                PageSize = pageSize,
+                SearchTerm = searchTerm
+            };
+
+            var response = await DistributorService.GetManufacturerProductsAsync(request);
 
             if (response.Success && response.Data != null)
             {
-                availableProducts = response.Data.Items
-                    .Where(p => p.ManufacturerProductId.HasValue) // Only show products linked to manufacturer
-                    .Where(p => p.CurrentStock < p.MinStockLevel * 2) // Products that might need reordering
-                    .ToList();
+                manufacturerProducts = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load manufacturer products";
+                manufacturerProducts = null;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading products");
-            errorMessage = "Failed to load available products";
+            Logger.LogError(ex, "Error loading manufacturer products");
+            errorMessage = "Failed to load manufacturer products. Please try again.";
+        }
+        finally
+        {
+            loadingProducts = false;
         }
     }
 
-    private void AddToOrder()
+    private void ToggleProductList()
     {
-        if (selectedProductId == 0 || quantityToAdd <= 0)
-            return;
+        showProductList = !showProductList;
+    }
 
-        var product = availableProducts.FirstOrDefault(p => p.ManufacturerProductId.HasValue && p.ManufacturerProductId.Value == selectedProductId);
-        if (product == null)
-            return;
-
-        var existingItem = orderItems.FirstOrDefault(i => i.ProductId == selectedProductId);
-        if (existingItem != null)
+    private async Task GoToPage(int page)
+    {
+        if (page >= 1 && page <= (manufacturerProducts?.TotalPages ?? 1) && page != currentPage)
         {
-            existingItem.Quantity += quantityToAdd;
+            currentPage = page;
+            await LoadManufacturerProducts();
+        }
+    }
+
+    private void SetTempQuantity(int productId, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int quantity) && quantity > 0)
+        {
+            tempQuantities[productId] = quantity;
         }
         else
         {
-            orderItems.Add(new OrderItemViewModel
+            tempQuantities[productId] = 1;
+        }
+    }
+
+    private void AddManufacturerProductToOrder(ProductDto product)
+    {
+        try
+        {
+            int quantity = tempQuantities.ContainsKey(product.Id) ? tempQuantities[product.Id] : 1;
+
+            if (quantity <= 0 || quantity > product.AvailableStock)
             {
-                ProductId = selectedProductId, // This is already an int, not nullable
-                ProductName = product.ProductName,
-                SKU = product.SKU,
-                Quantity = quantityToAdd,
-                UnitPrice = product.PurchasePrice
+                errorMessage = $"Invalid quantity for {product.Name}. Available stock: {product.AvailableStock}";
+                return;
+            }
+
+            var existingItem = orderItems.FirstOrDefault(i => i.ManufacturerProductId == product.Id);
+            if (existingItem != null)
+            {
+                existingItem.Quantity += quantity;
+            }
+            else
+            {
+                orderItems.Add(new OrderItemViewModel
+                {
+                    ManufacturerProductId = product.Id, // Use manufacturer product ID
+                    ProductName = product.Name,
+                    SKU = product.SKU,
+                    Quantity = quantity,
+                    UnitPrice = product.Price
+                });
+            }
+
+            UpdateOrderTotal();
+            successMessage = $"Added {quantity} x {product.Name} to order";
+
+            // Clear the success message after 3 seconds
+            _ = Task.Delay(3000).ContinueWith(t =>
+            {
+                successMessage = null;
+                InvokeAsync(StateHasChanged);
             });
         }
-
-        UpdateOrderTotal();
-
-        // Reset selection
-        selectedProductId = 0;
-        quantityToAdd = 1;
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error adding product to order");
+            errorMessage = "Failed to add product to order";
+        }
     }
 
     private void RemoveItem(OrderItemViewModel item)
     {
         orderItems.Remove(item);
         UpdateOrderTotal();
+        successMessage = $"Removed {item.ProductName} from order";
+
+        // Clear the success message after 3 seconds
+        _ = Task.Delay(3000).ContinueWith(t =>
+        {
+            successMessage = null;
+            InvokeAsync(StateHasChanged);
+        });
     }
 
     private void UpdateOrderTotal()
@@ -284,10 +491,12 @@
 
             isSubmitting = true;
             errorMessage = null;
+            successMessage = null;
 
+            // Map order items to the required DTO format with ManufacturerProductId
             orderDto.Items = orderItems.Select(i => new OrderItemRequest
             {
-                ManufacturerProductId = i.ProductId, // ProductId is already non-nullable int
+                ManufacturerProductId = i.ManufacturerProductId, // Use manufacturer product ID
                 Quantity = i.Quantity
             }).ToList();
 
@@ -295,17 +504,20 @@
 
             if (response.Success)
             {
+                successMessage = "Order created successfully! Redirecting...";
+                await Task.Delay(1500); // Show success message briefly
                 Navigation.NavigateTo($"/distributor/orders/{response.Data?.Id ?? 0}");
             }
             else
             {
-                errorMessage = response.Message ?? "Failed to create order";
+                errorMessage = response.Message ?? "Failed to create order. Please try again.";
+                Logger.LogError("Order creation failed: {Message}", response.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating order");
-            errorMessage = "An error occurred while creating the order";
+            errorMessage = "An unexpected error occurred while creating the order. Please try again.";
         }
         finally
         {
@@ -320,7 +532,7 @@
 
     private class OrderItemViewModel
     {
-        public int ProductId { get; set; }  // Keep this as non-nullable int
+        public int ManufacturerProductId { get; set; } // Changed to ManufacturerProductId
         public string ProductName { get; set; } = string.Empty;
         public string SKU { get; set; } = string.Empty;
         public int Quantity { get; set; }
