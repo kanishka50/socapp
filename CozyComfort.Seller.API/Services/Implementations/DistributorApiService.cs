@@ -121,6 +121,69 @@ namespace CozyComfort.Seller.API.Services.Implementations
             }
         }
 
+
+        public async Task<ApiResponse<PagedResult<DistributorProductDto>>> GetDistributorProductsAsync(PagedRequest request)
+        {
+            try
+            {
+                var token = await GetAuthTokenAsync();
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var query = $"api/products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    query += $"&searchTerm={Uri.EscapeDataString(request.SearchTerm)}";
+
+                if (!string.IsNullOrWhiteSpace(request.SortBy))
+                    query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
+
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<DistributorProductDto>>>(query);
+                return response ?? new ApiResponse<PagedResult<DistributorProductDto>>
+                {
+                    Success = false,
+                    Message = "No response from distributor API"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching distributor products");
+                return new ApiResponse<PagedResult<DistributorProductDto>>
+                {
+                    Success = false,
+                    Message = "Error fetching distributor products",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<DistributorProductDto>> GetDistributorProductByIdAsync(int id)
+        {
+            try
+            {
+                var token = await GetAuthTokenAsync();
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<DistributorProductDto>>($"api/products/{id}");
+                return response ?? new ApiResponse<DistributorProductDto>
+                {
+                    Success = false,
+                    Message = "Distributor product not found"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching distributor product {ProductId}", id);
+                return new ApiResponse<DistributorProductDto>
+                {
+                    Success = false,
+                    Message = "Error fetching distributor product",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
         private string GenerateOrderNumber()
         {
             return $"SEL-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";

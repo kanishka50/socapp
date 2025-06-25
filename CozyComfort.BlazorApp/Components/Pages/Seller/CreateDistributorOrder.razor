@@ -1,0 +1,535 @@
+﻿@page "/seller/orders/create-distributor-order"
+@attribute [Authorize(Roles = "Seller")]
+@inject ISellerService SellerService
+@inject NavigationManager Navigation
+@inject ILogger<CreateDistributorOrder> Logger
+
+<PageTitle>Create Distributor Order - Seller</PageTitle>
+
+<div class="container-fluid p-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/seller/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/seller/orders">Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Create Distributor Order</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 mb-4">Create Order from Distributor</h1>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Product Selection -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Select Distributor Products</h5>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="LoadDistributorProducts" disabled="@loadingProducts">
+                        @if (loadingProducts)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" placeholder="Search distributor products..."
+                                   @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearchKeyUp" />
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" @onclick="LoadDistributorProducts" disabled="@loadingProducts">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100" @onclick="ToggleProductList">
+                                <i class="bi bi-list"></i> @(showProductList ? "Hide" : "Show") Products
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (showProductList)
+                    {
+                        @if (loadingProducts)
+                        {
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-primary"></div>
+                                <p class="mt-2">Loading distributor products...</p>
+                            </div>
+                        }
+                        else if (distributorProducts == null || !distributorProducts.Items.Any())
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> No distributor products found.
+                                <button class="btn btn-sm btn-outline-primary ms-2" @onclick="LoadDistributorProducts">
+                                    Try Again
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Product Name</th>
+                                            <th>Purchase Price</th>
+                                            <th>Selling Price</th>
+                                            <th>Available Stock</th>
+                                            <th>Quantity</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var product in distributorProducts.Items)
+                                        {
+                                            <tr>
+                                                <td><small class="text-muted">@product.SKU</small></td>
+                                                <td><strong>@product.ProductName</strong></td>
+                                                <td><span class="badge bg-primary">$@product.PurchasePrice.ToString("F2")</span></td>
+                                                <td><span class="badge bg-success">$@product.SellingPrice.ToString("F2")</span></td>
+                                                <td>
+                                                    @if (product.AvailableStock > 0)
+                                                    {
+                                                        <span class="badge bg-success">@product.AvailableStock</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Out of Stock</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm" style="width: 80px;"
+                                                           min="1" max="@product.AvailableStock" value="1"
+                                                           @onchange="@((ChangeEventArgs e) => SetTempQuantity(product.Id, e))" />
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary"
+                                                            @onclick="() => AddDistributorProductToOrder(product)"
+                                                            disabled="@(product.AvailableStock <= 0)">
+                                                        <i class="bi bi-plus"></i> Add
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            @if (distributorProducts.TotalPages > 1)
+                            {
+                                <nav class="mt-3">
+                                    <ul class="pagination pagination-sm justify-content-center">
+                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">Previous</button>
+                                        </li>
+
+                                        @for (int i = 1; i <= Math.Min(distributorProducts.TotalPages, 5); i++)
+                                        {
+                                            var pageNumber = i;
+                                            <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                                                <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                                            </li>
+                                        }
+
+                                        <li class="page-item @(currentPage == distributorProducts.TotalPages ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">Next</button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            }
+                        }
+                    }
+
+                    <hr />
+
+                    @if (orderItems.Any())
+                    {
+                        <h6 class="mb-3">
+                            <i class="bi bi-cart"></i> Order Items (@orderItems.Count)
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>SKU</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in orderItems)
+                                    {
+                                        <tr>
+                                            <td>@item.ProductName</td>
+                                            <td><small class="text-muted">@item.SKU</small></td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" style="width: 80px;"
+                                                       @bind="item.Quantity" @bind:event="oninput" @onchange="UpdateOrderTotal" min="1" />
+                                            </td>
+                                            <td>$@item.RequestedPrice.ToString("F2")</td>
+                                            <td><strong>$@item.Total.ToString("F2")</strong></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger" @onclick="() => RemoveItem(item)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <th colspan="4" class="text-end">Order Total:</th>
+                                        <th><h5 class="mb-0">$@orderTotal.ToString("F2")</h5></th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No items added to the order yet. Select products from the distributor catalog above.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="orderReference" class="form-label">Order Reference <span class="text-danger">*</span></label>
+                        <input id="orderReference" type="text" class="form-control" @bind="orderRequest.OrderReference"
+                               placeholder="Enter order reference or leave blank for auto-generation" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Order Notes (Optional)</label>
+                        <textarea id="notes" class="form-control" rows="2" @bind="orderRequest.Notes"
+                                  placeholder="Add any special instructions or notes for the distributor"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Order Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-6">Items:</dt>
+                        <dd class="col-6">@orderItems.Count</dd>
+
+                        <dt class="col-6">Total Quantity:</dt>
+                        <dd class="col-6">@orderItems.Sum(i => i.Quantity)</dd>
+
+                        <dt class="col-6">Order Total:</dt>
+                        <dd class="col-6 fw-bold text-success">$@orderTotal.ToString("F2")</dd>
+                    </dl>
+
+                    <hr />
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting)">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            }
+                            <i class="bi bi-check-circle"></i> Submit Order
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CancelOrder" disabled="@isSubmitting">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                    </div>
+
+                    @if (!orderItems.Any())
+                    {
+                        <small class="text-muted">Add products to enable order submission</small>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Available Products</h6>
+                </div>
+                <div class="card-body">
+                    @if (distributorProducts != null)
+                    {
+                        <p class="mb-1"><strong>@distributorProducts.TotalCount</strong> products available</p>
+                        <p class="mb-0 text-muted">Page @currentPage of @distributorProducts.TotalPages</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Loading product information...</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateDistributorOrderRequest orderRequest = new();
+    private PagedResult<DistributorProductDto>? distributorProducts;
+    private List<OrderItemViewModel> orderItems = new();
+    private Dictionary<int, int> tempQuantities = new();
+
+    private string searchTerm = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private bool showProductList = true;
+    private bool loadingProducts = false;
+
+    private decimal orderTotal = 0;
+    private bool isSubmitting = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDistributorProducts();
+        orderRequest.OrderReference = GenerateOrderReference();
+    }
+
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            currentPage = 1;
+            await LoadDistributorProducts();
+        }
+    }
+
+    private async Task LoadDistributorProducts()
+    {
+        try
+        {
+            loadingProducts = true;
+            errorMessage = null;
+
+            var request = new PagedRequest
+            {
+                PageNumber = currentPage,
+                PageSize = pageSize,
+                SearchTerm = searchTerm
+            };
+
+            var response = await SellerService.GetDistributorProductsAsync(request);
+
+            if (response.Success && response.Data != null)
+            {
+                distributorProducts = response.Data;
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to load distributor products";
+                distributorProducts = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading distributor products");
+            errorMessage = "Failed to load distributor products. Please try again.";
+        }
+        finally
+        {
+            loadingProducts = false;
+        }
+    }
+
+    private void ToggleProductList()
+    {
+        showProductList = !showProductList;
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page >= 1 && page <= (distributorProducts?.TotalPages ?? 1) && page != currentPage)
+        {
+            currentPage = page;
+            await LoadDistributorProducts();
+        }
+    }
+
+    private void SetTempQuantity(int productId, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int quantity) && quantity > 0)
+        {
+            tempQuantities[productId] = quantity;
+        }
+        else
+        {
+            tempQuantities[productId] = 1;
+        }
+    }
+
+    private void AddDistributorProductToOrder(DistributorProductDto product)
+    {
+        try
+        {
+            int quantity = tempQuantities.ContainsKey(product.Id) ? tempQuantities[product.Id] : 1;
+
+            if (quantity <= 0 || quantity > product.AvailableStock)
+            {
+                errorMessage = $"Invalid quantity for {product.ProductName}. Available stock: {product.AvailableStock}";
+                return;
+            }
+
+            var existingItem = orderItems.FirstOrDefault(i => i.DistributorProductId == product.Id);
+            if (existingItem != null)
+            {
+                existingItem.Quantity += quantity;
+            }
+            else
+            {
+                orderItems.Add(new OrderItemViewModel
+                {
+                    DistributorProductId = product.Id,
+                    ProductName = product.ProductName,
+                    SKU = product.SKU,
+                    Quantity = quantity,
+                    RequestedPrice = product.SellingPrice // Use selling price as our purchase price
+                });
+            }
+
+            UpdateOrderTotal();
+            successMessage = $"Added {quantity} x {product.ProductName} to order";
+
+            // Clear the success message after 3 seconds
+            _ = Task.Delay(3000).ContinueWith(t =>
+            {
+                successMessage = null;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error adding product to order");
+            errorMessage = "Failed to add product to order";
+        }
+    }
+
+    private void RemoveItem(OrderItemViewModel item)
+    {
+        orderItems.Remove(item);
+        UpdateOrderTotal();
+        successMessage = $"Removed {item.ProductName} from order";
+
+        // Clear the success message after 3 seconds
+        _ = Task.Delay(3000).ContinueWith(t =>
+        {
+            successMessage = null;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void UpdateOrderTotal()
+    {
+        orderTotal = orderItems.Sum(i => i.Total);
+    }
+
+    private async Task SubmitOrder()
+    {
+        try
+        {
+            if (!orderItems.Any())
+            {
+                errorMessage = "Please add at least one item to the order";
+                return;
+            }
+
+            isSubmitting = true;
+            errorMessage = null;
+            successMessage = null;
+
+            // Generate order reference if empty
+            if (string.IsNullOrWhiteSpace(orderRequest.OrderReference))
+            {
+                orderRequest.OrderReference = GenerateOrderReference();
+            }
+
+            // Map order items to the required DTO format
+            orderRequest.Items = orderItems.Select(i => new DistributorOrderItem
+            {
+                DistributorProductId = i.DistributorProductId,
+                Quantity = i.Quantity,
+                RequestedPrice = i.RequestedPrice
+            }).ToList();
+
+            var response = await SellerService.CreateDistributorOrderAsync(orderRequest);
+
+            if (response.Success)
+            {
+                successMessage = "Order created successfully! Redirecting...";
+                await Task.Delay(1500);
+                Navigation.NavigateTo("/seller/orders");
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to create order. Please try again.";
+                Logger.LogError("Order creation failed: {Message}", response.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating order");
+            errorMessage = "An unexpected error occurred while creating the order. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void CancelOrder()
+    {
+        Navigation.NavigateTo("/seller/orders");
+    }
+
+    private string GenerateOrderReference()
+    {
+        return $"SLR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
+    }
+
+    private class OrderItemViewModel
+    {
+        public int DistributorProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string SKU { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal RequestedPrice { get; set; }
+        public decimal Total => Quantity * RequestedPrice;
+    }
+}

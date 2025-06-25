@@ -1,5 +1,6 @@
 ﻿using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Seller;
+using CozyComfort.Shared.DTOs.Distributor;
 
 namespace CozyComfort.BlazorApp.Services.Interfaces
 {
@@ -15,6 +16,13 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         Task<ApiResponse<bool>> UpdateOrderStatusAsync(int orderId, string status);
         Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto);
         Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string customerEmail);
+
+        // NEW: Distributor Products for Order Creation
+        Task<ApiResponse<PagedResult<DistributorProductDto>>> GetDistributorProductsAsync(PagedRequest request);
+        Task<ApiResponse<DistributorProductDto>> GetDistributorProductByIdAsync(int id);
+
+
+        Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderRequest orderRequest);
 
         // Cart - Updated to return CartDto
         Task<ApiResponse<CartDto>> GetCartAsync(string sessionId);

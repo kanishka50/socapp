@@ -1,10 +1,11 @@
-﻿using CozyComfort.BlazorApp.Services.Interfaces;
+﻿using Blazored.LocalStorage;
+using CozyComfort.BlazorApp.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs.Seller;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Blazored.LocalStorage;
-using System.Net.Http.Headers;
 
 namespace CozyComfort.BlazorApp.Services.ApiServices
 {
@@ -612,6 +613,99 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 {
                     Success = false,
                     Message = "Error updating stock",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<PagedResult<DistributorProductDto>>> GetDistributorProductsAsync(PagedRequest request)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var query = $"api/distributor/products?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    query += $"&searchTerm={Uri.EscapeDataString(request.SearchTerm)}";
+
+                if (!string.IsNullOrWhiteSpace(request.SortBy))
+                    query += $"&sortBy={request.SortBy}&isDescending={request.IsDescending}";
+
+                var response = await client.GetFromJsonAsync<ApiResponse<PagedResult<DistributorProductDto>>>(query);
+                return response ?? new ApiResponse<PagedResult<DistributorProductDto>>
+                {
+                    Success = false,
+                    Message = "No response from server"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching distributor products");
+                return new ApiResponse<PagedResult<DistributorProductDto>>
+                {
+                    Success = false,
+                    Message = "Error fetching distributor products",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<DistributorProductDto>> GetDistributorProductByIdAsync(int id)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.GetFromJsonAsync<ApiResponse<DistributorProductDto>>($"api/distributor/products/{id}");
+                return response ?? new ApiResponse<DistributorProductDto>
+                {
+                    Success = false,
+                    Message = "Distributor product not found"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching distributor product {ProductId}", id);
+                return new ApiResponse<DistributorProductDto>
+                {
+                    Success = false,
+                    Message = "Error fetching distributor product",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderRequest orderRequest)
+        {
+            try
+            {
+                var client = await GetAuthenticatedClientAsync();
+
+                var response = await client.PostAsJsonAsync("api/distributor-orders/create", orderRequest);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Failed to create distributor order: {response.StatusCode}, Content: {errorContent}");
+
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = $"Failed to create distributor order: {response.StatusCode}"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating distributor order");
+                return new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Error creating distributor order",
                     Errors = new List<string> { ex.Message }
                 };
             }
