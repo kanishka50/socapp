@@ -75,6 +75,27 @@
   },
   {
     "ContainingType": "CozyComfort.Distributor.API.Controllers.OrdersController",
+    "Method": "ManufacturerOrderAccepted",
+    "RelativePath": "api/Orders/{orderNumber}/manufacturer-accepted",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "orderNumber",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "X-API-Key",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Distributor.API.Controllers.OrdersController",
     "Method": "CreateManufacturerOrder",
     "RelativePath": "api/Orders/create-manufacturer-order",
     "HttpMethod": "POST",

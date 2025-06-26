@@ -265,6 +265,35 @@ namespace CozyComfort.Manufacturer.API.Services.Implementations
                 _logger.LogInformation("Order {OrderNumber} status updated to {Status}",
                     order.OrderNumber, newStatus);
 
+                // NEW CODE: Notify distributor when order is accepted
+                if (newStatus == OrderStatus.Accepted && !string.IsNullOrEmpty(order.DistributorOrderNumber))
+                {
+                    try
+                    {
+                        using var httpClient = new HttpClient();
+                        httpClient.DefaultRequestHeaders.Add("X-API-Key", "manufacturer-api-key-123");
+                        httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+                        var response = await httpClient.PostAsync(
+                            $"https://localhost:7002/api/orders/{order.DistributorOrderNumber}/manufacturer-accepted",
+                            null); // No body needed
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            _logger.LogInformation($"Successfully notified distributor about order {order.OrderNumber} acceptance");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"Failed to notify distributor. Status: {response.StatusCode}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error notifying distributor about order {order.OrderNumber}");
+                        // Don't throw - notification failure shouldn't affect the order status update
+                    }
+                }
+
                 return await GetOrderByIdAsync(order.Id);
             }
             catch (Exception ex)

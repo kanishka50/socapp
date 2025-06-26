@@ -11,5 +11,6 @@ namespace CozyComfort.Distributor.API.Services.Interfaces
         Task<ApiResponse<OrderDto>> CreateManufacturerOrderAsync(CreateManufacturerOrderDto dto);
         Task<ApiResponse<OrderDto>> ProcessSellerOrderAsync(ProcessSellerOrderDto dto);
         Task<ApiResponse<bool>> UpdateOrderStatusAsync(int id, string status);
+        Task<ApiResponse<bool>> UpdateOrderStatusAsync(string orderNumber, string status);
     }
 }

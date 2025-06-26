@@ -64,10 +64,41 @@ namespace CozyComfort.Distributor.API.Controllers
             var result = await _orderService.UpdateOrderStatusAsync(id, dto.Status);
             return result.Success ? Ok(result) : BadRequest(result);
         }
+
+
+
+        [HttpPost("{orderNumber}/manufacturer-accepted")]
+        [AllowAnonymous] // Allow manufacturer to call without JWT, but use API key
+        public async Task<IActionResult> ManufacturerOrderAccepted(
+    string orderNumber,
+    [FromHeader(Name = "X-API-Key")] string apiKey)
+        {
+            // Simple API key check
+            if (string.IsNullOrEmpty(apiKey) || apiKey != "manufacturer-api-key-123")
+            {
+                return Unauthorized("Invalid API key");
+            }
+
+            try
+            {
+                // Just update the order status to trigger inventory update
+                var result = await _orderService.UpdateOrderStatusAsync(orderNumber, "ACCEPTED");
+
+                if (result.Success)
+                {
+                    _logger.LogInformation($"Manufacturer order {orderNumber} accepted, inventory updated");
+                    return Ok(new { message = "Inventory updated successfully" });
+                }
+
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error processing manufacturer acceptance for order {orderNumber}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
     }
 
-    //public class UpdateOrderStatusDto
-    //{
-    //    public string Status { get; set; } = string.Empty;
-    //}
+    
 }

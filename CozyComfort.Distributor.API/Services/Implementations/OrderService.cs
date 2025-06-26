@@ -331,8 +331,8 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                             ManufacturerProductId = manufacturerProduct.Id,
                             ProductName = manufacturerProduct.Name,
                             SKU = manufacturerProduct.SKU,
-                            PurchasePrice = manufacturerProduct.Price * 0.7m, // 30% margin
-                            SellingPrice = manufacturerProduct.Price,
+                            PurchasePrice = manufacturerProduct.Price, // What we pay manufacturer
+                            SellingPrice = manufacturerProduct.Price * 1.05m, // 5% markup
                             CurrentStock = 0,
                             ReservedStock = 0,
                             MinStockLevel = 5,
@@ -455,6 +455,31 @@ namespace CozyComfort.Distributor.API.Services.Implementations
             {
                 _logger.LogError(ex, "Error getting manufacturer auth token");
                 return string.Empty;
+            }
+        }
+
+
+
+        public async Task<ApiResponse<bool>> UpdateOrderStatusAsync(string orderNumber, string status)
+        {
+            try
+            {
+                // Find order by order number
+                var order = await _context.Orders
+                    .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+
+                if (order == null)
+                {
+                    return ApiResponse<bool>.FailureResult($"Order {orderNumber} not found");
+                }
+
+                // Call the existing method with the order ID
+                return await UpdateOrderStatusAsync(order.Id, status);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating order status by order number");
+                return ApiResponse<bool>.FailureResult($"Error: {ex.Message}");
             }
         }
     }
