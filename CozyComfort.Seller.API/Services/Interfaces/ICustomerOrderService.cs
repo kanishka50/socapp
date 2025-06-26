@@ -11,5 +11,11 @@ namespace CozyComfort.Seller.API.Services.Interfaces
         Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto);
         Task<ApiResponse<bool>> UpdateOrderStatusAsync(int id, string status);
         Task<ApiResponse<List<CustomerOrderDto>>> GetCustomerOrdersAsync(string customerEmail);
+
+
+        Task<ApiResponse<SellerDistributorOrderDto>> CreateDistributorOrderAsync(CreateSellerDistributorOrderDto dto);
+        Task<ApiResponse<List<SellerDistributorOrderDto>>> GetDistributorOrdersAsync();
+        Task<ApiResponse<SellerDistributorOrderDto>> GetDistributorOrderByIdAsync(int id);
+        Task<ApiResponse<bool>> UpdateDistributorOrderStatusAsync(int id, string status);
     }
 }

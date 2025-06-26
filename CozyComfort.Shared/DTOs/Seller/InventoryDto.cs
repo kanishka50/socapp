@@ -33,11 +33,11 @@
         public string Notes { get; set; } = string.Empty;
     }
 
-    public class DistributorOrderItemRequest
-    {
-        public int ProductId { get; set; }
-        public int Quantity { get; set; }
-    }
+    //public class DistributorOrderItemRequest
+    //{
+    //    public int ProductId { get; set; }
+    //    public int Quantity { get; set; }
+    //}
 
     public class UpdateStockDto
     {

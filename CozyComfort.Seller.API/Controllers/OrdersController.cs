@@ -60,6 +60,33 @@ namespace CozyComfort.Seller.API.Controllers
             var result = await _orderService.UpdateOrderStatusAsync(id, dto.Status);
             return result.Success ? Ok(result) : BadRequest(result);
         }
+
+        [HttpGet("distributor")]
+        [Authorize(Policy = "SellerOnly")]
+        public async Task<IActionResult> GetDistributorOrders()
+        {
+            var result = await _orderService.GetDistributorOrdersAsync();
+            return Ok(result);
+        }
+
+        [HttpPost("distributor/create")]
+        [Authorize(Policy = "SellerOnly")]
+        public async Task<IActionResult> CreateDistributorOrder([FromBody] CreateSellerDistributorOrderDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _orderService.CreateDistributorOrderAsync(dto);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpGet("distributor/{id}")]
+        [Authorize(Policy = "SellerOnly")]
+        public async Task<IActionResult> GetDistributorOrder(int id)
+        {
+            var result = await _orderService.GetDistributorOrderByIdAsync(id);
+            return result.Success ? Ok(result) : NotFound(result);
+        }
     }
 
     public class UpdateStatusDto

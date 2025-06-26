@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CozyComfort.Shared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+559abe18f56d1ab95a4341861f3f332875517f4c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+39aeb2c7add451358b7ddfabfba89efabd71ea06")]
 [assembly: System.Reflection.AssemblyProductAttribute("CozyComfort.Shared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CozyComfort.Shared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
