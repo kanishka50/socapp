@@ -6,6 +6,8 @@ using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
+using SellerOrderItemDto = CozyComfort.Shared.DTOs.Seller.OrderItemDto;
+
 
 namespace CozyComfort.Seller.API.Services.Implementations
 {
@@ -13,13 +15,15 @@ namespace CozyComfort.Seller.API.Services.Implementations
     {
         private readonly SellerDbContext _context;
         private readonly ICartService _cartService;
+        private readonly IDistributorApiService _distributorApiService;
         private readonly ILogger<CustomerOrderService> _logger;
 
-        public CustomerOrderService(SellerDbContext context, ICartService cartService, ILogger<CustomerOrderService> logger)
+        public CustomerOrderService(SellerDbContext context, ICartService cartService, ILogger<CustomerOrderService> logger, IDistributorApiService distributorApiService)
         {
             _context = context;
             _cartService = cartService;
             _logger = logger;
+            _distributorApiService = distributorApiService;
         }
 
         public async Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto)
@@ -156,7 +160,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     TotalAmount = o.TotalAmount,
                     ShippingAddress = o.ShippingAddress,
                     IsPaid = o.IsPaid,
-                    Items = o.OrderItems.Select(oi => new OrderItemDto
+                    Items = o.OrderItems.Select(oi => new SellerOrderItemDto
                     {
                         ProductId = oi.ProductId,
                         ProductName = oi.Product?.ProductName ?? "Unknown",
@@ -210,7 +214,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     TotalAmount = order.TotalAmount,
                     ShippingAddress = order.ShippingAddress,
                     IsPaid = order.IsPaid,
-                    Items = order.OrderItems.Select(oi => new OrderItemDto
+                    Items = order.OrderItems.Select(oi => new SellerOrderItemDto
                     {
                         ProductId = oi.ProductId,
                         ProductName = oi.Product?.ProductName ?? "Unknown",
@@ -345,7 +349,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     TotalAmount = o.TotalAmount,
                     ShippingAddress = o.ShippingAddress,
                     IsPaid = o.IsPaid,
-                    Items = o.OrderItems.Select(oi => new OrderItemDto
+                    Items = o.OrderItems.Select(oi => new SellerOrderItemDto
                     {
                         ProductId = oi.ProductId,
                         ProductName = oi.Product?.ProductName ?? "Unknown",
@@ -517,5 +521,45 @@ namespace CozyComfort.Seller.API.Services.Implementations
                 }).ToList()
             };
         }
+
+        public async Task<ApiResponse<bool>> UpdateDistributorOrderStatusAsync(int id, string status)
+{
+    using var transaction = await _context.Database.BeginTransactionAsync();
+    try
+    {
+        var order = await _context.DistributorOrders
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order == null)
+        {
+            return ApiResponse<bool>.FailureResult("Distributor order not found");
+        }
+
+        // Parse the string status to enum
+        if (!Enum.TryParse<OrderStatus>(status, true, out var newStatus))
+        {
+            return ApiResponse<bool>.FailureResult($"Invalid status: {status}");
+        }
+
+        // Update order status
+        order.Status = newStatus;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        _logger.LogInformation($"Distributor order {order.OrderNumber} status updated to {newStatus}");
+        return ApiResponse<bool>.SuccessResult(true, $"Order status updated to {status}");
+    }
+    catch (Exception ex)
+    {
+        await transaction.RollbackAsync();
+        _logger.LogError(ex, "Error updating distributor order status");
+        return ApiResponse<bool>.FailureResult("Error updating order status");
+    }
+}
+
+
+
     }
 }
