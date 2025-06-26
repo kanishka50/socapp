@@ -111,6 +111,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorOrdersController",
+    "Method": "CreateDistributorOrder",
+    "RelativePath": "api/distributor-orders/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CreateDistributorOrderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorController",
     "Method": "GetDistributorProducts",
     "RelativePath": "api/Distributor/products",
@@ -157,22 +173,6 @@
       {
         "Name": "id",
         "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorOrdersController",
-    "Method": "CreateDistributorOrder",
-    "RelativePath": "api/DistributorOrders/create",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "CozyComfort.Shared.DTOs.Seller.CreateDistributorOrderRequest",
         "IsRequired": true
       }
     ],

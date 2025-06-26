@@ -297,31 +297,7 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                 decimal totalAmount = 0;
 
                 // Add order items
-                foreach (var item in dto.Items)
-                {
-                    // Find the distributor product
-                    var distributorProduct = await _context.Products
-                        .FirstOrDefaultAsync(p => p.ManufacturerProductId == item.ManufacturerProductId);
-
-                    if (distributorProduct == null)
-                    {
-                        throw new InvalidOperationException($"Product with manufacturer ID {item.ManufacturerProductId} not found");
-                    }
-
-                    var orderItem = new DistributorOrderItem
-                    {
-                        OrderId = order.Id,
-                        ProductId = distributorProduct.Id,
-                        Quantity = item.Quantity,
-                        UnitPrice = distributorProduct.PurchasePrice,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = "System",
-                        IsActive = true
-                    };
-
-                    _context.OrderItems.Add(orderItem);
-                    totalAmount += orderItem.Quantity * orderItem.UnitPrice;
-                }
+               
 
                 // Update order total
                 order.TotalAmount = totalAmount;

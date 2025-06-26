@@ -290,7 +290,7 @@
         }
       }
     },
-    "/api/DistributorOrders/create": {
+    "/api/distributor-orders/create": {
       "post": {
         "tags": [
           "DistributorOrders"

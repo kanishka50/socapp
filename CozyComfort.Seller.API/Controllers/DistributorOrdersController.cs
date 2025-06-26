@@ -7,7 +7,7 @@ using CozyComfort.Shared.DTOs.Distributor;
 
 namespace CozyComfort.Seller.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/distributor-orders")]
     [ApiController]
     [Authorize(Policy = "SellerOnly")]
     public class DistributorOrdersController : ControllerBase
