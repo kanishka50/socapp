@@ -17,7 +17,6 @@ namespace CozyComfort.Distributor.API.Services.Implementations
         private readonly ILogger<OrderService> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
 
-
         public OrderService(DistributorDbContext context, ILogger<OrderService> logger , IHttpClientFactory httpClientFactory)
         {
             _context = context;
@@ -25,7 +24,85 @@ namespace CozyComfort.Distributor.API.Services.Implementations
             _httpClientFactory = httpClientFactory;
         }
 
-       
+        public async Task<ApiResponse<OrderDto>> ProcessSellerOrderAsync(ProcessSellerOrderDto dto)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Create distributor order with PENDING status
+                var order = new DistributorOrder
+                {
+                    OrderNumber = $"DIST-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
+                    OrderType = OrderType.FromSeller,
+                    CustomerId = dto.SellerId,
+                    CustomerOrderNumber = dto.SellerOrderNumber,
+                    Status = OrderStatus.Pending, // Always start as Pending
+                    OrderDate = DateTime.UtcNow,
+                    ShippingAddress = dto.ShippingAddress,
+                    CreatedAt = DateTime.UtcNow,
+                    TotalAmount = 0
+                };
+
+                decimal totalAmount = 0;
+
+                // Add order items without affecting inventory yet
+                foreach (var item in dto.Items)
+                {
+                    var product = await _context.Products.FindAsync(item.DistributorProductId);
+                    if (product == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return ApiResponse<OrderDto>.FailureResult($"Product {item.DistributorProductId} not found");
+                    }
+
+                    var orderItem = new DistributorOrderItem
+                    {
+                        ProductId = product.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = product.SellingPrice,
+                        Product = product
+                    };
+
+                    order.OrderItems.Add(orderItem);
+                    totalAmount += orderItem.Quantity * orderItem.UnitPrice;
+                }
+
+                order.TotalAmount = totalAmount;
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                var orderDto = new OrderDto
+                {
+                    Id = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    CustomerName = $"Seller #{dto.SellerId}",
+                    Status = order.Status.ToString(),
+                    OrderDate = order.OrderDate,
+                    TotalAmount = order.TotalAmount,
+                    Items = order.OrderItems.Select(oi => new OrderItemDto
+                    {
+                        ProductId = oi.ProductId,
+                        ProductName = oi.Product.ProductName,
+                        SKU = oi.Product.SKU,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.Quantity * oi.UnitPrice
+                    }).ToList()
+                };
+
+                _logger.LogInformation($"Seller order {order.OrderNumber} created successfully with PENDING status");
+                return ApiResponse<OrderDto>.SuccessResult(orderDto, "Order created successfully");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error processing seller order");
+                return ApiResponse<OrderDto>.FailureResult($"Error processing order: {ex.Message}");
+            }
+        }
 
         public async Task<ApiResponse<bool>> UpdateOrderStatusAsync(int id, string status)
         {
@@ -433,129 +510,6 @@ namespace CozyComfort.Distributor.API.Services.Implementations
             {
                 _logger.LogError(ex, "Error updating order status by order number");
                 return ApiResponse<bool>.FailureResult($"Error: {ex.Message}");
-            }
-        }
-
-        public async Task<ApiResponse<OrderDto>> ProcessSellerOrderAsync(ProcessSellerOrderDto dto)
-        {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                // Create distributor order for the seller
-                var order = new DistributorOrder
-                {
-                    OrderNumber = $"DO-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
-                    OrderType = OrderType.FromSeller,
-                    SellerId = dto.SellerId,
-                    CustomerName = $"Seller #{dto.SellerId}",
-                    Status = OrderStatus.Pending,
-                    OrderDate = DateTime.UtcNow,
-                    ShippingAddress = dto.ShippingAddress,
-                    Notes = $"Seller Order: {dto.SellerOrderNumber}",
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "SellerAPI",
-                    IsActive = true
-                };
-
-                decimal totalAmount = 0;
-                var orderItems = new List<DistributorOrderItem>();
-
-                // Process order items
-                foreach (var item in dto.Items)
-                {
-                    var product = await _context.Products.FindAsync(item.DistributorProductId);
-                    if (product == null)
-                    {
-                        await transaction.RollbackAsync();
-                        return ApiResponse<OrderDto>.FailureResult($"Product {item.DistributorProductId} not found");
-                    }
-
-                    // Check available stock (CurrentStock - ReservedStock)
-                    var availableStock = product.CurrentStock - product.ReservedStock;
-                    if (availableStock < item.Quantity)
-                    {
-                        await transaction.RollbackAsync();
-                        return ApiResponse<OrderDto>.FailureResult($"Insufficient stock for {product.ProductName}. Available: {availableStock}, Required: {item.Quantity}");
-                    }
-
-                    var orderItem = new DistributorOrderItem
-                    {
-                        ProductId = item.DistributorProductId,
-                        Quantity = item.Quantity,
-                        UnitPrice = item.RequestedPrice,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = "SellerAPI",
-                        IsActive = true
-                    };
-
-                    orderItems.Add(orderItem);
-                    totalAmount += orderItem.Quantity * orderItem.UnitPrice;
-
-                    // Reserve stock (don't decrease CurrentStock yet, just increase ReservedStock)
-                    product.ReservedStock += item.Quantity;
-                    product.UpdatedAt = DateTime.UtcNow;
-                }
-
-                order.TotalAmount = totalAmount;
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
-
-                // Add order items
-                foreach (var orderItem in orderItems)
-                {
-                    orderItem.OrderId = order.Id;
-                    _context.OrderItems.Add(orderItem);
-                }
-
-                // Create inventory transactions for reservation
-                foreach (var item in dto.Items)
-                {
-                    var inventoryTx = new DistributorInventoryTransaction
-                    {
-                        ProductId = item.DistributorProductId,
-                        TransactionType = "RESERVED",
-                        Quantity = item.Quantity,
-                        Reference = order.OrderNumber,
-                        Notes = $"Reserved for seller order {dto.SellerOrderNumber}",
-                        TransactionDate = DateTime.UtcNow,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    _context.InventoryTransactions.Add(inventoryTx);
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                // Return the created order DTO
-                var orderDto = new OrderDto
-                {
-                    Id = order.Id,
-                    OrderNumber = order.OrderNumber,
-                    CustomerName = order.CustomerName,
-                    Status = order.Status.ToString(),
-                    OrderDate = order.OrderDate,
-                    TotalAmount = order.TotalAmount,
-                    Items = orderItems.Select(oi => new OrderItemDto
-                    {
-                        ProductId = oi.ProductId,
-                        ProductName = _context.Products.Find(oi.ProductId)?.ProductName ?? "",
-                        SKU = _context.Products.Find(oi.ProductId)?.SKU ?? "",
-                        Quantity = oi.Quantity,
-                        UnitPrice = oi.UnitPrice,
-                        TotalPrice = oi.Quantity * oi.UnitPrice
-                    }).ToList()
-                };
-
-                _logger.LogInformation($"Seller order {order.OrderNumber} created successfully for seller order {dto.SellerOrderNumber}");
-                return ApiResponse<OrderDto>.SuccessResult(orderDto, "Order processed successfully");
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error processing seller order");
-                return ApiResponse<OrderDto>.FailureResult($"Error processing order: {ex.Message}");
             }
         }
     }

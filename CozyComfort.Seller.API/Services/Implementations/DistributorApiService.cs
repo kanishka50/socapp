@@ -92,38 +92,6 @@ namespace CozyComfort.Seller.API.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<OrderDto>> CreateDistributorOrderAsync(ProcessSellerOrderDto dto)
-        {
-            try
-            {
-                var token = await GetAuthTokenAsync();
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-                var response = await _httpClient.PostAsJsonAsync("api/orders/process-seller-order", dto);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<OrderDto>>();
-                    if (result != null && result.Success)
-                    {
-                        _logger.LogInformation($"Distributor order created successfully: {result.Data?.OrderNumber}");
-                        return result;
-                    }
-                    return ApiResponse<OrderDto>.FailureResult("Invalid response from distributor API");
-                }
-
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Failed to create distributor order. Status: {response.StatusCode}, Content: {errorContent}");
-                return ApiResponse<OrderDto>.FailureResult($"Failed to create distributor order: {response.StatusCode}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating distributor order");
-                return ApiResponse<OrderDto>.FailureResult($"Error creating order: {ex.Message}");
-            }
-        }
-
         public async Task<string> GetAuthTokenAsync()
         {
             try
@@ -152,6 +120,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                 throw;
             }
         }
+
 
         public async Task<ApiResponse<PagedResult<DistributorProductDto>>> GetDistributorProductsAsync(PagedRequest request)
         {

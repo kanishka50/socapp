@@ -77,18 +77,15 @@ namespace CozyComfort.Seller.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("ShippingCost")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<decimal>("SubTotal")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Tax")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TotalAmount")
@@ -103,7 +100,7 @@ namespace CozyComfort.Seller.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CustomerOrders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.CustomerOrderItem", b =>
@@ -148,182 +145,7 @@ namespace CozyComfort.Seller.API.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("CustomerOrderItems", (string)null);
-                });
-
-            modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerDistributorOrder", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ActualDeliveryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DistributorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DistributorOrderNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("ExpectedDeliveryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("OrderNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ShippingAddress")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderNumber")
-                        .IsUnique();
-
-                    b.ToTable("SellerDistributorOrders", (string)null);
-                });
-
-            modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerDistributorOrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("SellerDistributorOrderItems", (string)null);
-                });
-
-            modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerInventoryTransaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reference")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TransactionType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<decimal?>("UnitCost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TransactionDate");
-
-                    b.HasIndex("ProductId", "TransactionDate");
-
-                    b.ToTable("SellerInventoryTransactions", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerProduct", b =>
@@ -391,14 +213,14 @@ namespace CozyComfort.Seller.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SellerProducts", (string)null);
+                    b.ToTable("Products");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
                             Category = "Chairs",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 24, 5, 36, 35, 391, DateTimeKind.Utc).AddTicks(7002),
                             CurrentStock = 25,
                             Description = "Comfortable office chair for retail",
                             DisplayStock = 25,
@@ -415,7 +237,7 @@ namespace CozyComfort.Seller.API.Migrations
                         {
                             Id = 2,
                             Category = "Desks",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 24, 5, 36, 35, 391, DateTimeKind.Utc).AddTicks(7014),
                             CurrentStock = 15,
                             Description = "Adjustable standing desk for retail",
                             DisplayStock = 15,
@@ -483,29 +305,29 @@ namespace CozyComfort.Seller.API.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 24, 5, 36, 35, 197, DateTimeKind.Utc).AddTicks(4471),
                             Email = "admin@seller.com",
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "Seller",
-                            PasswordHash = "$2a$11$RZvBwJL7e8OadjLPNgW7x.Km7NkkdVNoLSbEVmNGbxSu.Pnw8dXLa",
+                            PasswordHash = "$2a$11$0NGK9YqKL/Klw1xBvq89cOChPHLy3g4MzbFS8VBWrkOopNgnaRdn.",
                             Role = 1
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 24, 5, 36, 35, 390, DateTimeKind.Utc).AddTicks(7973),
                             Email = "seller@cozycomfort.com",
                             FirstName = "Bob",
                             IsActive = true,
                             LastName = "Seller",
-                            PasswordHash = "$2a$11$5VBm7OKqiM6XGQqATcQTb.SZeh7mr8fVyVuVC.M8FQ8g1jLOSGGBu",
+                            PasswordHash = "$2a$11$IWdMv4yl.Z7LqzF69Dgy8u1BWKvpsdfQlmwFdB3M11ppIdhDB42fq",
                             Role = 4
                         });
                 });
@@ -521,50 +343,15 @@ namespace CozyComfort.Seller.API.Migrations
                     b.HasOne("CozyComfort.Seller.API.Models.Entities.SellerProduct", "Product")
                         .WithMany("OrderItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerDistributorOrderItem", b =>
-                {
-                    b.HasOne("CozyComfort.Seller.API.Models.Entities.SellerDistributorOrder", "Order")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CozyComfort.Seller.API.Models.Entities.SellerProduct", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Order");
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerInventoryTransaction", b =>
-                {
-                    b.HasOne("CozyComfort.Seller.API.Models.Entities.SellerProduct", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.Navigation("Product");
                 });
 
             modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.CustomerOrder", b =>
-                {
-                    b.Navigation("OrderItems");
-                });
-
-            modelBuilder.Entity("CozyComfort.Seller.API.Models.Entities.SellerDistributorOrder", b =>
                 {
                     b.Navigation("OrderItems");
                 });

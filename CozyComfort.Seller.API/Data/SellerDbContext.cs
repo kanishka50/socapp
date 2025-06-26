@@ -17,16 +17,10 @@ namespace CozyComfort.Seller.API.Data
         public DbSet<CustomerOrder> Orders { get; set; }
         public DbSet<CustomerOrderItem> OrderItems { get; set; }
 
-        // Add new DbSets
-        public DbSet<SellerDistributorOrder> DistributorOrders { get; set; }
-        public DbSet<SellerDistributorOrderItem> DistributorOrderItems { get; set; }
-        public DbSet<SellerInventoryTransaction> InventoryTransactions { get; set; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Existing configurations...
             // Configure User entity
             modelBuilder.Entity<User>()
                 .ToTable("Users")
@@ -41,10 +35,10 @@ namespace CozyComfort.Seller.API.Data
                 entity.Property(p => p.SellingPrice).HasPrecision(18, 2);
             });
 
-            // Configure CustomerOrder entity
+            // Configure CustomerOrder entity - THIS IS THE KEY FIX
             modelBuilder.Entity<CustomerOrder>(entity =>
             {
-                entity.ToTable("CustomerOrders");
+                entity.ToTable("CustomerOrders"); // Explicitly set table name
                 entity.Property(o => o.SubTotal).HasPrecision(18, 2);
                 entity.Property(o => o.Tax).HasPrecision(18, 2);
                 entity.Property(o => o.ShippingCost).HasPrecision(18, 2);
@@ -54,9 +48,10 @@ namespace CozyComfort.Seller.API.Data
             // Configure CustomerOrderItem entity
             modelBuilder.Entity<CustomerOrderItem>(entity =>
             {
-                entity.ToTable("CustomerOrderItems");
+                entity.ToTable("CustomerOrderItems"); // Explicitly set table name
                 entity.Property(oi => oi.UnitPrice).HasPrecision(18, 2);
 
+                // Configure relationships
                 entity.HasOne(oi => oi.Order)
                     .WithMany(o => o.OrderItems)
                     .HasForeignKey(oi => oi.OrderId)
@@ -68,83 +63,30 @@ namespace CozyComfort.Seller.API.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // NEW CONFIGURATIONS
-            // Configure SellerDistributorOrder entity
-            modelBuilder.Entity<SellerDistributorOrder>(entity =>
-            {
-                entity.ToTable("SellerDistributorOrders");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
-                entity.HasIndex(e => e.OrderNumber).IsUnique();
-                entity.Property(e => e.DistributorOrderNumber).HasMaxLength(50);
-                entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
-                entity.Property(e => e.ShippingAddress).HasMaxLength(500);
-                entity.Property(e => e.Notes).HasMaxLength(1000);
-            });
-
-            // Configure SellerDistributorOrderItem entity
-            modelBuilder.Entity<SellerDistributorOrderItem>(entity =>
-            {
-                entity.ToTable("SellerDistributorOrderItems");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
-
-                entity.HasOne(e => e.Order)
-                    .WithMany(o => o.OrderItems)
-                    .HasForeignKey(e => e.OrderId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(e => e.Product)
-                    .WithMany()
-                    .HasForeignKey(e => e.ProductId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // Configure SellerInventoryTransaction entity
-            modelBuilder.Entity<SellerInventoryTransaction>(entity =>
-            {
-                entity.ToTable("SellerInventoryTransactions");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.TransactionType).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.Reference).HasMaxLength(100);
-                entity.Property(e => e.Notes).HasMaxLength(500);
-                entity.Property(e => e.UnitCost).HasPrecision(18, 2);
-                entity.HasIndex(e => e.TransactionDate);
-                entity.HasIndex(e => new { e.ProductId, e.TransactionDate });
-
-                entity.HasOne(e => e.Product)
-                    .WithMany()
-                    .HasForeignKey(e => e.ProductId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
             // Seed initial data
             SeedData(modelBuilder);
         }
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Existing seed data remains the same...
             // Seed seller users
             modelBuilder.Entity<User>().HasData(
-                 new User
-                 {
-                     Id = 1,
-                     Email = "admin@seller.com",
-                     // Static hash for "Admin123!"
-                     PasswordHash = "$2a$11$RZvBwJL7e8OadjLPNgW7x.Km7NkkdVNoLSbEVmNGbxSu.Pnw8dXLa",
-                     FirstName = "Admin",
-                     LastName = "Seller",
-                     Role = UserRole.Administrator,
-                     IsActive = true,
-                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                 },
+                new User
+                {
+                    Id = 1,
+                    Email = "admin@seller.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                    FirstName = "Admin",
+                    LastName = "Seller",
+                    Role = UserRole.Administrator,
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
                 new User
                 {
                     Id = 2,
                     Email = "seller@cozycomfort.com",
-                    // Static hash for "Seller123!"
-                    PasswordHash = "$2a$11$5VBm7OKqiM6XGQqATcQTb.SZeh7mr8fVyVuVC.M8FQ8g1jLOSGGBu",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Seller123!"),
                     FirstName = "Bob",
                     LastName = "Seller",
                     Role = UserRole.Seller,
@@ -153,7 +95,7 @@ namespace CozyComfort.Seller.API.Data
                 }
             );
 
-            // Existing product seed data...
+            // Seed sample products for sellers
             modelBuilder.Entity<SellerProduct>().HasData(
                 new SellerProduct
                 {

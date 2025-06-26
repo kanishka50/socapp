@@ -3,7 +3,6 @@ using CozyComfort.BlazorApp.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs.Seller;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -707,55 +706,6 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 {
                     Success = false,
                     Message = "Error creating distributor order",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
-        }
-
-
-        public async Task<ApiResponse<List<SellerDistributorOrderDto>>> GetDistributorOrdersAsync()
-        {
-            try
-            {
-                var response = await _httpClient.GetFromJsonAsync<ApiResponse<List<SellerDistributorOrderDto>>>(
-                    "api/orders/distributor");
-
-                return response ?? new ApiResponse<List<SellerDistributorOrderDto>>
-                {
-                    Success = false,
-                    Message = "No response from server"
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching distributor orders");
-                return new ApiResponse<List<SellerDistributorOrderDto>>
-                {
-                    Success = false,
-                    Message = "Error fetching distributor orders",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
-        }
-
-        public async Task<ApiResponse<SellerDistributorOrderDto>> CreateDistributorOrderAsync(CreateSellerDistributorOrderDto dto)
-        {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("api/orders/distributor/create", dto);
-                var content = await response.Content.ReadAsStringAsync();
-
-                return JsonSerializer.Deserialize<ApiResponse<SellerDistributorOrderDto>>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                    ?? new ApiResponse<SellerDistributorOrderDto> { Success = false, Message = "Invalid response" };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating distributor order");
-                return new ApiResponse<SellerDistributorOrderDto>
-                {
-                    Success = false,
-                    Message = "Error creating order",
                     Errors = new List<string> { ex.Message }
                 };
             }

@@ -1,13 +1,10 @@
-﻿using CozyComfort.Seller.API.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using CozyComfort.Seller.API.Data;
+using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Seller.API.Models.Entities;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
-using CozyComfort.Shared.DTOs.Distributor;
-using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Shared.Enums;
-using Microsoft.EntityFrameworkCore;
-using SellerOrderItemDto = CozyComfort.Shared.DTOs.Seller.OrderItemDto;
-
 
 namespace CozyComfort.Seller.API.Services.Implementations
 {
@@ -15,15 +12,13 @@ namespace CozyComfort.Seller.API.Services.Implementations
     {
         private readonly SellerDbContext _context;
         private readonly ICartService _cartService;
-        private readonly IDistributorApiService _distributorApiService;
         private readonly ILogger<CustomerOrderService> _logger;
 
-        public CustomerOrderService(SellerDbContext context, ICartService cartService, ILogger<CustomerOrderService> logger, IDistributorApiService distributorApiService)
+        public CustomerOrderService(SellerDbContext context, ICartService cartService, ILogger<CustomerOrderService> logger)
         {
             _context = context;
             _cartService = cartService;
             _logger = logger;
-            _distributorApiService = distributorApiService;
         }
 
         public async Task<ApiResponse<CustomerOrderDto>> CreateOrderAsync(CreateCustomerOrderDto dto)
@@ -160,7 +155,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     TotalAmount = o.TotalAmount,
                     ShippingAddress = o.ShippingAddress,
                     IsPaid = o.IsPaid,
-                    Items = o.OrderItems.Select(oi => new SellerOrderItemDto
+                    Items = o.OrderItems.Select(oi => new OrderItemDto
                     {
                         ProductId = oi.ProductId,
                         ProductName = oi.Product?.ProductName ?? "Unknown",
@@ -214,7 +209,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     TotalAmount = order.TotalAmount,
                     ShippingAddress = order.ShippingAddress,
                     IsPaid = order.IsPaid,
-                    Items = order.OrderItems.Select(oi => new SellerOrderItemDto
+                    Items = order.OrderItems.Select(oi => new OrderItemDto
                     {
                         ProductId = oi.ProductId,
                         ProductName = oi.Product?.ProductName ?? "Unknown",
@@ -349,7 +344,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     TotalAmount = o.TotalAmount,
                     ShippingAddress = o.ShippingAddress,
                     IsPaid = o.IsPaid,
-                    Items = o.OrderItems.Select(oi => new SellerOrderItemDto
+                    Items = o.OrderItems.Select(oi => new OrderItemDto
                     {
                         ProductId = oi.ProductId,
                         ProductName = oi.Product?.ProductName ?? "Unknown",
@@ -369,197 +364,5 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     new List<string> { ex.Message });
             }
         }
-
-
-
-        public async Task<ApiResponse<SellerDistributorOrderDto>> CreateDistributorOrderAsync(CreateSellerDistributorOrderDto dto)
-        {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                // Create order
-                var order = new SellerDistributorOrder
-                {
-                    OrderNumber = $"SDO-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
-                    DistributorId = 1, // You might want to make this configurable
-                    Status = OrderStatus.Pending,
-                    OrderDate = DateTime.UtcNow,
-                    ShippingAddress = dto.ShippingAddress,
-                    Notes = dto.Notes,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                decimal totalAmount = 0;
-
-                // Add order items and check stock
-                foreach (var item in dto.Items)
-                {
-                    var product = await _context.SellerProducts.FindAsync(item.ProductId);
-                    if (product == null)
-                    {
-                        await transaction.RollbackAsync();
-                        return ApiResponse<SellerDistributorOrderDto>.FailureResult($"Product {item.ProductId} not found");
-                    }
-
-                    var orderItem = new SellerDistributorOrderItem
-                    {
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity,
-                        UnitPrice = product.PurchasePrice // Use purchase price for distributor orders
-                    };
-
-                    totalAmount += orderItem.TotalPrice;
-                    order.OrderItems.Add(orderItem);
-                }
-
-                order.TotalAmount = totalAmount;
-                _context.DistributorOrders.Add(order);
-                await _context.SaveChangesAsync();
-
-                // Call Distributor API to create order
-                var distributorItems = order.OrderItems.Select(i => new SellerOrderItem
-                {
-                    DistributorProductId = i.Product.DistributorProductId,
-                    Quantity = i.Quantity,
-                    RequestedPrice = i.UnitPrice
-                }).ToList();
-
-                var processOrderDto = new ProcessSellerOrderDto
-                {
-                    SellerId = 1, // Configure this
-                    SellerOrderNumber = order.OrderNumber,
-                    Items = distributorItems,
-                    ShippingAddress = order.ShippingAddress
-                };
-
-                var distributorResult = await _distributorApiService.CreateDistributorOrderAsync(processOrderDto);
-
-                if (distributorResult.Success && distributorResult.Data != null)
-                {
-                    order.DistributorOrderNumber = distributorResult.Data.OrderNumber;
-                    await _context.SaveChangesAsync();
-                }
-
-                await transaction.CommitAsync();
-
-                // Map to DTO
-                var orderDto = MapToSellerDistributorOrderDto(order);
-                return ApiResponse<SellerDistributorOrderDto>.SuccessResult(orderDto);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error creating distributor order");
-                return ApiResponse<SellerDistributorOrderDto>.FailureResult("Error creating order");
-            }
-        }
-
-        public async Task<ApiResponse<List<SellerDistributorOrderDto>>> GetDistributorOrdersAsync()
-        {
-            try
-            {
-                var orders = await _context.DistributorOrders
-                    .Include(o => o.OrderItems)
-                    .ThenInclude(i => i.Product)
-                    .OrderByDescending(o => o.OrderDate)
-                    .ToListAsync();
-
-                var orderDtos = orders.Select(MapToSellerDistributorOrderDto).ToList();
-                return ApiResponse<List<SellerDistributorOrderDto>>.SuccessResult(orderDtos);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving distributor orders");
-                return ApiResponse<List<SellerDistributorOrderDto>>.FailureResult("Error retrieving orders");
-            }
-        }
-
-        public async Task<ApiResponse<SellerDistributorOrderDto>> GetDistributorOrderByIdAsync(int id)
-        {
-            try
-            {
-                var order = await _context.DistributorOrders
-                    .Include(o => o.OrderItems)
-                    .ThenInclude(i => i.Product)
-                    .FirstOrDefaultAsync(o => o.Id == id);
-
-                if (order == null)
-                {
-                    return ApiResponse<SellerDistributorOrderDto>.FailureResult("Order not found");
-                }
-
-                var orderDto = MapToSellerDistributorOrderDto(order);
-                return ApiResponse<SellerDistributorOrderDto>.SuccessResult(orderDto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving distributor order");
-                return ApiResponse<SellerDistributorOrderDto>.FailureResult("Error retrieving order");
-            }
-        }
-
-        private SellerDistributorOrderDto MapToSellerDistributorOrderDto(SellerDistributorOrder order)
-        {
-            return new SellerDistributorOrderDto
-            {
-                Id = order.Id,
-                OrderNumber = order.OrderNumber,
-                DistributorOrderNumber = order.DistributorOrderNumber,
-                Status = order.Status.ToString(),
-                OrderDate = order.OrderDate,
-                ExpectedDeliveryDate = order.ExpectedDeliveryDate,
-                TotalAmount = order.TotalAmount,
-                Items = order.OrderItems.Select(i => new SellerDistributorOrderItemDto
-                {
-                    ProductId = i.ProductId,
-                    ProductName = i.Product?.ProductName ?? "",
-                    SKU = i.Product?.SKU ?? "",
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice,
-                    TotalPrice = i.TotalPrice
-                }).ToList()
-            };
-        }
-
-        public async Task<ApiResponse<bool>> UpdateDistributorOrderStatusAsync(int id, string status)
-{
-    using var transaction = await _context.Database.BeginTransactionAsync();
-    try
-    {
-        var order = await _context.DistributorOrders
-            .FirstOrDefaultAsync(o => o.Id == id);
-
-        if (order == null)
-        {
-            return ApiResponse<bool>.FailureResult("Distributor order not found");
-        }
-
-        // Parse the string status to enum
-        if (!Enum.TryParse<OrderStatus>(status, true, out var newStatus))
-        {
-            return ApiResponse<bool>.FailureResult($"Invalid status: {status}");
-        }
-
-        // Update order status
-        order.Status = newStatus;
-        order.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        _logger.LogInformation($"Distributor order {order.OrderNumber} status updated to {newStatus}");
-        return ApiResponse<bool>.SuccessResult(true, $"Order status updated to {status}");
-    }
-    catch (Exception ex)
-    {
-        await transaction.RollbackAsync();
-        _logger.LogError(ex, "Error updating distributor order status");
-        return ApiResponse<bool>.FailureResult("Error updating order status");
-    }
-}
-
-
-
     }
 }
