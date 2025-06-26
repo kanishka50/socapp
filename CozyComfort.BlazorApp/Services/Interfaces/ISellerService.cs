@@ -40,5 +40,9 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         Task<ApiResponse<CheckStockResponseDto>> CheckDistributorStockAsync(int productId, int quantityNeeded);
         Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderDto request);
         Task<ApiResponse<bool>> UpdateStockAsync(int productId, int newStock);
+
+
+        Task<ApiResponse<List<SellerDistributorOrderDto>>> GetDistributorOrdersAsync();
+        Task<ApiResponse<SellerDistributorOrderDto>> CreateDistributorOrderAsync(CreateSellerDistributorOrderDto dto);
     }
 }
