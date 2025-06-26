@@ -1,6 +1,8 @@
 ﻿//using CozyComfort.Distributor.API.Models.DTOs;
-using CozyComfort.Shared.DTOs.Distributor;
+using CozyComfort.Distributor.API.Models.Entities;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
+using CozyComfort.Shared.DTOs.Manufacturer;
 
 namespace CozyComfort.Distributor.API.Services.Interfaces
 {
@@ -13,5 +15,6 @@ namespace CozyComfort.Distributor.API.Services.Interfaces
         Task<ApiResponse<bool>> DeleteProductAsync(int id);
         Task<ApiResponse<DistributorStockCheckResponse>> CheckStockAsync(DistributorStockCheckRequest request);
         Task<ApiResponse<bool>> UpdateStockAsync(int productId, UpdateDistributorStockDto dto);
+        Task<ApiResponse<DistributorProduct>> CreateProductFromManufacturerAsync(ProductDto manufacturerProduct, decimal purchasePrice = 0);
     }
 }

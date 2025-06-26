@@ -3,9 +3,11 @@ using CozyComfort.Distributor.API.Models.Entities;
 using CozyComfort.Distributor.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Distributor;
+using CozyComfort.Shared.DTOs.Manufacturer;
 using CozyComfort.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace CozyComfort.Distributor.API.Services.Implementations
 {
@@ -279,7 +281,7 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                 {
                     OrderNumber = $"DIST-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
                     OrderType = OrderType.ToManufacturer,
-                    ManufacturerId = 1, // You might want to make this configurable
+                    ManufacturerId = 1,
                     CustomerName = "Cozy Comfort Manufacturing",
                     Status = OrderStatus.Pending,
                     OrderDate = DateTime.UtcNow,
@@ -295,18 +297,7 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 decimal totalAmount = 0;
-
-                // Add order items
-               
-
-                // Update order total
-                order.TotalAmount = totalAmount;
-                await _context.SaveChangesAsync();
-
-                // Call manufacturer API to create the order there
                 var manufacturerApiService = _httpClientFactory.CreateClient("ManufacturerAPI");
-
-                // Get authentication token for manufacturer API
                 var authToken = await GetManufacturerAuthToken();
                 if (!string.IsNullOrEmpty(authToken))
                 {
@@ -314,10 +305,73 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
 
-                // Prepare request for manufacturer
+                // Add order items - create distributor products if they don't exist
+                foreach (var item in dto.Items)
+                {
+                    // Get manufacturer product details
+                    var manufacturerProductResponse = await manufacturerApiService.GetFromJsonAsync<ApiResponse<ProductDto>>($"api/products/{item.ManufacturerProductId}");
+
+                    if (manufacturerProductResponse?.Success != true || manufacturerProductResponse.Data == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return ApiResponse<OrderDto>.FailureResult($"Manufacturer product {item.ManufacturerProductId} not found");
+                    }
+
+                    var manufacturerProduct = manufacturerProductResponse.Data;
+
+                    // Check if distributor product exists, if not create it
+                    var distributorProduct = await _context.Products
+                        .FirstOrDefaultAsync(p => p.ManufacturerProductId == item.ManufacturerProductId);
+
+                    if (distributorProduct == null)
+                    {
+                        // Create new distributor product with 0 stock
+                        distributorProduct = new DistributorProduct
+                        {
+                            ManufacturerProductId = manufacturerProduct.Id,
+                            ProductName = manufacturerProduct.Name,
+                            SKU = manufacturerProduct.SKU,
+                            PurchasePrice = manufacturerProduct.Price * 0.7m, // 30% margin
+                            SellingPrice = manufacturerProduct.Price,
+                            CurrentStock = 0,
+                            ReservedStock = 0,
+                            MinStockLevel = 5,
+                            ReorderPoint = 10,
+                            ReorderQuantity = 20,
+                            CreatedAt = DateTime.UtcNow,
+                            IsActive = true
+                        };
+
+                        _context.Products.Add(distributorProduct);
+                        await _context.SaveChangesAsync();
+
+                        _logger.LogInformation($"Auto-created distributor product {distributorProduct.SKU} for manufacturer order");
+                    }
+
+                    // Create order item
+                    var orderItem = new DistributorOrderItem
+                    {
+                        OrderId = order.Id,
+                        ProductId = distributorProduct.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = distributorProduct.PurchasePrice,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "System",
+                        IsActive = true
+                    };
+
+                    _context.OrderItems.Add(orderItem);
+                    totalAmount += orderItem.Quantity * orderItem.UnitPrice;
+                }
+
+                // Update order total
+                order.TotalAmount = totalAmount;
+                await _context.SaveChangesAsync();
+
+                // Call manufacturer API to create the order there
                 var manufacturerOrderRequest = new
                 {
-                    DistributorId = 1, // Your distributor ID
+                    DistributorId = 1,
                     DistributorName = "Central Distribution Ltd",
                     DistributorOrderNumber = order.OrderNumber,
                     Notes = dto.Notes,
@@ -334,7 +388,6 @@ namespace CozyComfort.Distributor.API.Services.Implementations
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Rollback if manufacturer API call fails
                     await transaction.RollbackAsync();
                     var error = await response.Content.ReadAsStringAsync();
                     _logger.LogError("Failed to create order in manufacturer API: {Error}", error);
@@ -343,7 +396,7 @@ namespace CozyComfort.Distributor.API.Services.Implementations
 
                 await transaction.CommitAsync();
 
-                // Return the created order
+                // Return the created order with proper item details
                 var orderDto = new OrderDto
                 {
                     Id = order.Id,
