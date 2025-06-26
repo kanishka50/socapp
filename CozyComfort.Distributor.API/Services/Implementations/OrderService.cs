@@ -129,8 +129,8 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                 var oldStatus = order.Status;
                 order.Status = newStatus;
 
-                // Handle inventory updates based on status change
-                if (oldStatus == OrderStatus.Pending && newStatus == OrderStatus.Accepted)
+                // Handle FROM_SELLER orders - DECREASE inventory when accepted
+                if (oldStatus == OrderStatus.Pending && newStatus == OrderStatus.Accepted && order.OrderType == OrderType.FromSeller)
                 {
                     // Check if we have enough inventory
                     foreach (var item in order.OrderItems)
@@ -154,7 +154,37 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                             TransactionType = "OUT",
                             Quantity = item.Quantity,
                             Reference = order.OrderNumber,
-                            Notes = $"Order accepted - Stock decreased",
+                            Notes = $"Order accepted - Stock decreased for seller",
+                            TransactionDate = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.InventoryTransactions.Add(inventoryTx);
+                    }
+                }
+
+                // NEW CODE: Handle TO_MANUFACTURER orders - INCREASE inventory when accepted
+                else if (newStatus == OrderStatus.Accepted && order.OrderType == OrderType.ToManufacturer)
+                {
+                    _logger.LogInformation($"Processing manufacturer order acceptance for {order.OrderNumber}");
+
+                    // Increase distributor inventory for each item
+                    foreach (var item in order.OrderItems)
+                    {
+                        var previousStock = item.Product.CurrentStock;
+                        item.Product.CurrentStock += item.Quantity;
+                        item.Product.UpdatedAt = DateTime.UtcNow;
+
+                        _logger.LogInformation($"Updated stock for {item.Product.SKU}: {previousStock} -> {item.Product.CurrentStock} (+{item.Quantity})");
+
+                        // Create inventory transaction
+                        var inventoryTx = new DistributorInventoryTransaction
+                        {
+                            ProductId = item.ProductId,
+                            TransactionType = "IN",
+                            Quantity = item.Quantity,
+                            UnitCost = item.UnitPrice,
+                            Reference = order.OrderNumber,
+                            Notes = $"Received from manufacturer - Order accepted",
                             TransactionDate = DateTime.UtcNow,
                             CreatedAt = DateTime.UtcNow
                         };
