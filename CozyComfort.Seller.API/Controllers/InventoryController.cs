@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using CozyComfort.Seller.API.Data;
+﻿using CozyComfort.Seller.API.Data;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs.Seller;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 
 
@@ -146,7 +147,7 @@ namespace CozyComfort.Seller.API.Controllers
                 var distributorItems = request.Items.Select(item =>
                 {
                     var product = products[item.ProductId];
-                    return new DistributorOrderItem
+                    return new DistributorOrderItemDto
                     {
                         DistributorProductId = product.DistributorProductId,
                         Quantity = item.Quantity,

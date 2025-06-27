@@ -48,7 +48,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<OrderDto>> CreateDistributorOrderAsync(List<SellerDistributorOrderItemRequest> items)
+        public async Task<ApiResponse<OrderDto>> CreateDistributorOrderAsync(List<DistributorOrderItemDto> items)
         {
             try
             {
@@ -163,12 +163,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
     }
 
     // Internal DTOs for DistributorApiService
-    public class SellerDistributorOrderItemRequest
-    {
-        public int DistributorProductId { get; set; }
-        public int Quantity { get; set; }
-        public decimal RequestedPrice { get; set; }
-    }
+   
 
     public class LoginResponseDto
     {
