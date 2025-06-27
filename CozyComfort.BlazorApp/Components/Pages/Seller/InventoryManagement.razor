@@ -6,12 +6,15 @@
 @inject IJSRuntime JSRuntime
 @using CozyComfort.Shared.DTOs.Seller
 
-<PageTitle>Inventory Management - Cozy Comfort</PageTitle>
+<PageTitle>Inventory Management - Seller</PageTitle>
 
 <div class="container-fluid p-4">
-    <!-- Header -->
+    <!-- Clean Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Inventory Management</h2>
+        <div>
+            <h2 class="mb-1">Inventory Management</h2>
+            <p class="text-muted mb-0">Monitor and manage your product inventory</p>
+        </div>
         <button class="btn btn-primary" @onclick="NavigateToDistributorOrders">
             <i class="bi bi-truck"></i> View Distributor Orders
         </button>
@@ -33,10 +36,15 @@
     }
     else
     {
-        <!-- Search and Filter Bar -->
+        <!-- Search and Filter -->
         <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-funnel me-2"></i>Search & Filter
+                </h6>
+            </div>
             <div class="card-body">
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -45,7 +53,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" @bind="filterOption">
+                        <select class="form-select" @bind="filterOption" @bind:after="ApplyFilter">
                             <option value="">All Products</option>
                             <option value="low-stock">Low Stock (≤ 10)</option>
                             <option value="out-of-stock">Out of Stock</option>
@@ -63,12 +71,21 @@
 
         <!-- Inventory Table -->
         <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-boxes me-2"></i>Product Inventory
+                </h5>
+                @if (inventoryItems?.Any() == true)
+                {
+                    <span class="badge bg-secondary">@GetFilteredItems().Count items</span>
+                }
+            </div>
             <div class="card-body">
                 @if (inventoryItems?.Any() == true)
                 {
                     <div class="table-responsive">
                         <table class="table table-hover">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
                                     <th>Product</th>
                                     <th>SKU</th>
@@ -78,7 +95,7 @@
                                     <th>Purchase Price</th>
                                     <th>Selling Price</th>
                                     <th>Status</th>
-                                    <th>Actions</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -90,24 +107,33 @@
                                                 @if (!string.IsNullOrEmpty(item.ImageUrl))
                                                 {
                                                     <img src="@item.ImageUrl" alt="@item.ProductName"
-                                                         class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                         class="me-2 rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="me-2 bg-light rounded d-flex align-items-center justify-content-center"
+                                                         style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-image text-muted"></i>
+                                                    </div>
                                                 }
                                                 <div>
-                                                    <div class="fw-bold">@item.ProductName</div>
+                                                    <div class="fw-semibold">@item.ProductName</div>
                                                     <small class="text-muted">ID: @item.Id</small>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>@item.SKU</td>
-                                        <td><span class="badge bg-secondary">@item.Category</span></td>
+                                        <td class="text-muted">@item.SKU</td>
                                         <td>
-                                            <span class="@GetStockBadgeClass(item.CurrentStock)">
+                                            <span class="badge bg-light text-dark">@item.Category</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetStockBadgeClass(item.CurrentStock) fs-6">
                                                 @item.CurrentStock
                                             </span>
                                         </td>
-                                        <td>@item.DisplayStock</td>
+                                        <td class="text-muted">@item.DisplayStock</td>
                                         <td>$@item.PurchasePrice.ToString("F2")</td>
-                                        <td>$@item.SellingPrice.ToString("F2")</td>
+                                        <td class="fw-semibold">$@item.SellingPrice.ToString("F2")</td>
                                         <td>
                                             @if (item.CurrentStock == 0)
                                             {
@@ -115,14 +141,14 @@
                                             }
                                             else if (item.NeedsReorder)
                                             {
-                                                <span class="badge bg-warning">Low Stock</span>
+                                                <span class="badge bg-warning text-dark">Low Stock</span>
                                             }
                                             else
                                             {
                                                 <span class="badge bg-success">In Stock</span>
                                             }
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             <div class="btn-group btn-group-sm">
                                                 <button class="btn btn-outline-info" @onclick="() => CheckDistributorStock(item)"
                                                         title="Check Distributor Stock">
@@ -144,42 +170,54 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div>
-                            Showing @((pagedRequest.PageNumber - 1) * pagedRequest.PageSize + 1) to
-                            @Math.Min(pagedRequest.PageNumber * pagedRequest.PageSize, totalCount) of @totalCount items
-                        </div>
-                        <nav>
-                            <ul class="pagination mb-0">
-                                <li class="page-item @(pagedRequest.PageNumber == 1 ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(pagedRequest.PageNumber - 1)">
-                                        Previous
-                                    </button>
-                                </li>
-                                @for (int i = 1; i <= totalPages; i++)
-                                {
-                                    var pageNum = i;
-                                    <li class="page-item @(pagedRequest.PageNumber == pageNum ? "active" : "")">
-                                        <button class="page-link" @onclick="() => ChangePage(pageNum)">
-                                            @pageNum
+                    <!-- Simple Pagination -->
+                    @if (totalPages > 1)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="text-muted">
+                                Showing @((pagedRequest.PageNumber - 1) * pagedRequest.PageSize + 1) to
+                                @Math.Min(pagedRequest.PageNumber * pagedRequest.PageSize, totalCount) of @totalCount items
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0">
+                                    <li class="page-item @(pagedRequest.PageNumber == 1 ? "disabled" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(pagedRequest.PageNumber - 1)">
+                                            <i class="bi bi-chevron-left"></i>
                                         </button>
                                     </li>
-                                }
-                                <li class="page-item @(pagedRequest.PageNumber == totalPages ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(pagedRequest.PageNumber + 1)">
-                                        Next
-                                    </button>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
+
+                                    @for (int i = Math.Max(1, pagedRequest.PageNumber - 2); i <= Math.Min(totalPages, pagedRequest.PageNumber + 2); i++)
+                                    {
+                                        var pageNum = i;
+                                        <li class="page-item @(pagedRequest.PageNumber == pageNum ? "active" : "")">
+                                            <button class="page-link" @onclick="() => ChangePage(pageNum)">
+                                                @pageNum
+                                            </button>
+                                        </li>
+                                    }
+
+                                    <li class="page-item @(pagedRequest.PageNumber == totalPages ? "disabled" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(pagedRequest.PageNumber + 1)">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    }
                 }
                 else
                 {
                     <div class="text-center py-5 text-muted">
-                        <i class="bi bi-inbox fs-1"></i>
-                        <p class="mt-2">No inventory items found</p>
+                        <i class="bi bi-inbox display-1"></i>
+                        <h5 class="mt-3">No Inventory Items Found</h5>
+                        <p>No items match your current search or filter criteria.</p>
+                        @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(filterOption))
+                        {
+                            <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </button>
+                        }
                     </div>
                 }
             </div>
@@ -194,23 +232,34 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Distributor Stock Check</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-search me-2"></i>Distributor Stock Check
+                    </h5>
                     <button type="button" class="btn-close" @onclick="CloseStockCheckModal"></button>
                 </div>
                 <div class="modal-body">
                     @if (isCheckingStock)
                     {
-                        <div class="text-center">
+                        <div class="text-center py-4">
                             <div class="spinner-border text-primary" role="status"></div>
-                            <p class="mt-2">Checking distributor stock...</p>
+                            <p class="mt-3 mb-0">Checking distributor stock...</p>
                         </div>
                     }
                     else if (stockCheckResult != null)
                     {
                         <div class="alert @(stockCheckResult.DistributorHasStock ? "alert-success" : "alert-warning")">
-                            <h6>@stockCheckResult.ProductName</h6>
-                            <p class="mb-1">Your Current Stock: @stockCheckResult.CurrentSellerStock</p>
-                            <p class="mb-1">Quantity Requested: @stockCheckResult.QuantityNeeded</p>
+                            <h6 class="mb-2">@stockCheckResult.ProductName</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Your Current Stock</small>
+                                    <div class="fw-semibold">@stockCheckResult.CurrentSellerStock</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Quantity Requested</small>
+                                    <div class="fw-semibold">@stockCheckResult.QuantityNeeded</div>
+                                </div>
+                            </div>
+                            <hr class="my-2">
                             <p class="mb-0">@stockCheckResult.Message</p>
                         </div>
                     }
@@ -220,7 +269,7 @@
                     @if (stockCheckResult?.DistributorHasStock == true)
                     {
                         <button type="button" class="btn btn-primary" @onclick="() => ShowOrderDialog(selectedItem!)">
-                            Place Order
+                            <i class="bi bi-cart-plus"></i> Place Order
                         </button>
                     }
                 </div>
@@ -229,23 +278,33 @@
     </div>
 }
 
-<!-- Order from Distributor Modal -->
+<!-- Order Modal -->
 @if (showOrderModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Order from Distributor</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-cart-plus me-2"></i>Order from Distributor
+                    </h5>
                     <button type="button" class="btn-close" @onclick="CloseOrderModal"></button>
                 </div>
                 <div class="modal-body">
                     @if (selectedItem != null)
                     {
-                        <div class="mb-3">
-                            <h6>@selectedItem.ProductName</h6>
-                            <p class="text-muted mb-1">SKU: @selectedItem.SKU</p>
-                            <p class="text-muted">Current Stock: @selectedItem.CurrentStock</p>
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <h6 class="mb-1">@selectedItem.ProductName</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">SKU</small>
+                                    <div>@selectedItem.SKU</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Current Stock</small>
+                                    <div class="fw-semibold">@selectedItem.CurrentStock</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Quantity to Order</label>
@@ -253,7 +312,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" @bind="orderNotes" rows="3"></textarea>
+                            <textarea class="form-control" @bind="orderNotes" rows="3"
+                                      placeholder="Add any special instructions..."></textarea>
                         </div>
                     }
                 </div>
@@ -265,7 +325,7 @@
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
                         }
-                        Place Order
+                        <i class="bi bi-check"></i> Place Order
                     </button>
                 </div>
             </div>
@@ -280,15 +340,17 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Update Stock</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil me-2"></i>Update Stock Level
+                    </h5>
                     <button type="button" class="btn-close" @onclick="CloseUpdateStockModal"></button>
                 </div>
                 <div class="modal-body">
                     @if (selectedItem != null)
                     {
-                        <div class="mb-3">
-                            <h6>@selectedItem.ProductName</h6>
-                            <p class="text-muted">Current Stock: @selectedItem.CurrentStock</p>
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <h6 class="mb-1">@selectedItem.ProductName</h6>
+                            <small class="text-muted">Current Stock: <span class="fw-semibold">@selectedItem.CurrentStock</span></small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">New Stock Level</label>
@@ -304,7 +366,7 @@
                         {
                             <span class="spinner-border spinner-border-sm me-2"></span>
                         }
-                        Update Stock
+                        <i class="bi bi-check"></i> Update Stock
                     </button>
                 </div>
             </div>
@@ -381,17 +443,36 @@
         await LoadInventory();
     }
 
+    private async Task ApplyFilter()
+    {
+        pagedRequest.PageNumber = 1;
+        await LoadInventory();
+    }
+
     private List<SellerInventoryDto> GetFilteredItems()
     {
         if (inventoryItems == null) return new List<SellerInventoryDto>();
 
-        return filterOption switch
+        var filtered = inventoryItems.AsEnumerable();
+
+        filtered = filterOption switch
         {
-            "low-stock" => inventoryItems.Where(i => i.CurrentStock > 0 && i.CurrentStock <= 10).ToList(),
-            "out-of-stock" => inventoryItems.Where(i => i.CurrentStock == 0).ToList(),
-            "needs-reorder" => inventoryItems.Where(i => i.NeedsReorder).ToList(),
-            _ => inventoryItems
+            "low-stock" => filtered.Where(i => i.CurrentStock > 0 && i.CurrentStock <= 10),
+            "out-of-stock" => filtered.Where(i => i.CurrentStock == 0),
+            "needs-reorder" => filtered.Where(i => i.NeedsReorder),
+            _ => filtered
         };
+
+        return filtered.ToList();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = "";
+        filterOption = "";
+        pagedRequest.SearchTerm = "";
+        pagedRequest.PageNumber = 1;
+        await LoadInventory();
     }
 
     private async Task ChangePage(int page)
@@ -415,7 +496,7 @@
 
         try
         {
-            var response = await SellerService.CheckDistributorStockAsync(item.Id, 50); // Check for 50 units
+            var response = await SellerService.CheckDistributorStockAsync(item.Id, 50);
             if (response.Success && response.Data != null)
             {
                 stockCheckResult = response.Data;
@@ -450,7 +531,7 @@
     private void ShowOrderDialog(SellerInventoryDto item)
     {
         selectedItem = item;
-        orderQuantity = Math.Max(50, 100 - item.CurrentStock); // Suggest quantity to reach 100
+        orderQuantity = Math.Max(50, 100 - item.CurrentStock);
         orderNotes = "";
         showOrderModal = true;
         CloseStockCheckModal();
@@ -465,16 +546,16 @@
         {
             var orderDto = new CreateSellerDistributorOrderDto
             {
-                ShippingAddress = "Default Seller Address", // Add appropriate address
+                ShippingAddress = "Default Seller Address",
                 Notes = orderNotes,
                 Items = new List<CreateSellerDistributorOrderItemDto>
-    {
-        new CreateSellerDistributorOrderItemDto
-        {
-            DistributorProductId = selectedItem.DistributorProductId, // Use DistributorProductId
-            Quantity = orderQuantity
-        }
-    }
+                {
+                    new CreateSellerDistributorOrderItemDto
+                    {
+                        DistributorProductId = selectedItem.DistributorProductId,
+                        Quantity = orderQuantity
+                    }
+                }
             };
 
             var response = await SellerService.CreateDistributorOrderAsync(orderDto);
@@ -483,7 +564,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Order placed successfully with distributor!");
                 CloseOrderModal();
-                await LoadInventory(); // Refresh the list
+                await LoadInventory();
             }
             else
             {
@@ -521,7 +602,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Stock updated successfully!");
                 CloseUpdateStockModal();
-                await LoadInventory(); // Refresh the list
+                await LoadInventory();
             }
             else
             {
@@ -541,7 +622,7 @@
 
     private void NavigateToDistributorOrders()
     {
-        Navigation.NavigateTo("/seller/distributor-orders");
+        Navigation.NavigateTo("/seller/orders");
     }
 
     private void CloseStockCheckModal()
@@ -571,8 +652,8 @@
 
     private string GetStockBadgeClass(int stock)
     {
-        if (stock == 0) return "badge bg-danger";
-        if (stock <= 10) return "badge bg-warning";
-        return "badge bg-success";
+        if (stock == 0) return "bg-danger";
+        if (stock <= 10) return "bg-warning text-dark";
+        return "bg-success";
     }
 }

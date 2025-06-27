@@ -12,13 +12,16 @@
 <PageTitle>Order Details - Seller</PageTitle>
 
 <div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/seller/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/seller/orders">Orders</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Order Details</li>
-        </ol>
-    </nav>
+    <!-- Clean Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Order Details</h2>
+            <p class="text-muted mb-0">@(order?.OrderNumber ?? "Loading...")</p>
+        </div>
+        <button class="btn btn-outline-secondary" @onclick="NavigateToOrders">
+            <i class="bi bi-arrow-left"></i> Back to Orders
+        </button>
+    </div>
 
     @if (isLoading)
     {
@@ -28,166 +31,206 @@
             </div>
         </div>
     }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        </div>
+    }
     else if (order != null)
     {
-        <!-- Order Header -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <h3>Order #@order.OrderNumber</h3>
-                <p class="text-muted mb-0">Order ID: @order.Id</p>
+        <!-- Success/Error Messages -->
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> @successMessage
+                <button type="button" class="btn-close" @onclick="ClearSuccessMessage"></button>
             </div>
-            <div class="col-md-4 text-end">
-                <span class="badge @GetStatusBadgeClass(order.Status) fs-6">
-                    @GetDisplayStatus(order.Status)
-                </span>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle"></i> @errorMessage
+                <button type="button" class="btn-close" @onclick="ClearErrorMessage"></button>
             </div>
-        </div>
+        }
 
         <div class="row">
             <!-- Order Information -->
             <div class="col-md-8">
-                <!-- Order Summary -->
+                <!-- Order Summary Card -->
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Order Summary</h5>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clipboard-data me-2"></i>Order Summary
+                        </h5>
+                        <span class="badge @GetStatusBadgeClass(order.Status) fs-6">
+                            @GetDisplayStatus(order.Status)
+                        </span>
                     </div>
                     <div class="card-body">
-                        <div class="row mb-3">
+                        <div class="row">
                             <div class="col-md-6">
-                                <h6 class="text-muted">Order Date</h6>
-                                <p>@order.OrderDate.ToString("MMMM dd, yyyy hh:mm tt")</p>
+                                <h6 class="text-muted">Order Information</h6>
+                                <div class="mb-3">
+                                    <strong>Order Number:</strong> @order.OrderNumber<br />
+                                    <strong>Order ID:</strong> @order.Id<br />
+                                    <strong>Order Date:</strong> @order.OrderDate.ToString("MMMM dd, yyyy hh:mm tt")
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Customer Information</h6>
+                                <div class="mb-3">
+                                    <strong>Name:</strong> @order.CustomerName<br />
+                                    <strong>Email:</strong> @order.CustomerEmail
+                                </div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12">
-                                <h6 class="text-muted">Customer Information</h6>
-                                <div class="border rounded p-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <strong>Name:</strong> @order.CustomerName<br />
-                                            <strong>Email:</strong> @order.CustomerEmail
-                                        </div>
-                                        <div class="col-md-6">
-                                            <strong>Shipping Address:</strong><br />
-                                            @order.ShippingAddress
-                                        </div>
-                                    </div>
+                            <div class="col-12">
+                                <h6 class="text-muted">Shipping Address</h6>
+                                <div class="border rounded p-3 bg-light">
+                                    @order.ShippingAddress
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order Items -->
+                <!-- Order Items Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Order Items</h5>
+                        <h5 class="mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Order Items
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>SKU</th>
-                                        <th>Quantity</th>
-                                        <th>Unit Price</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in order.Items)
-                                    {
+                        @if (order.Items?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
                                         <tr>
-                                            <td>
-                                                <strong>@item.ProductName</strong>
-                                            </td>
-                                            <td>@item.SKU</td>
-                                            <td>@item.Quantity</td>
-                                            <td>$@item.UnitPrice.ToString("F2")</td>
-                                            <td>$@item.TotalPrice.ToString("F2")</td>
+                                            <th>Product</th>
+                                            <th>SKU</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
                                         </tr>
-                                    }
-                                </tbody>
-                                <tfoot class="table-light">
-                                    <tr>
-                                        <th colspan="4" class="text-end">Order Total:</th>
-                                        <th>$@order.TotalAmount.ToString("F2")</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in order.Items)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold">@item.ProductName</div>
+                                                </td>
+                                                <td class="text-muted">@item.SKU</td>
+                                                <td>
+                                                    <span class="badge bg-secondary">@item.Quantity</span>
+                                                </td>
+                                                <td>$@item.UnitPrice.ToString("F2")</td>
+                                                <td class="fw-semibold">$@item.TotalPrice.ToString("F2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <th colspan="4" class="text-end fs-5">Order Total:</th>
+                                            <th class="fs-5 text-success">$@order.TotalAmount.ToString("F2")</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox display-2"></i>
+                                <h6 class="mt-2">No Items Found</h6>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
 
             <!-- Actions Panel -->
             <div class="col-md-4">
-                <!-- Order Actions -->
+                <!-- Order Actions Card -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Order Actions</h5>
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>Order Actions
+                        </h5>
                     </div>
                     <div class="card-body">
                         @if (IsOrderPending(order.Status))
                         {
                             <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
                                 <strong>Pending Order</strong><br />
-                                Choose an action for this order:
+                                Choose an action for this order
                             </div>
 
-                            <button class="btn btn-success w-100 mb-2" @onclick='() => QuickUpdateStatus("Accepted")' disabled="@isUpdating">
-                                @if (isUpdating && pendingAction == "Accepted")
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                }
-                                <i class="bi bi-check-circle"></i> Accept Order
-                            </button>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" @onclick='() => QuickUpdateStatus("Accepted")' disabled="@isUpdating">
+                                    @if (isUpdating && pendingAction == "Accepted")
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    <i class="bi bi-check-circle me-2"></i>Accept Order
+                                </button>
 
-                            <button class="btn btn-danger w-100 mb-2" @onclick='() => QuickUpdateStatus("Cancelled")' disabled="@isUpdating">
-                                @if (isUpdating && pendingAction == "Cancelled")
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                }
-                                <i class="bi bi-x-circle"></i> Cancel Order
-                            </button>
+                                <button class="btn btn-danger" @onclick='() => QuickUpdateStatus("Cancelled")' disabled="@isUpdating">
+                                    @if (isUpdating && pendingAction == "Cancelled")
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    <i class="bi bi-x-circle me-2"></i>Cancel Order
+                                </button>
+                            </div>
 
                             <hr />
                         }
                         else
                         {
                             <div class="alert alert-secondary">
-                                <strong>Order Status:</strong> @GetDisplayStatus(order.Status)<br />
-                                <small>This order has been processed and cannot be modified.</small>
+                                <i class="bi bi-lock"></i>
+                                <strong>Order Processed</strong><br />
+                                <small>
+                                    Status: @GetDisplayStatus(order.Status)<br />
+                                    This order cannot be modified.
+                                </small>
                             </div>
                         }
 
-                        <button class="btn btn-outline-secondary w-100 mb-2" @onclick="PrintOrder">
-                            <i class="bi bi-printer"></i> Print Order
-                        </button>
-
-                        <button class="btn btn-outline-info w-100 mb-2" @onclick="EmailCustomer">
-                            <i class="bi bi-envelope"></i> Email Customer
-                        </button>
-
-                        <button class="btn btn-secondary w-100" @onclick="NavigateToOrders">
-                            <i class="bi bi-arrow-left"></i> Back to Orders
-                        </button>
+                        <!-- Additional Actions -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-secondary" @onclick="PrintOrder">
+                                <i class="bi bi-printer me-2"></i>Print Order
+                            </button>
+                            <button class="btn btn-outline-info" @onclick="EmailCustomer">
+                                <i class="bi bi-envelope me-2"></i>Email Customer
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Order Timeline -->
-                <div class="card">
+                <!-- Order Status Timeline Card -->
+                <div class="card mb-4">
                     <div class="card-header">
-                        <h6 class="card-title mb-0">Order Timeline</h6>
+                        <h6 class="mb-0">
+                            <i class="bi bi-clock-history me-2"></i>Order Timeline
+                        </h6>
                     </div>
                     <div class="card-body">
                         <div class="timeline">
                             <div class="timeline-item completed">
                                 <div class="timeline-marker bg-success"></div>
                                 <div class="timeline-content">
-                                    <h6 class="mb-0">Order Placed</h6>
+                                    <div class="fw-semibold">Order Placed</div>
                                     <small class="text-muted">@order.OrderDate.ToString("MMM dd, yyyy HH:mm")</small>
                                 </div>
                             </div>
@@ -195,8 +238,8 @@
                             <div class="timeline-item @(IsStatusReached("Pending") ? "completed" : "")">
                                 <div class="timeline-marker @(IsStatusReached("Pending") ? "bg-warning" : "bg-secondary")"></div>
                                 <div class="timeline-content">
-                                    <h6 class="mb-0">Pending Review</h6>
-                                    <small class="text-muted">@(IsStatusReached("Pending") ? "Order awaiting approval" : "Not reached")</small>
+                                    <div class="fw-semibold">Pending Review</div>
+                                    <small class="text-muted">Awaiting seller action</small>
                                 </div>
                             </div>
 
@@ -205,8 +248,8 @@
                                 <div class="timeline-item completed">
                                     <div class="timeline-marker bg-success"></div>
                                     <div class="timeline-content">
-                                        <h6 class="mb-0">Order Accepted</h6>
-                                        <small class="text-muted">Order approved and inventory deducted</small>
+                                        <div class="fw-semibold">Order Accepted</div>
+                                        <small class="text-muted">Inventory updated</small>
                                     </div>
                                 </div>
                             }
@@ -216,7 +259,7 @@
                                 <div class="timeline-item completed">
                                     <div class="timeline-marker bg-danger"></div>
                                     <div class="timeline-content">
-                                        <h6 class="mb-0">Order Cancelled</h6>
+                                        <div class="fw-semibold">Order Cancelled</div>
                                         <small class="text-muted">Order was cancelled</small>
                                     </div>
                                 </div>
@@ -225,33 +268,33 @@
                     </div>
                 </div>
 
-                <!-- Success/Error Messages -->
-                @if (!string.IsNullOrEmpty(successMessage))
-                {
-                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                        @successMessage
-                        <button type="button" class="btn-close" @onclick="ClearSuccessMessage" aria-label="Close"></button>
+                <!-- Order Summary Stats -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>Order Summary
+                        </h6>
                     </div>
-                }
-
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                        @errorMessage
-                        <button type="button" class="btn-close" @onclick="ClearErrorMessage" aria-label="Close"></button>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="fw-semibold text-primary">@(order.Items?.Count ?? 0)</div>
+                                <small class="text-muted">Items</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="fw-semibold text-info">@(order.Items?.Sum(i => i.Quantity) ?? 0)</div>
+                                <small class="text-muted">Total Quantity</small>
+                            </div>
+                        </div>
+                        <hr class="my-3">
+                        <div class="text-center">
+                            <div class="fw-bold text-success fs-4">$@order.TotalAmount.ToString("F2")</div>
+                            <small class="text-muted">Total Amount</small>
+                        </div>
                     </div>
-                }
+                </div>
             </div>
         </div>
-    }
-    else if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-circle"></i> @errorMessage
-        </div>
-        <button class="btn btn-primary" @onclick="NavigateToOrders">
-            <i class="bi bi-arrow-left"></i> Back to Orders
-        </button>
     }
 </div>
 
@@ -265,53 +308,64 @@
                     <h5 class="modal-title">
                         @if (pendingAction == "Accepted")
                         {
-                            <i class="bi bi-check-circle text-success"></i>
-                            <text>Accept Order</text>
-                        }
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                            Accept Order
+                                            }
                         else
                         {
-                            <i class="bi bi-x-circle text-danger"></i>
-                            <text>Cancel Order</text>
-                        }
+                            <i class="bi bi-x-circle text-danger me-2"></i>
+                            Cancel Order
+                                        }
                     </h5>
                     <button type="button" class="btn-close" @onclick="CloseConfirmModal"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Order:</strong> @order?.OrderNumber</p>
-                    <p><strong>Customer:</strong> @order?.CustomerName</p>
-                    <p><strong>Total Amount:</strong> $@order?.TotalAmount.ToString("N2")</p>
+                    <div class="mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <strong>Order:</strong> @order?.OrderNumber<br />
+                            <strong>Customer:</strong> @order?.CustomerName<br />
+                            <strong>Total Amount:</strong> $@order?.TotalAmount.ToString("N2")
+                        </div>
+                    </div>
 
                     @if (pendingAction == "Accepted")
                     {
                         <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Important:</strong> Accepting this order will deduct the following items from your inventory:
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Accepting this order will deduct items from your inventory:
                         </div>
-                        <ul>
-                            @if (order?.Items != null)
-                            {
+
+                        @if (order?.Items != null)
+                        {
+                            <ul class="list-unstyled mb-3">
                                 @foreach (var item in order.Items)
                                 {
-                                    <li>@item.ProductName - Quantity: @item.Quantity</li>
+                                    <li class="border-bottom py-2">
+                                        <div class="d-flex justify-content-between">
+                                            <span>@item.ProductName</span>
+                                            <span class="badge bg-primary">@item.Quantity</span>
+                                        </div>
+                                    </li>
                                 }
-                            }
-                        </ul>
-                        <p class="text-muted">Make sure you have sufficient stock before accepting.</p>
+                            </ul>
+                        }
+
+                        <p class="text-muted mb-0">Make sure you have sufficient stock before accepting.</p>
                     }
                     else
                     {
-                        <p>Are you sure you want to cancel this order?</p>
+                        <p>Are you sure you want to cancel this order? This action cannot be undone.</p>
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseConfirmModal">Close</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseConfirmModal">Cancel</button>
                     <button type="button"
                             class="btn @(pendingAction == "Accepted" ? "btn-success" : "btn-danger")"
                             @onclick="ConfirmStatusUpdate"
                             disabled="@isUpdating">
                         @if (isUpdating)
                         {
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span class="spinner-border spinner-border-sm me-2"></span>
                         }
                         @(pendingAction == "Accepted" ? "Accept Order" : "Cancel Order")
                     </button>
@@ -357,8 +411,8 @@
         box-shadow: 0 0 0 2px #dee2e6;
     }
 
-    .timeline-content h6 {
-        margin-bottom: 2px;
+    .timeline-content {
+        margin-bottom: 5px;
     }
 </style>
 
@@ -440,9 +494,6 @@
 
                 order.Status = pendingAction;
                 CloseConfirmModal();
-
-                // Optional: Show success with JS alert
-                await JSRuntime.InvokeVoidAsync("alert", successMessage);
             }
             else
             {
@@ -462,13 +513,11 @@
 
     private void PrintOrder()
     {
-        // TODO: Implement print functionality
         successMessage = "Print functionality will be implemented";
     }
 
     private void EmailCustomer()
     {
-        // TODO: Implement email functionality
         successMessage = "Email functionality will be implemented";
     }
 
@@ -487,7 +536,6 @@
         errorMessage = null;
     }
 
-    // FIXED: Check if order is pending
     private bool IsOrderPending(string status)
     {
         if (string.IsNullOrEmpty(status))
@@ -497,7 +545,6 @@
                status.Trim() == "0";
     }
 
-    // FIXED: Proper status badge mapping
     private string GetStatusBadgeClass(string status)
     {
         if (string.IsNullOrEmpty(status))
@@ -512,7 +559,6 @@
         };
     }
 
-    // Helper method to display proper status name
     private string GetDisplayStatus(string status)
     {
         if (string.IsNullOrEmpty(status))
@@ -531,10 +577,9 @@
     {
         if (order == null) return false;
 
-        // For our simple enum: Pending -> Accepted OR Cancelled
         return targetStatus.ToLower() switch
         {
-            "pending" => true, // Always reached since order exists
+            "pending" => true,
             "accepted" => IsOrderAccepted(order.Status),
             "cancelled" => IsOrderCancelled(order.Status),
             _ => false

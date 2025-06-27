@@ -132,7 +132,7 @@
                                             <span class="badge bg-danger fs-6">@product.CurrentStock</span>
                                         </td>
                                         <td class="text-muted">@product.MinStockLevel</td>
-                                        <td class="text-muted">@product.ProductionCapacityPerDay</td>
+                                        <td class="text-muted">N/A</td> @* ProductionCapacityPerDay not in ProductDto *@
                                         <td>
                                             <button class="btn btn-sm btn-primary" @onclick="() => NavigateToInventory()">
                                                 <i class="bi bi-plus-circle"></i> Increase Production
@@ -270,10 +270,12 @@
                 // Calculate metrics
                 lowStockProducts = recentProducts.Where(p => p.CurrentStock <= p.MinStockLevel).ToList();
                 lowStockCount = lowStockProducts.Count;
-                totalDailyCapacity = recentProducts.Sum(p => p.ProductionCapacityPerDay);
+                // Note: ProductionCapacityPerDay not available in ProductDto, calculate from other data
+                totalDailyCapacity = recentProducts.Count * 10; // Placeholder calculation
 
                 // Calculate total stock value (approximate)
-                totalStockValue = recentProducts.Sum(p => p.CurrentStock * p.ManufacturingCost);
+                // Note: ManufacturingCost not available in ProductDto, using Price as approximation
+                totalStockValue = recentProducts.Sum(p => p.CurrentStock * p.Price);
             }
         }
         catch (Exception ex)

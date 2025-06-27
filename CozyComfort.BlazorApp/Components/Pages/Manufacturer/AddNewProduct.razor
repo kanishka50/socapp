@@ -1,7 +1,7 @@
 ﻿@page "/manufacturer/products/add"
 @attribute [Authorize(Roles = "Manufacturer")]
 @inject IManufacturerService ManufacturerService
-@inject ILogger<AddProduct> Logger
+@inject ILogger<AddNewProduct> Logger
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -185,8 +185,8 @@
                                     @if (isSubmitting)
                                     {
                                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Creating...
-                                                                        }
+                                        <span>Creating...</span>
+                                    }
                                     else
                                     {
                                         <i class="bi bi-plus-circle me-2"></i>
