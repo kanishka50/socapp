@@ -18,55 +18,46 @@
         </button>
     </div>
 
-    <!-- Status Filter Tabs -->
+    <!-- Status Filter Buttons -->
     <div class="card mb-4">
-        <div class="card-header p-0">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <button class="nav-link @(statusFilter == "" ? "active" : "")"
-                            @onclick="() => FilterByStatus(string.Empty)">
-                        <i class="bi bi-list me-2"></i>
-                        All Orders
-                        @if (totalOrders > 0)
-                        {
-                            <span class="badge bg-secondary ms-2">@totalOrders</span>
-                        }
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link @(statusFilter == "Pending" ? "active" : "")"
-                            @onclick="@(() => FilterByStatus("Pending"))">
-                        <i class="bi bi-hourglass me-2"></i>
-                        Pending
-                        @if (pendingCount > 0)
-                        {
-                            <span class="badge bg-warning ms-2">@pendingCount</span>
-                        }
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link @(statusFilter == "Accepted" ? "active" : "")"
-                            @onclick="@(() => FilterByStatus("Accepted"))">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Accepted
-                        @if (acceptedCount > 0)
-                        {
-                            <span class="badge bg-success ms-2">@acceptedCount</span>
-                        }
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link @(statusFilter == "Cancelled" ? "active" : "")"
-                            @onclick="@(() => FilterByStatus("Cancelled"))">
-                        <i class="bi bi-x-circle me-2"></i>
-                        Cancelled
-                        @if (cancelledCount > 0)
-                        {
-                            <span class="badge bg-danger ms-2">@cancelledCount</span>
-                        }
-                    </button>
-                </li>
-            </ul>
+        <div class="card-body">
+            <div class="d-flex gap-2 flex-wrap">
+                <button style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; font-size: 14px;"
+                        @onclick="() => FilterByStatus(string.Empty)">
+                    All Orders
+                    @if (totalOrders > 0)
+                    {
+                        <span style="background-color: white; color: #6c757d; padding: 2px 6px; border-radius: 12px; margin-left: 8px; font-size: 12px;">@totalOrders</span>
+                    }
+                </button>
+
+                <button style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; font-size: 14px;"
+                        @onclick="@(() => FilterByStatus("Pending"))">
+                    Pending
+                    @if (pendingCount > 0)
+                    {
+                        <span style="background-color: white; color: #6c757d; padding: 2px 6px; border-radius: 12px; margin-left: 8px; font-size: 12px;">@pendingCount</span>
+                    }
+                </button>
+
+                <button style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; font-size: 14px;"
+                        @onclick="@(() => FilterByStatus("Accepted"))">
+                    Accepted
+                    @if (acceptedCount > 0)
+                    {
+                        <span style="background-color: white; color: #6c757d; padding: 2px 6px; border-radius: 12px; margin-left: 8px; font-size: 12px;">@acceptedCount</span>
+                    }
+                </button>
+
+                <button style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; font-size: 14px;"
+                        @onclick="@(() => FilterByStatus("Cancelled"))">
+                    Cancelled
+                    @if (cancelledCount > 0)
+                    {
+                        <span style="background-color: white; color: #6c757d; padding: 2px 6px; border-radius: 12px; margin-left: 8px; font-size: 12px;">@cancelledCount</span>
+                    }
+                </button>
+            </div>
         </div>
     </div>
 

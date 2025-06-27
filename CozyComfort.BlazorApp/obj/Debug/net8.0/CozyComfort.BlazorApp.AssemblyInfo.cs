@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CozyComfort.BlazorApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5784a2c98d3907035f5128a469a49f2569c7929a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a8b95c9286f08af5d7630fb1485724f0f1fbe931")]
 [assembly: System.Reflection.AssemblyProductAttribute("CozyComfort.BlazorApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CozyComfort.BlazorApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

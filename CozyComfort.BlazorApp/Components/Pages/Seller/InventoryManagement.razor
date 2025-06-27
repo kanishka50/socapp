@@ -103,23 +103,9 @@
                                 {
                                     <tr class="@GetRowClass(item)">
                                         <td>
-                                            <div class="d-flex align-items-center">
-                                                @if (!string.IsNullOrEmpty(item.ImageUrl))
-                                                {
-                                                    <img src="@item.ImageUrl" alt="@item.ProductName"
-                                                         class="me-2 rounded" style="width: 40px; height: 40px; object-fit: cover;">
-                                                }
-                                                else
-                                                {
-                                                    <div class="me-2 bg-light rounded d-flex align-items-center justify-content-center"
-                                                         style="width: 40px; height: 40px;">
-                                                        <i class="bi bi-image text-muted"></i>
-                                                    </div>
-                                                }
-                                                <div>
-                                                    <div class="fw-semibold">@item.ProductName</div>
-                                                    <small class="text-muted">ID: @item.Id</small>
-                                                </div>
+                                            <div>
+                                                <div class="fw-semibold">@item.ProductName</div>
+                                                <small class="text-muted">ID: @item.Id</small>
                                             </div>
                                         </td>
                                         <td class="text-muted">@item.SKU</td>
@@ -149,20 +135,10 @@
                                             }
                                         </td>
                                         <td class="text-center">
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-info" @onclick="() => CheckDistributorStock(item)"
-                                                        title="Check Distributor Stock">
-                                                    <i class="bi bi-search"></i>
-                                                </button>
-                                                <button class="btn btn-outline-primary" @onclick="() => ShowOrderDialog(item)"
-                                                        title="Order from Distributor">
-                                                    <i class="bi bi-cart-plus"></i>
-                                                </button>
-                                                <button class="btn btn-outline-secondary" @onclick="() => ShowUpdateStockDialog(item)"
-                                                        title="Update Stock">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </div>
+                                            <button class="btn btn-outline-info btn-sm" @onclick="() => CheckDistributorStock(item)"
+                                                    title="Check Distributor Stock">
+                                                <i class="bi bi-search"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 }
@@ -266,108 +242,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseStockCheckModal">Close</button>
-                    @if (stockCheckResult?.DistributorHasStock == true)
-                    {
-                        <button type="button" class="btn btn-primary" @onclick="() => ShowOrderDialog(selectedItem!)">
-                            <i class="bi bi-cart-plus"></i> Place Order
-                        </button>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Order Modal -->
-@if (showOrderModal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-cart-plus me-2"></i>Order from Distributor
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="CloseOrderModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (selectedItem != null)
-                    {
-                        <div class="mb-3 p-3 bg-light rounded">
-                            <h6 class="mb-1">@selectedItem.ProductName</h6>
-                            <div class="row">
-                                <div class="col-6">
-                                    <small class="text-muted">SKU</small>
-                                    <div>@selectedItem.SKU</div>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted">Current Stock</small>
-                                    <div class="fw-semibold">@selectedItem.CurrentStock</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Quantity to Order</label>
-                            <input type="number" class="form-control" @bind="orderQuantity" min="1" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" @bind="orderNotes" rows="3"
-                                      placeholder="Add any special instructions..."></textarea>
-                        </div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseOrderModal">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="PlaceDistributorOrder"
-                            disabled="@(orderQuantity <= 0 || isPlacingOrder)">
-                        @if (isPlacingOrder)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        <i class="bi bi-check"></i> Place Order
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Update Stock Modal -->
-@if (showUpdateStockModal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil me-2"></i>Update Stock Level
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="CloseUpdateStockModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (selectedItem != null)
-                    {
-                        <div class="mb-3 p-3 bg-light rounded">
-                            <h6 class="mb-1">@selectedItem.ProductName</h6>
-                            <small class="text-muted">Current Stock: <span class="fw-semibold">@selectedItem.CurrentStock</span></small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">New Stock Level</label>
-                            <input type="number" class="form-control" @bind="newStockLevel" min="0" />
-                        </div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseUpdateStockModal">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="UpdateStock"
-                            disabled="@(newStockLevel < 0 || isUpdatingStock)">
-                        @if (isUpdatingStock)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        <i class="bi bi-check"></i> Update Stock
-                    </button>
                 </div>
             </div>
         </div>
@@ -385,19 +259,12 @@
     private int totalCount = 0;
     private int totalPages = 1;
 
-    // Modal states
+    // Modal states (only for stock check)
     private bool showStockCheckModal = false;
-    private bool showOrderModal = false;
-    private bool showUpdateStockModal = false;
     private bool isCheckingStock = false;
-    private bool isPlacingOrder = false;
-    private bool isUpdatingStock = false;
 
     private SellerInventoryDto? selectedItem;
     private CheckStockResponseDto? stockCheckResult;
-    private int orderQuantity = 1;
-    private string orderNotes = "";
-    private int newStockLevel = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -528,98 +395,6 @@
         }
     }
 
-    private void ShowOrderDialog(SellerInventoryDto item)
-    {
-        selectedItem = item;
-        orderQuantity = Math.Max(50, 100 - item.CurrentStock);
-        orderNotes = "";
-        showOrderModal = true;
-        CloseStockCheckModal();
-    }
-
-    private async Task PlaceDistributorOrder()
-    {
-        if (selectedItem == null || orderQuantity <= 0) return;
-
-        isPlacingOrder = true;
-        try
-        {
-            var orderDto = new CreateSellerDistributorOrderDto
-            {
-                ShippingAddress = "Default Seller Address",
-                Notes = orderNotes,
-                Items = new List<CreateSellerDistributorOrderItemDto>
-                {
-                    new CreateSellerDistributorOrderItemDto
-                    {
-                        DistributorProductId = selectedItem.DistributorProductId,
-                        Quantity = orderQuantity
-                    }
-                }
-            };
-
-            var response = await SellerService.CreateDistributorOrderAsync(orderDto);
-
-            if (response.Success)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Order placed successfully with distributor!");
-                CloseOrderModal();
-                await LoadInventory();
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("alert", $"Failed to place order: {response.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error placing distributor order");
-            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while placing the order");
-        }
-        finally
-        {
-            isPlacingOrder = false;
-        }
-    }
-
-    private void ShowUpdateStockDialog(SellerInventoryDto item)
-    {
-        selectedItem = item;
-        newStockLevel = item.CurrentStock;
-        showUpdateStockModal = true;
-    }
-
-    private async Task UpdateStock()
-    {
-        if (selectedItem == null || newStockLevel < 0) return;
-
-        isUpdatingStock = true;
-        try
-        {
-            var response = await SellerService.UpdateStockAsync(selectedItem.Id, newStockLevel);
-
-            if (response.Success)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Stock updated successfully!");
-                CloseUpdateStockModal();
-                await LoadInventory();
-            }
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("alert", $"Failed to update stock: {response.Message}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error updating stock");
-            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while updating stock");
-        }
-        finally
-        {
-            isUpdatingStock = false;
-        }
-    }
-
     private void NavigateToDistributorOrders()
     {
         Navigation.NavigateTo("/seller/orders");
@@ -629,18 +404,6 @@
     {
         showStockCheckModal = false;
         stockCheckResult = null;
-    }
-
-    private void CloseOrderModal()
-    {
-        showOrderModal = false;
-        selectedItem = null;
-    }
-
-    private void CloseUpdateStockModal()
-    {
-        showUpdateStockModal = false;
-        selectedItem = null;
     }
 
     private string GetRowClass(SellerInventoryDto item)

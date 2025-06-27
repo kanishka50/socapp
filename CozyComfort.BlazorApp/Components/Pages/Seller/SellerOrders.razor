@@ -34,26 +34,22 @@
     {
         <!-- Simple Tabs -->
         <div class="card mb-4">
-            <div class="card-header p-0">
-                <ul class="nav nav-tabs card-header-tabs">
-                    <li class="nav-item">
-                        <button class="nav-link @(activeTab == "customer" ? "active" : "")"
-                                @onclick="@(() => activeTab = "customer")">
-                            <i class="bi bi-person-fill me-2"></i>
-                            Customer Orders
-                            <span class="badge bg-primary ms-2">@combinedOrders.TotalCustomerOrders</span>
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link @(activeTab == "distributor" ? "active" : "")"
-                                @onclick="@(() => activeTab = "distributor")">
-                            <i class="bi bi-truck me-2"></i>
-                            Distributor Orders
-                            <span class="badge bg-info ms-2">@combinedOrders.TotalDistributorOrders</span>
-                        </button>
-                    </li>
-                </ul>
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+                    <button style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; font-size: 14px;"
+                            @onclick="@(() => activeTab = "customer")">
+                        Customer Orders
+                        <span style="background-color: white; color: #6c757d; padding: 2px 6px; border-radius: 12px; margin-left: 8px; font-size: 12px;">@combinedOrders.TotalCustomerOrders</span>
+                    </button>
+
+                    <button style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; font-size: 14px;"
+                            @onclick="@(() => activeTab = "distributor")">
+                        Distributor Orders
+                        <span style="background-color: white; color: #6c757d; padding: 2px 6px; border-radius: 12px; margin-left: 8px; font-size: 12px;">@combinedOrders.TotalDistributorOrders</span>
+                    </button>
+                </div>
             </div>
+
             <div class="card-body p-0">
                 @if (activeTab == "customer")
                 {

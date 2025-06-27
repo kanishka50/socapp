@@ -163,7 +163,7 @@
                         <!-- Order Status Summary Sidebar -->
                         <div class="col-md-4">
                             <!-- Order Status Summary -->
-                            <div class="card mb-3 bg-light">
+                            @* <div class="card mb-3 bg-light">
                                 <div class="card-header bg-transparent">
                                     <h6 class="mb-0 fw-semibold">
                                         <i class="bi bi-pie-chart me-2"></i>Order Status Summary
@@ -195,7 +195,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> *@
 
                             <!-- Today's Highlights -->
                             <div class="card bg-light">
@@ -267,34 +267,63 @@
             isLoading = true;
             errorMessage = null;
 
-            // Load orders for metrics
-            var ordersResponse = await SellerService.GetOrdersAsync(new PagedRequest
+            // Load combined orders for metrics - THIS IS THE KEY CHANGE
+            var combinedOrdersResponse = await SellerService.GetCombinedOrdersAsync(new PagedRequest
             {
                 PageNumber = 1,
-                PageSize = 100
+                PageSize = 1000 // Get more records for accurate metrics
             });
 
-            if (ordersResponse.Success && ordersResponse.Data != null)
+            if (combinedOrdersResponse.Success && combinedOrdersResponse.Data != null)
             {
-                var orders = ordersResponse.Data.Items;
-                recentOrders = orders.OrderByDescending(o => o.OrderDate).ToList();
+                var combinedOrders = combinedOrdersResponse.Data;
 
-                // Calculate metrics
-                totalOrders = orders.Count;
-                pendingOrders = orders.Count(o => o.Status == "Pending");
-                processingOrders = orders.Count(o => o.Status == "Processing");
-                shippedOrders = orders.Count(o => o.Status == "Shipped");
-                deliveredOrders = orders.Count(o => o.Status == "Delivered");
+                // Combine both customer and distributor orders for metrics
+                var allCustomerOrders = combinedOrders.CustomerOrders.ToList();
+                var allDistributorOrders = combinedOrders.DistributorOrders.ToList();
 
+                // Calculate total orders (customer + distributor)
+                totalOrders = allCustomerOrders.Count + allDistributorOrders.Count;
+
+                // Calculate pending orders from both types
+                pendingOrders = allCustomerOrders.Count(o => o.Status.ToLower() == "pending") +
+                               allDistributorOrders.Count(o => o.Status.ToLower() == "pending");
+
+                // Calculate other status counts from both types
+                processingOrders = allCustomerOrders.Count(o => o.Status.ToLower() == "processing") +
+                                  allDistributorOrders.Count(o => o.Status.ToLower() == "processing");
+
+                shippedOrders = allCustomerOrders.Count(o => o.Status.ToLower() == "shipped") +
+                               allDistributorOrders.Count(o => o.Status.ToLower() == "shipped");
+
+                deliveredOrders = allCustomerOrders.Count(o => o.Status.ToLower() == "delivered") +
+                                 allDistributorOrders.Count(o => o.Status.ToLower() == "delivered");
+
+                // Use customer orders for recent orders display (more relevant for dashboard)
+                recentOrders = allCustomerOrders.OrderByDescending(o => o.OrderDate).ToList();
+
+                // Calculate today's metrics from both order types
                 var today = DateTime.Today;
-                var todayOrdersList = orders.Where(o => o.OrderDate.Date == today).ToList();
-                todayOrders = todayOrdersList.Count;
-                todayRevenue = todayOrdersList.Sum(o => o.TotalAmount);
+                var todayCustomerOrders = allCustomerOrders.Where(o => o.OrderDate.Date == today).ToList();
+                var todayDistributorOrders = allDistributorOrders.Where(o => o.OrderDate.Date == today).ToList();
 
-                if (orders.Any())
+                todayOrders = todayCustomerOrders.Count + todayDistributorOrders.Count;
+                todayRevenue = todayCustomerOrders.Sum(o => o.TotalAmount) +
+                              todayDistributorOrders.Sum(o => o.TotalAmount);
+
+                // Calculate average order value from all orders
+                var allOrderAmounts = allCustomerOrders.Select(o => o.TotalAmount)
+                                     .Concat(allDistributorOrders.Select(o => o.TotalAmount))
+                                     .ToList();
+
+                if (allOrderAmounts.Any())
                 {
-                    averageOrderValue = orders.Average(o => o.TotalAmount);
+                    averageOrderValue = allOrderAmounts.Average();
                 }
+            }
+            else
+            {
+                errorMessage = combinedOrdersResponse.Message ?? "Failed to load orders data";
             }
 
             // Load products for metrics
@@ -347,14 +376,16 @@
 
     private string GetStatusBadgeClass(string status)
     {
-        return status switch
+        return status.ToLower() switch
         {
-            "Pending" => "bg-warning",
-            "Processing" => "bg-info",
-            "Confirmed" => "bg-primary",
-            "Shipped" => "bg-secondary",
-            "Delivered" => "bg-success",
-            "Cancelled" => "bg-danger",
+            "pending" => "bg-warning text-dark",
+            "processing" => "bg-info",
+            "confirmed" => "bg-primary",
+            "shipped" => "bg-secondary",
+            "delivered" => "bg-success",
+            "cancelled" => "bg-danger",
+            "accepted" => "bg-success",
+            "completed" => "bg-primary",
             _ => "bg-secondary"
         };
     }
