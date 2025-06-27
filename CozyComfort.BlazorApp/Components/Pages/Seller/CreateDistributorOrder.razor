@@ -8,16 +8,7 @@
 <PageTitle>Create Distributor Order - Seller</PageTitle>
 
 <div class="container-fluid p-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/seller/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/seller/orders">Orders</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Create Distributor Order</li>
-        </ol>
-    </nav>
-
-    <!-- Header -->
+    <!-- Clean Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Create Order from Distributor</h2>
@@ -32,7 +23,7 @@
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-circle"></i> @errorMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" @onclick="ClearErrorMessage"></button>
         </div>
     }
 
@@ -40,7 +31,7 @@
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle"></i> @successMessage
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" @onclick="ClearSuccessMessage"></button>
         </div>
     }
 
@@ -49,7 +40,7 @@
             <!-- Product Selection -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
+                    <h5 class="mb-0">
                         <i class="bi bi-box-seam me-2"></i>Select Distributor Products
                     </h5>
                     <div class="d-flex gap-2">
@@ -252,7 +243,7 @@
             <!-- Order Details -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
+                    <h5 class="mb-0">
                         <i class="bi bi-clipboard me-2"></i>Order Details
                     </h5>
                 </div>
@@ -283,7 +274,7 @@
             <!-- Order Summary -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
+                    <h5 class="mb-0">
                         <i class="bi bi-receipt me-2"></i>Order Summary
                     </h5>
                 </div>
@@ -307,27 +298,27 @@
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder"
-                                disabled="@(!orderItems.Any() || isSubmitting || string.IsNullOrWhiteSpace(shippingAddress))">
-                            @if (isSubmitting)
+                        <button class="btn btn-primary btn-lg" @onclick="CreateOrder"
+                                disabled="@(!orderItems.Any() || isCreatingOrder || string.IsNullOrWhiteSpace(shippingAddress))">
+                            @if (isCreatingOrder)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Submitting...
+                                Creating Order...
                                                         }
                             else
                             {
                                 <i class="bi bi-check-circle me-2"></i>
-                                Submit Order
+                                Create Order
                                                         }
                         </button>
-                        <button class="btn btn-outline-secondary" @onclick="CancelOrder" disabled="@isSubmitting">
+                        <button class="btn btn-outline-secondary" @onclick="CancelOrder" disabled="@isCreatingOrder">
                             <i class="bi bi-x-circle"></i> Cancel
                         </button>
                     </div>
 
                     @if (!orderItems.Any())
                     {
-                        <small class="text-muted d-block mt-2">Add products to enable order submission</small>
+                        <small class="text-muted d-block mt-2">Add products to enable order creation</small>
                     }
                     else if (string.IsNullOrWhiteSpace(shippingAddress))
                     {
@@ -341,7 +332,7 @@
             <!-- Product Stats -->
             <div class="card">
                 <div class="card-header">
-                    <h6 class="card-title mb-0">
+                    <h6 class="mb-0">
                         <i class="bi bi-info-circle me-2"></i>Available Products
                     </h6>
                 </div>
@@ -388,7 +379,7 @@
 
     // Order summary
     private decimal orderTotal = 0;
-    private bool isSubmitting = false;
+    private bool isCreatingOrder = false;
     private string? errorMessage;
     private string? successMessage;
 
@@ -534,7 +525,7 @@
         orderTotal = orderItems.Sum(i => i.Total);
     }
 
-    private async Task SubmitOrder()
+    private async Task CreateOrder()
     {
         try
         {
@@ -550,7 +541,7 @@
                 return;
             }
 
-            isSubmitting = true;
+            isCreatingOrder = true;
             errorMessage = null;
             successMessage = null;
 
@@ -586,13 +577,23 @@
         }
         finally
         {
-            isSubmitting = false;
+            isCreatingOrder = false;
         }
     }
 
     private void CancelOrder()
     {
         Navigation.NavigateTo("/seller/orders");
+    }
+
+    private void ClearErrorMessage()
+    {
+        errorMessage = null;
+    }
+
+    private void ClearSuccessMessage()
+    {
+        successMessage = null;
     }
 
     private class OrderItemViewModel
