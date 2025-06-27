@@ -4,114 +4,227 @@
 @using CozyComfort.BlazorApp.Services
 @inject IDistributorService DistributorService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 
-<h3>Distributor Orders</h3>
+<PageTitle>Orders Management - Distributor</PageTitle>
 
-@if (isLoading)
-{
-    <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
+<div class="container-fluid p-4">
+    <!-- Clean Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Orders Management</h2>
+            <p class="text-muted mb-0">Manage incoming orders from sellers and outgoing orders to manufacturers</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" @onclick="NavigateToCreateOrder">
+                <i class="bi bi-plus-circle me-1"></i> New Manufacturer Order
+            </button>
+            <button class="btn btn-outline-secondary" @onclick="LoadOrders">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+        </div>
     </div>
-}
-else
-{
-    @if (orders?.Items?.Any() == true)
+
+    @if (isLoading)
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Order Number</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Total Amount</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var order in orders.Items)
-                {
-                    <tr>
-                        <td>@order.OrderNumber</td>
-                        <td>@order.CustomerName</td>
-                        <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>$@order.TotalAmount.ToString("F2")</td>
-                        <td>
-                            <span class="badge @GetStatusBadgeClass(order.Status)">
-                                @order.Status
-                            </span>
-                        </td>
-                        <td>
-                            @if (order.Status == "Pending")
-                            {
-                                <button class="btn btn-sm btn-success"
-                                        @onclick="@(() => UpdateOrderStatus(order.Id, "Accepted"))">
-                                    Accept
-                                </button>
-                                <button class="btn btn-sm btn-danger"
-                                        @onclick="@(() => UpdateOrderStatus(order.Id, "Cancelled"))">
-                                    Cancel
-                                </button>
-                            }
-                            <button class="btn btn-sm btn-info"
-                                    @onclick="@(() => ViewOrderDetails(order))">
-                                View Details
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading orders...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading orders...</p>
+        </div>
     }
     else
     {
-        <div class="alert alert-info">No orders found.</div>
+        @if (orders?.Items?.Any() == true)
+        {
+            <!-- Orders Table Card -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-check me-2"></i>All Orders
+                    </h5>
+                    <div class="text-muted">
+                        <small>Total: @orders.TotalCount orders</small>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="fw-semibold">Order Number</th>
+                                    <th class="fw-semibold">Type</th>
+                                    <th class="fw-semibold">Customer</th>
+                                    <th class="fw-semibold">Date</th>
+                                    <th class="fw-semibold">Total Amount</th>
+                                    <th class="fw-semibold">Status</th>
+                                    <th class="fw-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in orders.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@order.OrderNumber</div>
+                                        </td>
+                                        <td>
+                                            @if (order.OrderType == "Manufacturer")
+                                            {
+                                                <span class="badge bg-primary">
+                                                    <i class="bi bi-factory me-1"></i>From Manufacturer
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-shop me-1"></i>From Seller
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div>@order.CustomerName</div>
+                                        </td>
+                                        <td>
+                                            <div>@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                                            <small class="text-muted">@order.OrderDate.ToString("HH:mm")</small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-success">$@order.TotalAmount.ToString("N2")</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetStatusBadgeClass(order.Status)">
+                                                @order.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                @if (order.Status == "Pending")
+                                                {
+                                                    <button class="btn btn-outline-success"
+                                                            @onclick="@(() => UpdateOrderStatus(order.Id, "Accepted"))"
+                                                            title="Accept Order">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger"
+                                                            @onclick="@(() => UpdateOrderStatus(order.Id, "Cancelled"))"
+                                                            title="Cancel Order">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                }
+                                                <button class="btn btn-outline-primary"
+                                                        @onclick="@(() => ViewOrderDetails(order))"
+                                                        title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No Orders Found</h5>
+                    <p class="text-muted">Orders from sellers and manufacturers will appear here once they start coming in.</p>
+                    <button class="btn btn-primary" @onclick="NavigateToCreateOrder">
+                        <i class="bi bi-plus-circle me-1"></i> Create New Manufacturer Order
+                    </button>
+                </div>
+            </div>
+        }
     }
-}
+</div>
 
 <!-- Order Details Modal -->
 @if (selectedOrder != null)
 {
-    <div class="modal show d-block" tabindex="-1">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Order Details - @selectedOrder.OrderNumber</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-receipt me-2"></i>Order Details - @selectedOrder.OrderNumber
+                    </h5>
                     <button type="button" class="btn-close" @onclick="@(() => selectedOrder = null)"></button>
                 </div>
                 <div class="modal-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>SKU</th>
-                                <th>Quantity</th>
-                                <th>Unit Price</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in selectedOrder.Items)
-                            {
+                    <!-- Order Info -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-muted">Customer:</div>
+                            <div>@selectedOrder.CustomerName</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-muted">Order Date:</div>
+                            <div>@selectedOrder.OrderDate.ToString("MMMM dd, yyyy HH:mm")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-muted">Status:</div>
+                            <span class="badge @GetStatusBadgeClass(selectedOrder.Status)">@selectedOrder.Status</span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-muted">Total Amount:</div>
+                            <div class="h5 text-success mb-0">$@selectedOrder.TotalAmount.ToString("F2")</div>
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <h6 class="fw-semibold mb-3">Order Items</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
                                 <tr>
-                                    <td>@item.ProductName</td>
-                                    <td>@item.SKU</td>
-                                    <td>@item.Quantity</td>
-                                    <td>$@item.UnitPrice.ToString("F2")</td>
-                                    <td>$@item.TotalPrice.ToString("F2")</td>
+                                    <th class="fw-semibold">Product</th>
+                                    <th class="fw-semibold">SKU</th>
+                                    <th class="fw-semibold">Quantity</th>
+                                    <th class="fw-semibold">Unit Price</th>
+                                    <th class="fw-semibold">Total</th>
                                 </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th colspan="4">Total</th>
-                                <th>$@selectedOrder.TotalAmount.ToString("F2")</th>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in selectedOrder.Items)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@item.ProductName</td>
+                                        <td><small class="text-muted">@item.SKU</small></td>
+                                        <td><span class="badge bg-secondary">@item.Quantity</span></td>
+                                        <td class="text-muted">$@item.UnitPrice.ToString("F2")</td>
+                                        <td class="fw-semibold text-success">$@item.TotalPrice.ToString("F2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-info">
+                                    <th colspan="4" class="text-end">Total:</th>
+                                    <th class="text-success">$@selectedOrder.TotalAmount.ToString("F2")</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="@(() => selectedOrder = null)">Close</button>
+                    <button type="button" class="btn btn-secondary" @onclick="@(() => selectedOrder = null)">
+                        <i class="bi bi-x-circle me-1"></i> Close
+                    </button>
+                    @if (selectedOrder.Status == "Pending")
+                    {
+                        <button type="button" class="btn btn-success" @onclick="@(() => UpdateOrderStatusFromModal(selectedOrder.Id, "Accepted"))">
+                            <i class="bi bi-check-circle me-1"></i> Accept Order
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="@(() => UpdateOrderStatusFromModal(selectedOrder.Id, "Cancelled"))">
+                            <i class="bi bi-x-circle me-1"></i> Cancel Order
+                        </button>
+                    }
                 </div>
             </div>
         </div>
@@ -133,7 +246,7 @@ else
         isLoading = true;
         try
         {
-            var response = await DistributorService.GetOrdersAsync(1, 20);
+            var response = await DistributorService.GetOrdersAsync(1, 50);
             if (response.Success && response.Data != null)
             {
                 orders = response.Data;
@@ -177,17 +290,31 @@ else
         }
     }
 
+    private async Task UpdateOrderStatusFromModal(int orderId, string newStatus)
+    {
+        await UpdateOrderStatus(orderId, newStatus);
+        selectedOrder = null; // Close modal after update
+    }
+
     private void ViewOrderDetails(OrderDto order)
     {
         selectedOrder = order;
+    }
+
+    private void NavigateToCreateOrder()
+    {
+        Navigation.NavigateTo("/distributor/orders/create");
     }
 
     private string GetStatusBadgeClass(string status)
     {
         return status switch
         {
-            "Pending" => "bg-warning",
+            "Pending" => "bg-warning text-dark",
             "Accepted" => "bg-success",
+            "Processing" => "bg-info",
+            "Shipped" => "bg-primary",
+            "Delivered" => "bg-success",
             "Cancelled" => "bg-danger",
             _ => "bg-secondary"
         };

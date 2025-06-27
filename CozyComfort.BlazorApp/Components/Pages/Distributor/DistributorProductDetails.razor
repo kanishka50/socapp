@@ -7,11 +7,12 @@
 <PageTitle>Product Details - Distributor</PageTitle>
 
 <div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/distributor/inventory">Inventory</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Product Details</li>
+    <!-- Clean Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/distributor/inventory" class="text-decoration-none">Inventory</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Product Details</li>
         </ol>
     </nav>
 
@@ -21,87 +22,145 @@
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-3 text-muted">Loading product details...</p>
         </div>
     }
     else if (product != null)
     {
+        <!-- Clean Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">@product.ProductName</h2>
+                <p class="text-muted mb-0">SKU: @product.SKU</p>
+            </div>
+            <button class="btn btn-outline-secondary" @onclick="NavigateToInventory">
+                <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+            </button>
+        </div>
+
         <div class="row">
+            <!-- Main Content -->
             <div class="col-md-8">
+                <!-- Product Information Card -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h4 class="card-title mb-0">@product.ProductName</h4>
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Product Information
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row mb-3">
+                        <div class="row g-4">
                             <div class="col-md-6">
-                                <h6 class="text-muted">SKU</h6>
-                                <p class="fw-bold">@product.SKU</p>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-tag me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted d-block">SKU</small>
+                                        <span class="fw-semibold">@product.SKU</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="text-muted">Manufacturer Product ID</h6>
-                                <p>@product.ManufacturerProductId</p>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-factory me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Manufacturer Product ID</small>
+                                        <span class="fw-semibold">@product.ManufacturerProductId</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <hr class="my-4" />
+
+                        <!-- Pricing Information -->
+                        <h6 class="fw-semibold mb-3">
+                            <i class="bi bi-currency-dollar me-2"></i>Pricing Information
+                        </h6>
+                        <div class="row g-4">
                             <div class="col-md-6">
-                                <h6 class="text-muted">Purchase Price</h6>
-                                <p class="h5">$@product.PurchasePrice.ToString("F2")</p>
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted mb-1">Purchase Price</div>
+                                    <div class="h4 mb-0">$@product.PurchasePrice.ToString("F2")</div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="text-muted">Selling Price</h6>
-                                <p class="h5 text-primary">$@product.SellingPrice.ToString("F2")</p>
+                                <div class="text-center p-3 bg-primary bg-opacity-10 rounded">
+                                    <div class="text-muted mb-1">Selling Price</div>
+                                    <div class="h4 mb-0 text-primary">$@product.SellingPrice.ToString("F2")</div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-4 mt-2">
                             <div class="col-md-6">
-                                <h6 class="text-muted">Profit Margin</h6>
-                                <p class="text-success fw-bold">
-                                    $@product.ProfitMargin.ToString("F2")
-                                    (@product.ProfitPercentage.ToString("F1")%)
-                                </p>
+                                <div class="text-center p-3 bg-success bg-opacity-10 rounded">
+                                    <div class="text-muted mb-1">Profit Margin</div>
+                                    <div class="h5 mb-0 text-success">
+                                        $@product.ProfitMargin.ToString("F2")
+                                        <small>(@product.ProfitPercentage.ToString("F1")%)</small>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="text-muted">Minimum Stock Level</h6>
-                                <p>@product.MinStockLevel units</p>
+                                <div class="text-center p-3 bg-warning bg-opacity-10 rounded">
+                                    <div class="text-muted mb-1">Minimum Stock Level</div>
+                                    <div class="h5 mb-0 text-warning">@product.MinStockLevel units</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Stock Information -->
+                <!-- Stock Information Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Stock Information</h5>
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Stock Information
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 text-center">
-                                <h6 class="text-muted">Current Stock</h6>
-                                <p class="h3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")">
-                                    @product.CurrentStock
-                                </p>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="text-center p-4 rounded border">
+                                    <i class="bi bi-boxes display-4 mb-3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")"></i>
+                                    <div class="text-muted mb-1">Current Stock</div>
+                                    <div class="h3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")">
+                                        @product.CurrentStock
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-4 text-center">
-                                <h6 class="text-muted">Available Stock</h6>
-                                <p class="h3 text-primary">@product.AvailableStock</p>
+                            <div class="col-md-4">
+                                <div class="text-center p-4 rounded border">
+                                    <i class="bi bi-check-circle display-4 mb-3 text-primary"></i>
+                                    <div class="text-muted mb-1">Available Stock</div>
+                                    <div class="h3 text-primary">@product.AvailableStock</div>
+                                </div>
                             </div>
-                            <div class="col-md-4 text-center">
-                                <h6 class="text-muted">Reserved</h6>
-                                <p class="h3 text-warning">@(product.CurrentStock - product.AvailableStock)</p>
+                            <div class="col-md-4">
+                                <div class="text-center p-4 rounded border">
+                                    <i class="bi bi-clock display-4 mb-3 text-warning"></i>
+                                    <div class="text-muted mb-1">Reserved</div>
+                                    <div class="h3 text-warning">@(product.CurrentStock - product.AvailableStock)</div>
+                                </div>
                             </div>
                         </div>
 
                         @if (product.CurrentStock <= product.MinStockLevel)
                         {
-                            <div class="alert alert-warning mt-3">
-                                <i class="bi bi-exclamation-triangle"></i>
-                                Stock level is below minimum. Consider placing a reorder.
+                            <div class="alert alert-warning d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <div>
+                                    <strong>Low Stock Alert:</strong> Stock level is below minimum. Consider placing a reorder.
+                                </div>
                             </div>
                         }
 
-                        <div class="progress mt-3" style="height: 20px;">
+                        <!-- Stock Level Progress -->
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Stock Level</span>
+                                <span class="fw-semibold">@product.CurrentStock / @(product.MinStockLevel * 3) units</span>
+                            </div>
                             @{
                                 var stockPercentage = product.MinStockLevel > 0
                                 ? (product.CurrentStock / (double)(product.MinStockLevel * 3)) * 100
@@ -109,61 +168,73 @@
                                 var progressClass = stockPercentage > 50 ? "bg-success" :
                                 stockPercentage > 25 ? "bg-warning" : "bg-danger";
                             }
-                            <div class="progress-bar @progressClass" role="progressbar"
-                                 style="width: @Math.Min(stockPercentage, 100)%">
-                                @product.CurrentStock units
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar @progressClass" role="progressbar"
+                                     style="width: @Math.Min(stockPercentage, 100)%"
+                                     aria-valuenow="@stockPercentage" aria-valuemin="0" aria-valuemax="100">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Sidebar -->
             <div class="col-md-4">
-                <!-- Actions -->
+                <!-- Actions Card -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Actions</h5>
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-gear me-2"></i>Actions
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <div class="d-grid gap-2">
+                        <div class="d-grid gap-3">
                             <button class="btn btn-primary" @onclick="CheckStock">
-                                <i class="bi bi-box-seam"></i> Check Stock Availability
+                                <i class="bi bi-search me-2"></i> Check Stock Availability
                             </button>
                             @if (product.CurrentStock <= product.MinStockLevel)
                             {
                                 <button class="btn btn-warning" @onclick="NavigateToReorder">
-                                    <i class="bi bi-arrow-repeat"></i> Create Reorder
+                                    <i class="bi bi-arrow-repeat me-2"></i> Create Reorder
                                 </button>
                             }
+                            <hr class="my-2" />
                             <button class="btn btn-outline-secondary" @onclick="NavigateToInventory">
-                                <i class="bi bi-arrow-left"></i> Back to Inventory
+                                <i class="bi bi-arrow-left me-2"></i> Back to Inventory
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Stats -->
+                <!-- Financial Summary Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Quick Stats</h5>
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-graph-up me-2"></i>Financial Summary
+                        </h6>
                     </div>
                     <div class="card-body">
-                        <dl class="row mb-0">
-                            <dt class="col-7">Total Value:</dt>
-                            <dd class="col-5 text-end">
-                                $@((product.CurrentStock * product.PurchasePrice).ToString("N2"))
-                            </dd>
-
-                            <dt class="col-7">Potential Revenue:</dt>
-                            <dd class="col-5 text-end">
-                                $@((product.CurrentStock * product.SellingPrice).ToString("N2"))
-                            </dd>
-
-                            <dt class="col-7">Potential Profit:</dt>
-                            <dd class="col-5 text-end text-success">
-                                $@((product.CurrentStock * product.ProfitMargin).ToString("N2"))
-                            </dd>
-                        </dl>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Total Investment:</span>
+                                    <span class="fw-semibold">$@((product.CurrentStock * product.PurchasePrice).ToString("N2"))</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Potential Revenue:</span>
+                                    <span class="fw-semibold text-primary">$@((product.CurrentStock * product.SellingPrice).ToString("N2"))</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <span class="text-muted">Potential Profit:</span>
+                                    <span class="fw-semibold text-success">$@((product.CurrentStock * product.ProfitMargin).ToString("N2"))</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,11 +242,12 @@
     }
     else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        <div class="alert alert-danger d-flex align-items-center">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <div>@errorMessage</div>
         </div>
         <button class="btn btn-primary" @onclick="NavigateToInventory">
-            <i class="bi bi-arrow-left"></i> Back to Inventory
+            <i class="bi bi-arrow-left me-1"></i> Back to Inventory
         </button>
     }
 </div>
@@ -187,37 +259,48 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Stock Availability Check</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-search me-2"></i>Stock Availability Check
+                    </h5>
                     <button type="button" class="btn-close" @onclick="CloseStockModal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Enter quantity to check:</label>
-                        <input type="number" class="form-control" @bind="quantityToCheck" min="1" />
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Enter quantity to check:</label>
+                        <input type="number" class="form-control" @bind="quantityToCheck" min="1"
+                               placeholder="Enter quantity..." />
                     </div>
 
                     @if (stockCheckResponse != null)
                     {
-                        <div class="alert @(stockCheckResponse.IsAvailable ? "alert-success" : "alert-warning")">
-                            @stockCheckResponse.Message
+                        <div class="alert @(stockCheckResponse.IsAvailable ? "alert-success" : "alert-warning") d-flex align-items-start">
+                            <i class="bi bi-@(stockCheckResponse.IsAvailable ? "check-circle" : "exclamation-triangle") me-2 mt-1"></i>
+                            <div>@stockCheckResponse.Message</div>
                         </div>
 
                         @if (stockCheckResponse.NeedsReorder)
                         {
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i>
-                                Suggested reorder quantity: @stockCheckResponse.SuggestedReorderQuantity units
+                            <div class="alert alert-info d-flex align-items-start">
+                                <i class="bi bi-info-circle me-2 mt-1"></i>
+                                <div>
+                                    <strong>Reorder Suggestion:</strong> @stockCheckResponse.SuggestedReorderQuantity units
+                                </div>
                             </div>
                         }
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" @onclick="PerformStockCheck" disabled="@(quantityToCheck <= 0 || isCheckingStock)">
+                    <button type="button" class="btn btn-primary" @onclick="PerformStockCheck"
+                            disabled="@(quantityToCheck <= 0 || isCheckingStock)">
                         @if (isCheckingStock)
                         {
                             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         }
-                        Check
+                        else
+                        {
+                            <i class="bi bi-search me-2"></i>
+                        }
+                        Check Availability
                     </button>
                     <button type="button" class="btn btn-secondary" @onclick="CloseStockModal">Close</button>
                 </div>

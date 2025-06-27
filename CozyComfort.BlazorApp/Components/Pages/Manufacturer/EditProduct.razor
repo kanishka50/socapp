@@ -7,15 +7,25 @@
 <PageTitle>Edit Product - Cozy Comfort</PageTitle>
 
 <div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/manufacturer/products/@ProductId">Product Details</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit Product</li>
+    <!-- Clean Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/products/@ProductId" class="text-decoration-none">Product Details</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Edit Product</li>
         </ol>
     </nav>
 
-    <h1 class="h3 mb-4">Edit Product</h1>
+    <!-- Clean Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Edit Product</h2>
+            <p class="text-muted mb-0">Update product information and specifications</p>
+        </div>
+        <button class="btn btn-outline-secondary" @onclick="Cancel">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+    </div>
 
     @if (isLoading)
     {
@@ -23,32 +33,46 @@
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-3 text-muted">Loading product details...</p>
         </div>
     }
     else if (editProduct != null)
     {
+        <!-- Alert Messages -->
         @if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                @errorMessage
+                <i class="bi bi-exclamation-circle me-2"></i>@errorMessage
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
 
+        <!-- Edit Form Card -->
         <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pencil me-2"></i>Product Information
+                </h5>
+            </div>
             <div class="card-body">
                 <EditForm Model="editProduct" OnValidSubmit="HandleUpdateProduct">
                     <DataAnnotationsValidator />
-                    <ValidationSummary class="text-danger" />
+                    <ValidationSummary class="text-danger mb-3" />
 
-                    <div class="row g-3">
+                    <!-- Basic Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Basic Information
+                            </h6>
+                        </div>
                         <div class="col-md-6">
-                            <label for="productName" class="form-label">Product Name</label>
+                            <label for="productName" class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
                             <InputText id="productName" class="form-control" @bind-Value="editProduct.Name" />
                         </div>
                         <div class="col-md-6">
-                            <label for="category" class="form-label">Category</label>
-                            <InputSelect id="category" class="form-control" @bind-Value="editProduct.Category">
+                            <label for="category" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+                            <InputSelect id="category" class="form-select" @bind-Value="editProduct.Category">
                                 <option value="">Select category</option>
                                 <option value="Wool Blankets">Wool Blankets</option>
                                 <option value="Cotton Blankets">Cotton Blankets</option>
@@ -58,63 +82,101 @@
                         </div>
                     </div>
 
-                    <div class="row g-3 mt-2">
-                        <div class="col-md-4">
-                            <label for="material" class="form-label">Material</label>
-                            <InputText id="material" class="form-control" @bind-Value="editProduct.Material" />
+                    <!-- Specifications Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-rulers me-2"></i>Specifications
+                            </h6>
                         </div>
                         <div class="col-md-4">
-                            <label for="size" class="form-label">Size</label>
-                            <InputText id="size" class="form-control" @bind-Value="editProduct.Size" />
+                            <label for="material" class="form-label fw-semibold">Material</label>
+                            <InputText id="material" class="form-control" @bind-Value="editProduct.Material"
+                                       placeholder="e.g., 100% Merino Wool" />
                         </div>
                         <div class="col-md-4">
-                            <label for="price" class="form-label">Base Price</label>
-                            <InputNumber id="price" class="form-control" @bind-Value="editProduct.Price" />
+                            <label for="size" class="form-label fw-semibold">Size</label>
+                            <InputText id="size" class="form-control" @bind-Value="editProduct.Size"
+                                       placeholder="e.g., Queen (90x90 inches)" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="price" class="form-label fw-semibold">Base Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <InputNumber id="price" class="form-control" @bind-Value="editProduct.Price" step="0.01" />
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row g-3 mt-2">
+                    <!-- Production & Inventory Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-gear me-2"></i>Production & Inventory
+                            </h6>
+                        </div>
                         <div class="col-md-3">
-                            <label for="minStock" class="form-label">Minimum Stock Level</label>
+                            <label for="minStock" class="form-label fw-semibold">Minimum Stock Level</label>
                             <InputNumber id="minStock" class="form-control" @bind-Value="editProduct.MinStockLevel" />
+                            <small class="form-text text-muted">Reorder threshold</small>
                         </div>
                         <div class="col-md-3">
-                            <label for="prodCapacity" class="form-label">Production Capacity/Day</label>
+                            <label for="prodCapacity" class="form-label fw-semibold">Production Capacity/Day</label>
                             <InputNumber id="prodCapacity" class="form-control" @bind-Value="editProduct.ProductionCapacityPerDay" />
+                            <small class="form-text text-muted">Units per day</small>
                         </div>
                         <div class="col-md-3">
-                            <label for="manufacturingCost" class="form-label">Manufacturing Cost</label>
-                            <InputNumber id="manufacturingCost" class="form-control" @bind-Value="editProduct.ManufacturingCost" />
+                            <label for="manufacturingCost" class="form-label fw-semibold">Manufacturing Cost</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <InputNumber id="manufacturingCost" class="form-control" @bind-Value="editProduct.ManufacturingCost" step="0.01" />
+                            </div>
                         </div>
                         <div class="col-md-3">
-                            <label for="leadTime" class="form-label">Lead Time (Days)</label>
+                            <label for="leadTime" class="form-label fw-semibold">Lead Time (Days)</label>
                             <InputNumber id="leadTime" class="form-control" @bind-Value="editProduct.LeadTimeDays" />
+                            <small class="form-text text-muted">Production time</small>
                         </div>
                     </div>
 
-                    <div class="row g-3 mt-2">
+                    <!-- Description Section -->
+                    <div class="row mb-4">
                         <div class="col-12">
-                            <label for="description" class="form-label">Description</label>
-                            <InputTextArea id="description" class="form-control" @bind-Value="editProduct.Description" rows="3" />
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-file-text me-2"></i>Additional Information
+                            </h6>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="description" class="form-label fw-semibold">Description</label>
+                            <InputTextArea id="description" class="form-control" @bind-Value="editProduct.Description"
+                                           rows="3" placeholder="Detailed product description" />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="imageUrl" class="form-label fw-semibold">Image URL</label>
+                            <InputText id="imageUrl" class="form-control" @bind-Value="editProduct.ImageUrl"
+                                       placeholder="https://example.com/image.jpg" />
+                            <small class="form-text text-muted">Optional product image</small>
                         </div>
                     </div>
 
-                    <div class="row g-3 mt-2">
-                        <div class="col-12">
-                            <label for="imageUrl" class="form-label">Image URL (Optional)</label>
-                            <InputText id="imageUrl" class="form-control" @bind-Value="editProduct.ImageUrl" />
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
+                    <!-- Form Actions -->
+                    <hr class="my-4" />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="Cancel">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </button>
                         <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
                             @if (isSubmitting)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            }
-                            Save Changes
+                                Saving Changes...
+                                                }
+                            else
+                            {
+                                <i class="bi bi-check-circle me-2"></i>
+                                Save Changes
+                                                }
                         </button>
-                        <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
                     </div>
                 </EditForm>
             </div>
@@ -122,11 +184,12 @@
     }
     else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        <div class="alert alert-danger d-flex align-items-center">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <div>@errorMessage</div>
         </div>
         <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/dashboard"))">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
         </button>
     }
 </div>
@@ -152,7 +215,7 @@
             errorMessage = null;
 
             var response = await ManufacturerService.GetProductByIdAsync(ProductId);
-            
+
             if (response.Success && response.Data != null)
             {
                 var product = response.Data;
@@ -196,7 +259,7 @@
             errorMessage = null;
 
             var response = await ManufacturerService.UpdateProductAsync(ProductId, editProduct!);
-            
+
             if (response.Success)
             {
                 Navigation.NavigateTo($"/manufacturer/products/{ProductId}");

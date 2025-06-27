@@ -8,31 +8,44 @@
 <PageTitle>Inventory Management - Distributor</PageTitle>
 
 <div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Inventory Management</li>
+    <!-- Clean Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Inventory Management</li>
         </ol>
     </nav>
 
-    <h1 class="h3 mb-4">Inventory Management</h1>
+    <!-- Clean Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Inventory Management</h2>
+            <p class="text-muted mb-0">Monitor stock levels and manage product inventory</p>
+        </div>
+        <button class="btn btn-primary" @onclick="RefreshInventory">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+    </div>
 
+    <!-- Alert Messages -->
     @if (!string.IsNullOrEmpty(errorMessage))
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
+            <i class="bi bi-exclamation-circle me-2"></i>@errorMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <!-- Search and Filter Section -->
+    <!-- Search and Filter Card -->
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Search by product name or SKU..."
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search by product name or SKU..."
                                @bind="searchTerm" @bind:event="oninput" @onkeyup="@(async (e) => { if (e.Key == "Enter") await SearchProducts(); })" />
                     </div>
                 </div>
@@ -46,65 +59,85 @@
                 </div>
                 <div class="col-md-3">
                     <button class="btn btn-outline-primary w-100" @onclick="SearchProducts">
-                        <i class="bi bi-funnel"></i> Apply Filters
+                        <i class="bi bi-funnel me-1"></i> Apply Filters
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Inventory Table -->
+    <!-- Inventory Table Card -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Product Inventory</h5>
-            <button class="btn btn-sm btn-outline-primary" @onclick="RefreshInventory">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
+            <h5 class="card-title mb-0">
+                <i class="bi bi-box-seam me-2"></i>Product Inventory
+            </h5>
+            <div class="text-muted">
+                @if (totalItems > 0)
+                {
+                    <small>Showing @((currentPage - 1) * pageSize + 1) to @Math.Min(currentPage * pageSize, totalItems) of @totalItems items</small>
+                }
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             @if (isLoading)
             {
-                <div class="text-center py-4">
+                <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-3 text-muted">Loading inventory...</p>
                 </div>
             }
             else if (products != null && products.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>Product Name</th>
-                                <th>SKU</th>
-                                <th>Purchase Price</th>
-                                <th>Selling Price</th>
-                                <th>Profit Margin</th>
-                                <th>Current Stock</th>
-                                <th>Available Stock</th>
-                                <th>Min Level</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th class="fw-semibold">Product Name</th>
+                                <th class="fw-semibold">SKU</th>
+                                <th class="fw-semibold">Purchase Price</th>
+                                <th class="fw-semibold">Selling Price</th>
+                                <th class="fw-semibold">Profit Margin</th>
+                                <th class="fw-semibold">Current Stock</th>
+                                <th class="fw-semibold">Available Stock</th>
+                                <th class="fw-semibold">Min Level</th>
+                                <th class="fw-semibold">Status</th>
+                                <th class="fw-semibold">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var product in products)
                             {
                                 <tr>
-                                    <td>@product.ProductName</td>
-                                    <td>@product.SKU</td>
-                                    <td>$@product.PurchasePrice.ToString("F2")</td>
-                                    <td>$@product.SellingPrice.ToString("F2")</td>
                                     <td>
-                                        <span class="text-success">
-                                            $@product.ProfitMargin.ToString("F2")
-                                            (@product.ProfitPercentage.ToString("F1")%)
-                                        </span>
+                                        <div class="fw-semibold">@product.ProductName</div>
                                     </td>
-                                    <td>@product.CurrentStock</td>
-                                    <td>@product.AvailableStock</td>
-                                    <td>@product.MinStockLevel</td>
+                                    <td>
+                                        <small class="text-muted">@product.SKU</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">$@product.PurchasePrice.ToString("F2")</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">$@product.SellingPrice.ToString("F2")</span>
+                                    </td>
+                                    <td>
+                                        <div class="text-success">
+                                            <div class="fw-semibold">$@product.ProfitMargin.ToString("F2")</div>
+                                            <small>(@product.ProfitPercentage.ToString("F1")%)</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary fs-6">@product.CurrentStock</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info fs-6">@product.AvailableStock</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">@product.MinStockLevel</span>
+                                    </td>
                                     <td>
                                         @if (product.CurrentStock <= product.MinStockLevel)
                                         {
@@ -121,13 +154,13 @@
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button class="btn btn-outline-primary" @onclick="() => CheckStock(product.Id)" title="Check Stock">
-                                                <i class="bi bi-box-seam"></i>
+                                            <button class="btn btn-outline-info" @onclick="() => CheckStock(product.Id)" title="Check Stock">
+                                                <i class="bi bi-search"></i>
                                             </button>
                                             <button class="btn btn-outline-warning" @onclick="() => NavigateToReorder(product.Id)" title="Reorder">
                                                 <i class="bi bi-arrow-repeat"></i>
                                             </button>
-                                            <button class="btn btn-outline-info" @onclick="() => NavigateToProductDetails(product.Id)" title="View Details">
+                                            <button class="btn btn-outline-primary" @onclick="() => NavigateToProductDetails(product.Id)" title="View Details">
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                         </div>
@@ -138,38 +171,45 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
+                <!-- Simple Pagination -->
                 @if (totalPages > 1)
                 {
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                <button class="page-link" @onclick="@(() => LoadProducts(currentPage - 1))" disabled="@(currentPage == 1)">
-                                    Previous
-                                </button>
-                            </li>
-                            @for (int i = 1; i <= totalPages; i++)
-                            {
-                                var pageNumber = i;
-                                <li class="page-item @(currentPage == pageNumber ? "active" : "")">
-                                    <button class="page-link" @onclick="@(() => LoadProducts(pageNumber))">
-                                        @pageNumber
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-light">
+                        <div class="text-muted">
+                            <small>Showing @((currentPage - 1) * pageSize + 1) to @Math.Min(currentPage * pageSize, totalItems) of @totalItems items</small>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="@(() => LoadProducts(currentPage - 1))" disabled="@(currentPage == 1)">
+                                        <i class="bi bi-chevron-left"></i>
                                     </button>
                                 </li>
-                            }
-                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                <button class="page-link" @onclick="@(() => LoadProducts(currentPage + 1))" disabled="@(currentPage == totalPages)">
-                                    Next
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
+                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                                {
+                                    var pageNumber = i;
+                                    <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                        <button class="page-link" @onclick="@(() => LoadProducts(pageNumber))">
+                                            @pageNumber
+                                        </button>
+                                    </li>
+                                }
+                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="@(() => LoadProducts(currentPage + 1))" disabled="@(currentPage == totalPages)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 }
             }
             else
             {
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> No products found.
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No products found</h5>
+                    <p class="text-muted">Try adjusting your search criteria or add products to inventory.</p>
                 </div>
             }
         </div>
@@ -183,29 +223,40 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Stock Check Result</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-search me-2"></i>Stock Check Result
+                    </h5>
                     <button type="button" class="btn-close" @onclick="CloseStockModal"></button>
                 </div>
                 <div class="modal-body">
                     @if (stockCheckResponse != null)
                     {
-                        <div class="mb-3">
-                            <strong>Product:</strong> @stockCheckResponse.ProductName
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <div class="fw-semibold text-muted">Product:</div>
+                                <div>@stockCheckResponse.ProductName</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="fw-semibold text-muted">SKU:</div>
+                                <div>@stockCheckResponse.SKU</div>
+                            </div>
                         </div>
+
                         <div class="mb-3">
-                            <strong>SKU:</strong> @stockCheckResponse.SKU
+                            <div class="fw-semibold text-muted">Available Stock:</div>
+                            <div class="h4 text-primary">@stockCheckResponse.AvailableStock units</div>
                         </div>
-                        <div class="mb-3">
-                            <strong>Available Stock:</strong> @stockCheckResponse.AvailableStock units
-                        </div>
+
                         <div class="alert @(stockCheckResponse.IsAvailable ? "alert-success" : "alert-warning")">
+                            <i class="bi bi-@(stockCheckResponse.IsAvailable ? "check-circle" : "exclamation-triangle") me-2"></i>
                             @stockCheckResponse.Message
                         </div>
+
                         @if (stockCheckResponse.NeedsReorder)
                         {
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i>
-                                Suggested reorder quantity: @stockCheckResponse.SuggestedReorderQuantity units
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Reorder Suggestion:</strong> @stockCheckResponse.SuggestedReorderQuantity units
                             </div>
                         }
                     }
@@ -215,7 +266,7 @@
                     @if (stockCheckResponse?.NeedsReorder == true)
                     {
                         <button type="button" class="btn btn-primary" @onclick="() => NavigateToReorder(selectedProductId)">
-                            Create Reorder
+                            <i class="bi bi-cart-plus me-1"></i> Create Reorder
                         </button>
                     }
                 </div>

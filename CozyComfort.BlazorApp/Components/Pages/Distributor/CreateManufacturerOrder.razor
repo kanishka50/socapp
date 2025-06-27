@@ -7,20 +7,31 @@
 <PageTitle>Create Manufacturer Order - Distributor</PageTitle>
 
 <div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/distributor/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/distributor/orders">Orders</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Create Order</li>
+    <!-- Clean Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="/distributor/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/distributor/orders" class="text-decoration-none">Orders</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Create Order</li>
         </ol>
     </nav>
 
-    <h1 class="h3 mb-4">Create Order from Manufacturer</h1>
+    <!-- Clean Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Create Order from Manufacturer</h2>
+            <p class="text-muted mb-0">Place a new order with manufacturer to restock inventory</p>
+        </div>
+        <button class="btn btn-outline-secondary" @onclick="CancelOrder">
+            <i class="bi bi-x-circle"></i> Cancel
+        </button>
+    </div>
 
+    <!-- Alert Messages -->
     @if (!string.IsNullOrEmpty(errorMessage))
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
+            <i class="bi bi-exclamation-circle me-2"></i>@errorMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
@@ -28,40 +39,52 @@
     @if (!string.IsNullOrEmpty(successMessage))
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
+            <i class="bi bi-check-circle me-2"></i>@successMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
     <div class="row">
+        <!-- Main Content -->
         <div class="col-md-8">
-            <!-- Product Selection -->
+            <!-- Product Selection Card -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Select Manufacturer Products</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-box-seam me-2"></i>Select Manufacturer Products
+                    </h5>
                     <button class="btn btn-sm btn-outline-primary" @onclick="LoadManufacturerProducts" disabled="@loadingProducts">
                         @if (loadingProducts)
                         {
                             <span class="spinner-border spinner-border-sm me-1"></span>
                         }
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                        else
+                        {
+                            <i class="bi bi-arrow-clockwise me-1"></i>
+                        }
+                        Refresh
                     </button>
                 </div>
                 <div class="card-body">
-                    <!-- Search and Filter -->
-                    <div class="row mb-3">
+                    <!-- Search and Filter Row -->
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <input type="text" class="form-control" placeholder="Search manufacturer products..."
-                                   @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearchKeyUp" />
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="bi bi-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" placeholder="Search manufacturer products..."
+                                       @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearchKeyUp" />
+                            </div>
                         </div>
                         <div class="col-md-3">
-                            <button class="btn btn-secondary w-100" @onclick="LoadManufacturerProducts" disabled="@loadingProducts">
-                                <i class="bi bi-search"></i> Search
+                            <button class="btn btn-outline-secondary w-100" @onclick="LoadManufacturerProducts" disabled="@loadingProducts">
+                                <i class="bi bi-search me-1"></i> Search
                             </button>
                         </div>
                         <div class="col-md-3">
-                            <button class="btn btn-info w-100" @onclick="ToggleProductList">
-                                <i class="bi bi-list"></i> @(showProductList ? "Hide" : "Show") Products
+                            <button class="btn btn-outline-info w-100" @onclick="ToggleProductList">
+                                <i class="bi bi-list me-1"></i> @(showProductList ? "Hide" : "Show") Products
                             </button>
                         </div>
                     </div>
@@ -70,15 +93,18 @@
                     {
                         @if (loadingProducts)
                         {
-                            <div class="text-center p-4">
-                                <div class="spinner-border text-primary"></div>
-                                <p class="mt-2">Loading manufacturer products...</p>
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Loading manufacturer products...</p>
                             </div>
                         }
                         else if (manufacturerProducts == null || !manufacturerProducts.Items.Any())
                         {
                             <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> No manufacturer products found.
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                No manufacturer products found.
                                 <button class="btn btn-sm btn-outline-primary ms-2" @onclick="LoadManufacturerProducts">
                                     Try Again
                                 </button>
@@ -86,16 +112,17 @@
                         }
                         else
                         {
+                            <!-- Products Table -->
                             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                                <table class="table table-hover table-sm">
+                                <table class="table table-hover align-middle">
                                     <thead class="table-light sticky-top">
                                         <tr>
-                                            <th>SKU</th>
-                                            <th>Product Name</th>
-                                            <th>Price</th>
-                                            <th>Available Stock</th>
-                                            <th>Quantity</th>
-                                            <th>Action</th>
+                                            <th class="fw-semibold">SKU</th>
+                                            <th class="fw-semibold">Product Name</th>
+                                            <th class="fw-semibold">Price</th>
+                                            <th class="fw-semibold">Available Stock</th>
+                                            <th class="fw-semibold">Quantity</th>
+                                            <th class="fw-semibold">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -104,15 +131,15 @@
                                             <tr>
                                                 <td><small class="text-muted">@product.SKU</small></td>
                                                 <td>
-                                                    <strong>@product.Name</strong>
+                                                    <div class="fw-semibold">@product.Name</div>
                                                     @if (!string.IsNullOrEmpty(product.Description))
                                                     {
-                                                        <br>
-                                        
                                                         <small class="text-muted">@product.Description.Substring(0, Math.Min(50, product.Description.Length))...</small>
                                                     }
                                                 </td>
-                                                <td><span class="badge bg-info">$@product.Price.ToString("F2")</span></td>
+                                                <td>
+                                                    <span class="badge bg-primary">$@product.Price.ToString("F2")</span>
+                                                </td>
                                                 <td>
                                                     @if (product.AvailableStock > 0)
                                                     {
@@ -132,7 +159,7 @@
                                                     <button class="btn btn-sm btn-primary"
                                                             @onclick="() => AddManufacturerProductToOrder(product)"
                                                             disabled="@(product.AvailableStock <= 0)">
-                                                        <i class="bi bi-plus"></i> Add
+                                                        <i class="bi bi-plus-circle me-1"></i> Add
                                                     </button>
                                                 </td>
                                             </tr>
@@ -141,13 +168,15 @@
                                 </table>
                             </div>
 
-                            <!-- Pagination -->
+                            <!-- Simple Pagination -->
                             @if (manufacturerProducts.TotalPages > 1)
                             {
-                                <nav class="mt-3">
+                                <nav class="mt-4">
                                     <ul class="pagination pagination-sm justify-content-center">
                                         <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">Previous</button>
+                                            <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </button>
                                         </li>
 
                                         @for (int i = 1; i <= Math.Min(manufacturerProducts.TotalPages, 5); i++)
@@ -159,7 +188,9 @@
                                         }
 
                                         <li class="page-item @(currentPage == manufacturerProducts.TotalPages ? "disabled" : "")">
-                                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">Next</button>
+                                            <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </button>
                                         </li>
                                     </ul>
                                 </nav>
@@ -167,39 +198,40 @@
                         }
                     }
 
-                    <hr />
+                    <hr class="my-4" />
 
+                    <!-- Order Items Section -->
                     @if (orderItems.Any())
                     {
                         <h6 class="mb-3">
-                            <i class="bi bi-cart"></i> Order Items (@orderItems.Count)
+                            <i class="bi bi-cart-fill me-2"></i>Order Items (@orderItems.Count)
                         </h6>
                         <div class="table-responsive">
-                            <table class="table">
-                                <thead>
+                            <table class="table table-sm">
+                                <thead class="table-light">
                                     <tr>
-                                        <th>Product</th>
-                                        <th>SKU</th>
-                                        <th>Quantity</th>
-                                        <th>Unit Price</th>
-                                        <th>Total</th>
-                                        <th></th>
+                                        <th class="fw-semibold">Product</th>
+                                        <th class="fw-semibold">SKU</th>
+                                        <th class="fw-semibold">Quantity</th>
+                                        <th class="fw-semibold">Unit Price</th>
+                                        <th class="fw-semibold">Total</th>
+                                        <th class="fw-semibold"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var item in orderItems)
                                     {
                                         <tr>
-                                            <td>@item.ProductName</td>
+                                            <td class="fw-semibold">@item.ProductName</td>
                                             <td><small class="text-muted">@item.SKU</small></td>
                                             <td>
                                                 <input type="number" class="form-control form-control-sm" style="width: 80px;"
                                                        @bind="item.Quantity" @bind:event="oninput" @onchange="UpdateOrderTotal" min="1" />
                                             </td>
-                                            <td>$@item.UnitPrice.ToString("F2")</td>
-                                            <td><strong>$@item.Total.ToString("F2")</strong></td>
+                                            <td class="text-muted">$@item.UnitPrice.ToString("F2")</td>
+                                            <td class="fw-semibold text-success">$@item.Total.ToString("F2")</td>
                                             <td>
-                                                <button class="btn btn-sm btn-danger" @onclick="() => RemoveItem(item)">
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItem(item)">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -209,7 +241,9 @@
                                 <tfoot>
                                     <tr class="table-info">
                                         <th colspan="4" class="text-end">Order Total:</th>
-                                        <th><h5 class="mb-0">$@orderTotal.ToString("F2")</h5></th>
+                                        <th class="text-success">
+                                            <h5 class="mb-0">$@orderTotal.ToString("F2")</h5>
+                                        </th>
                                         <th></th>
                                     </tr>
                                 </tfoot>
@@ -219,25 +253,30 @@
                     else
                     {
                         <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> No items added to the order yet. Select products from the manufacturer catalog above.
+                            <i class="bi bi-info-circle me-2"></i>
+                            No items added to the order yet. Select products from the manufacturer catalog above.
                         </div>
                     }
                 </div>
             </div>
 
-            <!-- Shipping Information -->
+            <!-- Order Details Card -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Order Details</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>Order Details
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="shippingAddress" class="form-label">Shipping Address <span class="text-danger">*</span></label>
+                        <label for="shippingAddress" class="form-label fw-semibold">
+                            Shipping Address <span class="text-danger">*</span>
+                        </label>
                         <textarea id="shippingAddress" class="form-control" rows="3" @bind="orderDto.ShippingAddress"
                                   placeholder="Enter your complete shipping address"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="notes" class="form-label">Order Notes (Optional)</label>
+                        <label for="notes" class="form-label fw-semibold">Order Notes</label>
                         <textarea id="notes" class="form-control" rows="2" @bind="orderDto.Notes"
                                   placeholder="Add any special instructions or notes for the manufacturer"></textarea>
                     </div>
@@ -245,64 +284,90 @@
             </div>
         </div>
 
+        <!-- Sidebar -->
         <div class="col-md-4">
-            <!-- Order Summary -->
+            <!-- Order Summary Card -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Order Summary</h5>
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-receipt me-2"></i>Order Summary
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-6">Items:</dt>
-                        <dd class="col-6">@orderItems.Count</dd>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 mb-1">@orderItems.Count</div>
+                                <small class="text-muted">Items</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 mb-1">@orderItems.Sum(i => i.Quantity)</div>
+                                <small class="text-muted">Total Quantity</small>
+                            </div>
+                        </div>
+                    </div>
 
-                        <dt class="col-6">Total Quantity:</dt>
-                        <dd class="col-6">@orderItems.Sum(i => i.Quantity)</dd>
+                    <hr class="my-3" />
 
-                        <dt class="col-6">Order Total:</dt>
-                        <dd class="col-6 fw-bold text-success">$@orderTotal.ToString("F2")</dd>
-                    </dl>
-
-                    <hr />
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-semibold">Order Total:</span>
+                        <span class="h5 mb-0 text-success">$@orderTotal.ToString("F2")</span>
+                    </div>
 
                     <div class="d-grid gap-2">
-                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting || string.IsNullOrWhiteSpace(orderDto.ShippingAddress))">
+                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder"
+                                disabled="@(!orderItems.Any() || isSubmitting || string.IsNullOrWhiteSpace(orderDto.ShippingAddress))">
                             @if (isSubmitting)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                             }
-                            <i class="bi bi-check-circle"></i> Submit Order
+                            else
+                            {
+                                <i class="bi bi-check-circle me-2"></i>
+                            }
+                            Submit Order
                         </button>
-                        <button class="btn btn-secondary" @onclick="CancelOrder" disabled="@isSubmitting">
-                            <i class="bi bi-x-circle"></i> Cancel
+                        <button class="btn btn-outline-secondary" @onclick="CancelOrder" disabled="@isSubmitting">
+                            <i class="bi bi-x-circle me-2"></i> Cancel
                         </button>
                     </div>
 
                     @if (!orderItems.Any())
                     {
-                        <small class="text-muted">Add products to enable order submission</small>
+                        <small class="text-muted mt-2 d-block">Add products to enable order submission</small>
                     }
                     else if (string.IsNullOrWhiteSpace(orderDto.ShippingAddress))
                     {
-                        <small class="text-warning">Enter shipping address to enable order submission</small>
+                        <small class="text-warning mt-2 d-block">Enter shipping address to enable order submission</small>
                     }
                 </div>
             </div>
 
-            <!-- Quick Stats -->
+            <!-- Product Statistics Card -->
             <div class="card mt-3">
                 <div class="card-header">
-                    <h6 class="card-title mb-0">Available Products</h6>
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Available Products
+                    </h6>
                 </div>
                 <div class="card-body">
                     @if (manufacturerProducts != null)
                     {
-                        <p class="mb-1"><strong>@manufacturerProducts.TotalCount</strong> products available</p>
-                        <p class="mb-0 text-muted">Page @currentPage of @manufacturerProducts.TotalPages</p>
+                        <div class="text-center">
+                            <div class="h4 mb-1">@manufacturerProducts.TotalCount</div>
+                            <small class="text-muted">products available</small>
+                        </div>
+                        <hr class="my-2" />
+                        <small class="text-muted">Page @currentPage of @manufacturerProducts.TotalPages</small>
                     }
                     else
                     {
-                        <p class="text-muted mb-0">Loading product information...</p>
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm text-muted" role="status"></div>
+                            <p class="text-muted mt-2 mb-0">Loading product information...</p>
+                        </div>
                     }
                 </div>
             </div>

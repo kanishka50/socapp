@@ -7,10 +7,12 @@
 <PageTitle>Product Details - Cozy Comfort</PageTitle>
 
 <div class="container-fluid p-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Product Details</li>
+    <!-- Clean Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/inventory" class="text-decoration-none">Inventory</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Product Details</li>
         </ol>
     </nav>
 
@@ -20,127 +22,257 @@
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
+            <p class="mt-3 text-muted">Loading product details...</p>
         </div>
     }
     else if (product != null)
     {
+        <!-- Clean Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">@product.Name</h2>
+                <p class="text-muted mb-0">
+                    <span class="me-3">SKU: @product.SKU</span>
+                    @if (product.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </p>
+            </div>
+            <button class="btn btn-outline-secondary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/inventory"))">
+                <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+            </button>
+        </div>
+
         <div class="row">
+            <!-- Main Content -->
             <div class="col-md-8">
+                <!-- Product Information Card -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h4 class="card-title mb-0">@product.Name</h4>
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Product Information
+                        </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row mb-3">
+                        <div class="row g-4">
                             <div class="col-md-6">
-                                <h6 class="text-muted">SKU</h6>
-                                <p class="fw-bold">@product.SKU</p>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-tag me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted d-block">SKU</small>
+                                        <span class="fw-semibold">@product.SKU</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="text-muted">Category</h6>
-                                <p class="fw-bold">@product.Category</p>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-folder me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Category</small>
+                                        <span class="fw-semibold">@product.Category</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-layers me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Material</small>
+                                        <span class="fw-semibold">@(product.Material ?? "Not specified")</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-rulers me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Size</small>
+                                        <span class="fw-semibold">@(product.Size ?? "Not specified")</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        @if (!string.IsNullOrEmpty(product.Description))
+                        {
+                            <hr class="my-4" />
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-file-text me-2 text-muted mt-1"></i>
+                                <div>
+                                    <small class="text-muted d-block">Description</small>
+                                    <p class="mb-0">@product.Description</p>
+                                </div>
+                            </div>
+                        }
+
+                        <hr class="my-4" />
+
+                        <!-- Pricing Information -->
+                        <h6 class="fw-semibold mb-3">
+                            <i class="bi bi-currency-dollar me-2"></i>Pricing Information
+                        </h6>
+                        <div class="row g-3">
                             <div class="col-md-6">
-                                <h6 class="text-muted">Material</h6>
-                                <p>@product.Material</p>
+                                <div class="text-center p-3 bg-primary bg-opacity-10 rounded">
+                                    <div class="text-muted mb-1">Base Price</div>
+                                    <div class="h4 mb-0 text-primary">$@product.Price.ToString("F2")</div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="text-muted">Size</h6>
-                                <p>@product.Size</p>
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="text-muted mb-1">Status</div>
+                                    <div class="h5 mb-0">
+                                        @if (product.IsActive)
+                                        {
+                                            <span class="badge bg-success fs-6">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary fs-6">Inactive</span>
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <h6 class="text-muted">Description</h6>
-                            <p>@product.Description</p>
-                        </div>
-
-                        <div class="row">
+                <!-- Stock Information Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Stock Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-4">
-                                <h6 class="text-muted">Base Price</h6>
-                                <p class="h5 text-primary">$@product.Price.ToString("F2")</p>
+                                <div class="text-center p-4 rounded border">
+                                    <i class="bi bi-boxes display-4 mb-3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")"></i>
+                                    <div class="text-muted mb-1">Current Stock</div>
+                                    <div class="h3 @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")">
+                                        @product.CurrentStock
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <h6 class="text-muted">Status</h6>
-                                <p>
-                                    @if (product.IsActive)
-                                    {
-                                        <span class="badge bg-success">Active</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    }
-                                </p>
+                                <div class="text-center p-4 rounded border">
+                                    <i class="bi bi-check-circle display-4 mb-3 text-primary"></i>
+                                    <div class="text-muted mb-1">Available Stock</div>
+                                    <div class="h3 text-primary">@product.AvailableStock</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-4 rounded border">
+                                    <i class="bi bi-exclamation-triangle display-4 mb-3 text-warning"></i>
+                                    <div class="text-muted mb-1">Min Stock Level</div>
+                                    <div class="h3 text-warning">@product.MinStockLevel</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (product.CurrentStock <= product.MinStockLevel)
+                        {
+                            <div class="alert alert-warning d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <div>
+                                    <strong>Low Stock Alert:</strong> Stock level is below minimum threshold. Consider increasing production.
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Stock Level Progress -->
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Stock Level Progress</span>
+                                <span class="fw-semibold">@product.CurrentStock / @(product.MinStockLevel * 3) units</span>
+                            </div>
+                            @{
+                                var stockPercentage = product.MinStockLevel > 0
+                                ? (product.CurrentStock / (double)(product.MinStockLevel * 3)) * 100
+                                : 100;
+                                var progressClass = stockPercentage > 50 ? "bg-success" :
+                                stockPercentage > 25 ? "bg-warning" : "bg-danger";
+                            }
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar @progressClass" role="progressbar"
+                                     style="width: @Math.Min(stockPercentage, 100)%"
+                                     aria-valuenow="@stockPercentage" aria-valuemin="0" aria-valuemax="100">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Sidebar -->
             <div class="col-md-4">
+                <!-- Actions Card -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Stock Information</h5>
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-gear me-2"></i>Actions
+                        </h6>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted">Current Stock</span>
-                                <span class="fw-bold fs-5">@product.CurrentStock</span>
-                            </div>
-                            <div class="progress mt-2" style="height: 10px;">
-                                @{
-                                    var stockPercentage = product.MinStockLevel > 0 
-                                        ? (product.CurrentStock / (double)(product.MinStockLevel * 3)) * 100 
-                                        : 100;
-                                    var progressClass = stockPercentage > 50 ? "bg-success" : 
-                                                       stockPercentage > 25 ? "bg-warning" : "bg-danger";
-                                }
-                                <div class="progress-bar @progressClass" role="progressbar" 
-                                     style="width: @Math.Min(stockPercentage, 100)%"></div>
-                            </div>
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo($"/manufacturer/products/{ProductId}/edit"))">
+                                <i class="bi bi-pencil me-2"></i> Edit Product
+                            </button>
+                            <button class="btn btn-outline-secondary" @onclick="@(() => Navigation.NavigateTo($"/manufacturer/products/{ProductId}/stock"))">
+                                <i class="bi bi-box-seam me-2"></i> Manage Stock
+                            </button>
+                            <hr class="my-2" />
+                            <button class="btn btn-outline-secondary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/inventory"))">
+                                <i class="bi bi-arrow-left me-2"></i> Back to Inventory
+                            </button>
+                            <button class="btn btn-outline-secondary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/dashboard"))">
+                                <i class="bi bi-house me-2"></i> Back to Dashboard
+                            </button>
                         </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span class="text-muted">Available Stock</span>
-                                <span class="fw-bold">@product.AvailableStock</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span class="text-muted">Min Stock Level</span>
-                                <span>@product.MinStockLevel</span>
-                            </div>
-                        </div>
-
-                        @if (product.CurrentStock <= product.MinStockLevel)
-                        {
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Stock is below minimum level
-                            </div>
-                        }
                     </div>
                 </div>
 
+                <!-- Quick Statistics Card -->
                 <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-graph-up me-2"></i>Quick Statistics
+                        </h6>
+                    </div>
                     <div class="card-body">
-                        <h6 class="card-title">Actions</h6>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo($"/manufacturer/products/{ProductId}/edit"))">
-                                <i class="bi bi-pencil"></i> Edit Product
-                            </button>
-                            <button class="btn btn-outline-secondary" @onclick="@(() => Navigation.NavigateTo($"/manufacturer/products/{ProductId}/stock"))">
-                                <i class="bi bi-box-seam"></i> Manage Stock
-                            </button>
-                            <button class="btn btn-outline-secondary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/dashboard"))">
-                                <i class="bi bi-arrow-left"></i> Back to Dashboard
-                            </button>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Current Stock:</span>
+                                    <span class="fw-semibold @(product.CurrentStock <= product.MinStockLevel ? "text-danger" : "text-success")">
+                                        @product.CurrentStock units
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Available Stock:</span>
+                                    <span class="fw-semibold text-primary">@product.AvailableStock units</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="text-muted">Reserved Stock:</span>
+                                    <span class="fw-semibold">@(product.CurrentStock - product.AvailableStock) units</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <span class="text-muted">Base Price:</span>
+                                    <span class="fw-semibold text-success">$@product.Price.ToString("F2")</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -149,11 +281,12 @@
     }
     else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-circle"></i> @errorMessage
+        <div class="alert alert-danger d-flex align-items-center">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <div>@errorMessage</div>
         </div>
         <button class="btn btn-primary" @onclick="@(() => Navigation.NavigateTo("/manufacturer/dashboard"))">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
         </button>
     }
 </div>
@@ -178,7 +311,7 @@
             errorMessage = null;
 
             var response = await ManufacturerService.GetProductByIdAsync(ProductId);
-            
+
             if (response.Success && response.Data != null)
             {
                 product = response.Data;

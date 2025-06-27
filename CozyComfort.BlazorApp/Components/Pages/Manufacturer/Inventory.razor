@@ -7,38 +7,38 @@
 <PageTitle>Inventory - Manufacturer</PageTitle>
 
 <div class="container-fluid p-4">
-    <!-- Header -->
+    <!-- Clean Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Inventory Management</h2>
-            <p class="text-muted mb-0">Monitor and manage your blanket inventory</p>
+            <p class="text-muted mb-0">Monitor and manage your blanket production inventory</p>
         </div>
-        <div>
-            <button class="btn btn-primary" @onclick="NavigateToAddProduct">
-                <i class="bi bi-plus-circle"></i> Add New Product
-            </button>
-        </div>
+        <button class="btn btn-primary" @onclick="NavigateToAddProduct">
+            <i class="bi bi-plus-circle me-1"></i> Add New Product
+        </button>
     </div>
 
-    <!-- Filter Options -->
+    <!-- Filter & Search Card -->
     <div class="card mb-4">
         <div class="card-header">
-            <h6 class="mb-0">
+            <h6 class="card-title mb-0">
                 <i class="bi bi-funnel me-2"></i>Filter & Search
             </h6>
         </div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Search</label>
+                    <label class="form-label fw-semibold">Search</label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Search by name or SKU"
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search by name or SKU"
                                @bind="searchTerm" @oninput="ApplyFilters" />
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Stock Status</label>
+                    <label class="form-label fw-semibold">Stock Status</label>
                     <select class="form-select" @bind="stockFilter" @bind:after="ApplyFilters">
                         <option value="">All Items</option>
                         <option value="low">Low Stock</option>
@@ -47,7 +47,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Sort By</label>
+                    <label class="form-label fw-semibold">Sort By</label>
                     <select class="form-select" @bind="sortBy" @bind:after="ApplyFilters">
                         <option value="name">Product Name</option>
                         <option value="stock">Current Stock</option>
@@ -59,20 +59,20 @@
             <div class="row mt-3">
                 <div class="col-12">
                     <button class="btn btn-outline-secondary btn-sm" @onclick="ClearFilters">
-                        <i class="bi bi-x-circle"></i> Clear Filters
+                        <i class="bi bi-x-circle me-1"></i> Clear Filters
                     </button>
                     <button class="btn btn-outline-primary btn-sm ms-2" @onclick="LoadInventory">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Inventory Table -->
+    <!-- Inventory Table Card -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
+            <h5 class="card-title mb-0">
                 <i class="bi bi-boxes me-2"></i>Inventory Items
                 @if (filteredInventory.Any())
                 {
@@ -80,35 +80,36 @@
                 }
             </h5>
             <div class="text-muted">
-                Total Value: <strong>$@totalStockValue.ToString("N2")</strong>
+                <strong>Total Value: $@totalStockValue.ToString("N2")</strong>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             @if (loading)
             {
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading inventory...</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-3 text-muted">Loading inventory...</p>
                 </div>
             }
             else if (!filteredInventory.Any())
             {
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-inbox display-1"></i>
-                    <h5 class="mt-3">No Inventory Items Found</h5>
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No Inventory Items Found</h5>
                     @if (string.IsNullOrEmpty(searchTerm) && string.IsNullOrEmpty(stockFilter))
                     {
-                        <p>Start by adding your first product to the inventory.</p>
+                        <p class="text-muted">Start by adding your first product to the inventory.</p>
                         <button class="btn btn-primary" @onclick="NavigateToAddProduct">
-                            <i class="bi bi-plus-circle"></i> Add First Product
+                            <i class="bi bi-plus-circle me-1"></i> Add First Product
                         </button>
                     }
                     else
                     {
-                        <p>No items match your current filters. Try adjusting your search criteria.</p>
+                        <p class="text-muted">No items match your current filters. Try adjusting your search criteria.</p>
                         <button class="btn btn-outline-secondary" @onclick="ClearFilters">
-                            <i class="bi bi-x-circle"></i> Clear Filters
+                            <i class="bi bi-x-circle me-1"></i> Clear Filters
                         </button>
                     }
                 </div>
@@ -116,35 +117,51 @@
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Product</th>
-                                <th>SKU</th>
-                                <th>Current Stock</th>
-                                <th>Reserved</th>
-                                <th>Available</th>
-                                <th>Min Level</th>
-                                <th>Unit Cost</th>
-                                <th>Stock Value</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th class="fw-semibold">Product</th>
+                                <th class="fw-semibold">SKU</th>
+                                <th class="fw-semibold">Current Stock</th>
+                                <th class="fw-semibold">Reserved</th>
+                                <th class="fw-semibold">Available</th>
+                                <th class="fw-semibold">Min Level</th>
+                                <th class="fw-semibold">Unit Cost</th>
+                                <th class="fw-semibold">Stock Value</th>
+                                <th class="fw-semibold">Status</th>
+                                <th class="fw-semibold">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in filteredInventory)
                             {
                                 <tr>
-                                    <td class="fw-semibold">@item.ProductName</td>
-                                    <td class="text-muted">@item.SKU</td>
-                                    <td>@item.CurrentStock</td>
-                                    <td class="text-muted">@item.ReservedStock</td>
-                                    <td class="@(item.AvailableStock <= 0 ? "text-danger fw-bold" : item.AvailableStock < item.MinStockLevel ? "text-warning fw-bold" : "")">
-                                        @item.AvailableStock
+                                    <td>
+                                        <div class="fw-semibold">@item.ProductName</div>
                                     </td>
-                                    <td class="text-muted">@item.MinStockLevel</td>
-                                    <td>$@item.ManufacturingCost.ToString("N2")</td>
-                                    <td class="fw-semibold">$@((item.CurrentStock * item.ManufacturingCost).ToString("N2"))</td>
+                                    <td>
+                                        <small class="text-muted">@item.SKU</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary fs-6">@item.CurrentStock</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">@item.ReservedStock</span>
+                                    </td>
+                                    <td>
+                                        <span class="@(item.AvailableStock <= 0 ? "text-danger fw-bold" : item.AvailableStock < item.MinStockLevel ? "text-warning fw-bold" : "text-success")">
+                                            @item.AvailableStock
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">@item.MinStockLevel</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">$@item.ManufacturingCost.ToString("N2")</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-success">$@((item.CurrentStock * item.ManufacturingCost).ToString("N2"))</span>
+                                    </td>
                                     <td>
                                         @if (item.AvailableStock <= 0)
                                         {
@@ -152,7 +169,7 @@
                                         }
                                         else if (item.NeedsProduction)
                                         {
-                                            <span class="badge bg-warning">Low Stock</span>
+                                            <span class="badge bg-warning text-dark">Low Stock</span>
                                         }
                                         else
                                         {
@@ -160,7 +177,7 @@
                                         }
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-sm">
+                                        <div class="btn-group btn-group-sm" role="group">
                                             <button class="btn btn-outline-primary" @onclick="() => ViewProductDetails(item.ProductId)" title="View Details">
                                                 <i class="bi bi-eye"></i>
                                             </button>

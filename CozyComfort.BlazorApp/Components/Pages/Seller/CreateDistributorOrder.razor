@@ -298,18 +298,19 @@
                     </div>
 
                     <div class="d-grid gap-2">
+                        @* Lines 306-311 area - Fixed button text sections *@
                         <button class="btn btn-primary btn-lg" @onclick="CreateOrder"
                                 disabled="@(!orderItems.Any() || isCreatingOrder || string.IsNullOrWhiteSpace(shippingAddress))">
                             @if (isCreatingOrder)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Creating Order...
-                                                        }
+                                <text>Creating Order...</text>
+                            }
                             else
                             {
                                 <i class="bi bi-check-circle me-2"></i>
-                                Create Order
-                                                        }
+                                <text>Create Order</text>
+                            }
                         </button>
                         <button class="btn btn-outline-secondary" @onclick="CancelOrder" disabled="@isCreatingOrder">
                             <i class="bi bi-x-circle"></i> Cancel

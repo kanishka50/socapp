@@ -8,31 +8,31 @@
 <PageTitle>Add New Product - Manufacturer</PageTitle>
 
 <div class="container-fluid p-4">
-    <!-- Header -->
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/manufacturer/inventory">Inventory</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Add Product</li>
+    <!-- Clean Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/inventory" class="text-decoration-none">Inventory</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">Add Product</li>
         </ol>
     </nav>
 
+    <!-- Clean Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Add New Blanket Product</h2>
             <p class="text-muted mb-0">Create a new blanket model for production</p>
         </div>
-        <div>
-            <button class="btn btn-outline-secondary" @onclick="NavigateBack">
-                <i class="bi bi-arrow-left"></i> Back to Inventory
-            </button>
-        </div>
+        <button class="btn btn-outline-secondary" @onclick="NavigateBack">
+            <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+        </button>
     </div>
 
+    <!-- Alert Messages -->
     @if (!string.IsNullOrEmpty(errorMessage))
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-circle"></i> @errorMessage
+            <i class="bi bi-exclamation-circle me-2"></i>@errorMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
@@ -40,12 +40,12 @@
     @if (!string.IsNullOrEmpty(successMessage))
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle"></i> @successMessage
+            <i class="bi bi-check-circle me-2"></i>@successMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <!-- Product Creation Form -->
+    <!-- Product Creation Form Card -->
     <div class="card">
         <div class="card-header">
             <h5 class="card-title mb-0">
@@ -65,12 +65,12 @@
                         </h6>
                     </div>
                     <div class="col-md-4">
-                        <label for="productName" class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <label for="productName" class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
                         <InputText id="productName" class="form-control" @bind-Value="newProduct.Name"
                                    placeholder="e.g., Luxury Wool Blanket" />
                     </div>
                     <div class="col-md-4">
-                        <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                        <label for="category" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
                         <InputSelect id="category" class="form-select" @bind-Value="newProduct.Category">
                             <option value="">Select category</option>
                             <option value="Wool Blankets">Wool Blankets</option>
@@ -82,7 +82,7 @@
                         </InputSelect>
                     </div>
                     <div class="col-md-4">
-                        <label for="sku" class="form-label">SKU <span class="text-danger">*</span></label>
+                        <label for="sku" class="form-label fw-semibold">SKU <span class="text-danger">*</span></label>
                         <InputText id="sku" class="form-control" @bind-Value="newProduct.SKU"
                                    placeholder="e.g., LWB-Q-001" />
                         <div class="form-text">Unique product identifier</div>
@@ -97,17 +97,17 @@
                         </h6>
                     </div>
                     <div class="col-md-4">
-                        <label for="material" class="form-label">Material</label>
+                        <label for="material" class="form-label fw-semibold">Material</label>
                         <InputText id="material" class="form-control" @bind-Value="newProduct.Material"
                                    placeholder="e.g., 100% Merino Wool" />
                     </div>
                     <div class="col-md-4">
-                        <label for="size" class="form-label">Size</label>
+                        <label for="size" class="form-label fw-semibold">Size</label>
                         <InputText id="size" class="form-control" @bind-Value="newProduct.Size"
                                    placeholder="e.g., Queen (90x90 inches)" />
                     </div>
                     <div class="col-md-4">
-                        <label for="description" class="form-label">Description</label>
+                        <label for="description" class="form-label fw-semibold">Description</label>
                         <InputTextArea id="description" class="form-control" @bind-Value="newProduct.Description"
                                        rows="1" placeholder="Brief product description" />
                     </div>
@@ -121,7 +121,7 @@
                         </h6>
                     </div>
                     <div class="col-md-6">
-                        <label for="price" class="form-label">Base Price <span class="text-danger">*</span></label>
+                        <label for="price" class="form-label fw-semibold">Base Price <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <InputNumber id="price" class="form-control" @bind-Value="newProduct.Price"
@@ -130,7 +130,7 @@
                         <div class="form-text">Wholesale price per unit</div>
                     </div>
                     <div class="col-md-6">
-                        <label for="manufacturingCost" class="form-label">Manufacturing Cost</label>
+                        <label for="manufacturingCost" class="form-label fw-semibold">Manufacturing Cost</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <InputNumber id="manufacturingCost" class="form-control" @bind-Value="newProduct.ManufacturingCost"
@@ -148,53 +148,49 @@
                         </h6>
                     </div>
                     <div class="col-md-3">
-                        <label for="initialStock" class="form-label">Initial Stock</label>
+                        <label for="initialStock" class="form-label fw-semibold">Initial Stock</label>
                         <InputNumber id="initialStock" class="form-control" @bind-Value="newProduct.InitialStock" />
                         <div class="form-text">Starting inventory</div>
                     </div>
                     <div class="col-md-3">
-                        <label for="minStock" class="form-label">Min Stock Level</label>
+                        <label for="minStock" class="form-label fw-semibold">Min Stock Level</label>
                         <InputNumber id="minStock" class="form-control" @bind-Value="newProduct.MinStockLevel" />
                         <div class="form-text">Reorder threshold</div>
                     </div>
                     <div class="col-md-3">
-                        <label for="prodCapacity" class="form-label">Daily Production</label>
+                        <label for="prodCapacity" class="form-label fw-semibold">Daily Production</label>
                         <InputNumber id="prodCapacity" class="form-control" @bind-Value="newProduct.ProductionCapacityPerDay" />
                         <div class="form-text">Units per day</div>
                     </div>
                     <div class="col-md-3">
-                        <label for="leadTime" class="form-label">Lead Time (Days)</label>
+                        <label for="leadTime" class="form-label fw-semibold">Lead Time (Days)</label>
                         <InputNumber id="leadTime" class="form-control" @bind-Value="newProduct.LeadTimeDays" />
                         <div class="form-text">Production time</div>
                     </div>
                 </div>
 
                 <!-- Form Actions -->
-                <div class="row">
-                    <div class="col-12">
-                        <hr class="mb-4">
-                        <div class="d-flex justify-content-between">
-                            <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
-                                <i class="bi bi-x-circle"></i> Cancel
-                            </button>
-                            <div>
-                                <button type="button" class="btn btn-outline-primary me-2" @onclick="ResetForm">
-                                    <i class="bi bi-arrow-clockwise"></i> Reset Form
-                                </button>
-                                <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
-                                    @if (isSubmitting)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        <span>Creating...</span>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi bi-plus-circle me-2"></i>
-                                        <span>Create Product</span>
-                                    }
-                                </button>
-                            </div>
-                        </div>
+                <hr class="my-4" />
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary" @onclick="ResetForm">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Reset Form
+                        </button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Creating...
+                                                        }
+                            else
+                            {
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Create Product
+                                                        }
+                        </button>
                     </div>
                 </div>
             </EditForm>
