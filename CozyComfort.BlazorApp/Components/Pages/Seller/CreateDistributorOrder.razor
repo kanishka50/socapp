@@ -226,13 +226,13 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label for="orderReference" class="form-label">Order Reference <span class="text-danger">*</span></label>
-                        <input id="orderReference" type="text" class="form-control" @bind="orderRequest.OrderReference"
-                               placeholder="Enter order reference or leave blank for auto-generation" />
+                        <label for="shippingAddress" class="form-label">Shipping Address <span class="text-danger">*</span></label>
+                        <input id="shippingAddress" type="text" class="form-control" @bind="shippingAddress"
+                               placeholder="Enter shipping address" />
                     </div>
                     <div class="mb-3">
                         <label for="notes" class="form-label">Order Notes (Optional)</label>
-                        <textarea id="notes" class="form-control" rows="2" @bind="orderRequest.Notes"
+                        <textarea id="notes" class="form-control" rows="2" @bind="orderNotes"
                                   placeholder="Add any special instructions or notes for the distributor"></textarea>
                     </div>
                 </div>
@@ -260,7 +260,7 @@
                     <hr />
 
                     <div class="d-grid gap-2">
-                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting)">
+                        <button class="btn btn-primary btn-lg" @onclick="SubmitOrder" disabled="@(!orderItems.Any() || isSubmitting || string.IsNullOrWhiteSpace(shippingAddress))">
                             @if (isSubmitting)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -275,6 +275,10 @@
                     @if (!orderItems.Any())
                     {
                         <small class="text-muted">Add products to enable order submission</small>
+                    }
+                    else if (string.IsNullOrWhiteSpace(shippingAddress))
+                    {
+                        <small class="text-warning">Please enter shipping address</small>
                     }
                 </div>
             </div>
@@ -301,17 +305,23 @@
 </div>
 
 @code {
-    private CreateDistributorOrderRequest orderRequest = new();
+    // Form data
+    private string shippingAddress = "";
+    private string orderNotes = "";
+
+    // Page data
     private PagedResult<DistributorProductDto>? distributorProducts;
     private List<OrderItemViewModel> orderItems = new();
     private Dictionary<int, int> tempQuantities = new();
 
+    // Search and pagination
     private string searchTerm = "";
     private int currentPage = 1;
     private int pageSize = 10;
     private bool showProductList = true;
     private bool loadingProducts = false;
 
+    // Order summary
     private decimal orderTotal = 0;
     private bool isSubmitting = false;
     private string? errorMessage;
@@ -320,7 +330,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDistributorProducts();
-        orderRequest.OrderReference = GenerateOrderReference();
     }
 
     private async Task HandleSearchKeyUp(KeyboardEventArgs e)
@@ -470,25 +479,30 @@
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(shippingAddress))
+            {
+                errorMessage = "Please enter a shipping address";
+                return;
+            }
+
             isSubmitting = true;
             errorMessage = null;
             successMessage = null;
 
-            // Generate order reference if empty
-            if (string.IsNullOrWhiteSpace(orderRequest.OrderReference))
+            // Create the order DTO
+            var createOrderDto = new CreateSellerDistributorOrderDto
             {
-                orderRequest.OrderReference = GenerateOrderReference();
-            }
+                ShippingAddress = shippingAddress,
+                Notes = orderNotes,
+                Items = orderItems.Select(i => new CreateSellerDistributorOrderItemDto
+                {
+                    DistributorProductId = i.DistributorProductId,
+                    Quantity = i.Quantity
+                }).ToList()
+            };
 
-            // Map order items to the required DTO format
-            orderRequest.Items = orderItems.Select(i => new DistributorOrderItem
-            {
-                DistributorProductId = i.DistributorProductId,
-                Quantity = i.Quantity,
-                RequestedPrice = i.RequestedPrice
-            }).ToList();
-
-            var response = await SellerService.CreateDistributorOrderAsync(orderRequest);
+            // Call the service to create the order
+            var response = await SellerService.CreateDistributorOrderAsync(createOrderDto);
 
             if (response.Success)
             {
@@ -516,11 +530,6 @@
     private void CancelOrder()
     {
         Navigation.NavigateTo("/seller/orders");
-    }
-
-    private string GenerateOrderReference()
-    {
-        return $"SLR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
     }
 
     private class OrderItemViewModel
