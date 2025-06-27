@@ -49,7 +49,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 decimal totalAmount = 0;
-                var distributorOrderItems = new List<DistributorOrderItem>();
+                var distributorOrderItems = new List<SellerDistributorOrderItemRequest>();
 
                 foreach (var item in dto.Items)
                 {
@@ -107,7 +107,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     totalAmount += orderItem.Quantity * orderItem.UnitPrice;
 
                     // Prepare distributor order item
-                    distributorOrderItems.Add(new DistributorOrderItem
+                    distributorOrderItems.Add(new SellerDistributorOrderItemRequest
                     {
                         DistributorProductId = item.DistributorProductId,
                         Quantity = item.Quantity,
