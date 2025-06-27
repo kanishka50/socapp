@@ -579,24 +579,29 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderDto request)
+        public async Task<ApiResponse<SellerDistributorOrderDto>> CreateDistributorOrderAsync(CreateSellerDistributorOrderDto request)
         {
             try
             {
                 var client = await GetAuthenticatedClientAsync();
 
-                var response = await client.PostAsJsonAsync("api/inventory/create-distributor-order", request);
+                // Call the correct endpoint that returns SellerDistributorOrderDto
+                var response = await client.PostAsJsonAsync("api/orders/create-distributor-order", request);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
-                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<SellerDistributorOrderDto>>();
+                    return result ?? new ApiResponse<SellerDistributorOrderDto>
+                    {
+                        Success = false,
+                        Message = "Failed to deserialize response"
+                    };
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
                 _logger.LogError($"Failed to create distributor order: {response.StatusCode}, Content: {errorContent}");
 
-                return new ApiResponse<bool>
+                return new ApiResponse<SellerDistributorOrderDto>
                 {
                     Success = false,
                     Message = $"Failed to create distributor order: {response.StatusCode}"
@@ -605,7 +610,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating distributor order");
-                return new ApiResponse<bool>
+                return new ApiResponse<SellerDistributorOrderDto>
                 {
                     Success = false,
                     Message = "Error creating distributor order",

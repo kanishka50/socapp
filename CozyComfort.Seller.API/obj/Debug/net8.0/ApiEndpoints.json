@@ -112,6 +112,58 @@
   },
   {
     "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorOrdersController",
+    "Method": "GetDistributorOrders",
+    "RelativePath": "api/distributor-orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "PageNumber",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "PageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "SearchTerm",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SortBy",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "IsDescending",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorOrdersController",
+    "Method": "AcceptOrderNotification",
+    "RelativePath": "api/distributor-orders/accept-notification",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "notification",
+        "Type": "CozyComfort.Shared.DTOs.Seller.DistributorOrderAcceptedDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorOrdersController",
     "Method": "CreateDistributorOrder",
     "RelativePath": "api/distributor-orders/create",
     "HttpMethod": "POST",
@@ -120,7 +172,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "CozyComfort.Shared.DTOs.Seller.CreateDistributorOrderRequest",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CreateSellerDistributorOrderDto",
         "IsRequired": true
       }
     ],
@@ -285,8 +337,8 @@
   },
   {
     "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
-    "Method": "GetAllOrders",
-    "RelativePath": "api/Orders",
+    "Method": "GetCombinedOrders",
+    "RelativePath": "api/orders/combined",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -315,75 +367,6 @@
         "Name": "IsDescending",
         "Type": "System.Boolean",
         "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
-    "Method": "GetOrder",
-    "RelativePath": "api/Orders/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
-    "Method": "UpdateOrderStatus",
-    "RelativePath": "api/Orders/{id}/status",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "dto",
-        "Type": "CozyComfort.Seller.API.Controllers.UpdateStatusDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
-    "Method": "CreateOrder",
-    "RelativePath": "api/Orders/create",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "CozyComfort.Shared.DTOs.Seller.CreateCustomerOrderDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
-    "Method": "GetCustomerOrders",
-    "RelativePath": "api/Orders/customer/{email}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "email",
-        "Type": "System.String",
-        "IsRequired": true
       }
     ],
     "ReturnTypes": []

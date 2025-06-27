@@ -38,7 +38,7 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         // Inventory Management (NEW)
         Task<ApiResponse<PagedResult<SellerInventoryDto>>> GetInventoryAsync(PagedRequest request);
         Task<ApiResponse<CheckStockResponseDto>> CheckDistributorStockAsync(int productId, int quantityNeeded);
-        Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderDto request);
+        Task<ApiResponse<SellerDistributorOrderDto>> CreateDistributorOrderAsync(CreateSellerDistributorOrderDto request);
         Task<ApiResponse<bool>> UpdateStockAsync(int productId, int newStock);
 
 

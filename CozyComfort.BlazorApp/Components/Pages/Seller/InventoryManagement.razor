@@ -463,17 +463,18 @@
         isPlacingOrder = true;
         try
         {
-            var orderDto = new CreateDistributorOrderDto
+            var orderDto = new CreateSellerDistributorOrderDto
             {
-                Items = new List<DistributorOrderItemRequest>
-                {
-                    new DistributorOrderItemRequest
-                    {
-                        ProductId = selectedItem.Id,
-                        Quantity = orderQuantity
-                    }
-                },
-                Notes = orderNotes
+                ShippingAddress = "Default Seller Address", // Add appropriate address
+                Notes = orderNotes,
+                Items = new List<CreateSellerDistributorOrderItemDto>
+    {
+        new CreateSellerDistributorOrderItemDto
+        {
+            DistributorProductId = selectedItem.DistributorProductId, // Use DistributorProductId
+            Quantity = orderQuantity
+        }
+    }
             };
 
             var response = await SellerService.CreateDistributorOrderAsync(orderDto);

@@ -637,16 +637,30 @@
             "type": "string",
             "nullable": true
           },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SellerOrderItem"
-            },
-            "nullable": true
-          },
           "shippingAddress": {
             "type": "string",
             "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessSellerOrderItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProcessSellerOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "distributorProductId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -661,24 +675,6 @@
           "newPassword": {
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "SellerOrderItem": {
-        "type": "object",
-        "properties": {
-          "distributorProductId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "quantity": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "requestedPrice": {
-            "type": "number",
-            "format": "double"
           }
         },
         "additionalProperties": false
