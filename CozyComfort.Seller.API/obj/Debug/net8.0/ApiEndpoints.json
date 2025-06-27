@@ -546,6 +546,146 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "AddInventoryTransaction",
+    "RelativePath": "api/Test/add-inventory-transaction",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Seller.API.Controllers.AddInventoryTransactionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "CheckDistributorOrders",
+    "RelativePath": "api/Test/check-distributor-orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "CheckOrders",
+    "RelativePath": "api/Test/check-orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "CheckProducts",
+    "RelativePath": "api/Test/check-products",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "CheckUsers",
+    "RelativePath": "api/Test/check-users",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "CreateSampleOrder",
+    "RelativePath": "api/Test/create-sample-order",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "CreateSeller",
+    "RelativePath": "api/Test/create-seller",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Seller.API.Controllers.CreateSellerRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "GetDatabaseInfo",
+    "RelativePath": "api/Test/db-info",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/Test/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Seller.API.Controllers.ResetPasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "TestLogin",
+    "RelativePath": "api/Test/test-login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Seller.API.Controllers.TestLoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.TestController",
+    "Method": "ToggleUserStatus",
+    "RelativePath": "api/Test/toggle-user-status",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "CozyComfort.Seller.API.Controllers.ToggleUserStatusRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Program\u002B\u003C\u003Ec",
     "Method": "\u003C\u003CMain\u003E$\u003Eb__0_10",
     "RelativePath": "health",
