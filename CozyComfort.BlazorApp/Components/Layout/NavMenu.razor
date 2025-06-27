@@ -1,37 +1,47 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Cozy Comfort</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
+<!-- Brand Header -->
+<div class="navbar-brand">
+    <i class="bi bi-house-heart-fill" style="margin-right: 0.5rem;"></i>
+    Cozy Comfort
 </div>
 
+<!-- Mobile Toggle -->
+<div class="d-md-none">
+    <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="bi bi-list" style="color: white; font-size: 1.2rem;"></span>
+    </button>
+</div>
+
+<!-- Navigation Menu -->
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+
+        <!-- Public Menu - For Customers -->
         <AuthorizeView>
             <NotAuthorized>
-                <!-- Public Menu - For Customers -->
-                <div class="nav-item px-3">
+                <div class="nav-item">
                     <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="bi bi-house-door-fill" aria-hidden="true"></span> Home
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Home</span>
                     </NavLink>
                 </div>
-                <div class="nav-item px-3">
+                <div class="nav-item">
                     <NavLink class="nav-link" href="shop">
-                        <span class="bi bi-shop" aria-hidden="true"></span> Shop
+                        <i class="bi bi-shop"></i>
+                        <span>Shop</span>
                     </NavLink>
                 </div>
-                <div class="nav-item px-3">
+                <div class="nav-item">
                     <NavLink class="nav-link" href="cart">
-                        <span class="bi bi-cart" aria-hidden="true"></span> Cart
+                        <i class="bi bi-cart"></i>
+                        <span>Cart</span>
                     </NavLink>
                 </div>
-                <div class="nav-item px-3">
+                <div class="nav-item">
                     <NavLink class="nav-link" href="login">
-                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Login
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Login</span>
                     </NavLink>
                 </div>
             </NotAuthorized>
@@ -39,83 +49,104 @@
 
         <!-- Manufacturer Menu -->
         <AuthorizeView Roles="Administrator,Manufacturer">
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="manufacturer/dashboard">
-                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="manufacturer/products">
-                    <span class="bi bi-box" aria-hidden="true"></span> Products
+                    <i class="bi bi-box-seam"></i>
+                    <span>Products</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
+                <NavLink class="nav-link" href="manufacturer/products/add">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Add Product</span>
+                </NavLink>
+            </div>
+            <div class="nav-item">
                 <NavLink class="nav-link" href="manufacturer/inventory">
-                    <span class="bi bi-boxes" aria-hidden="true"></span> Inventory
+                    <i class="bi bi-archive"></i>
+                    <span>Inventory</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="manufacturer/orders">
-                    <span class="bi bi-receipt" aria-hidden="true"></span> Orders
+                    <i class="bi bi-receipt-cutoff"></i>
+                    <span>Orders</span>
                 </NavLink>
             </div>
         </AuthorizeView>
 
         <!-- Distributor Menu -->
         <AuthorizeView Roles="Administrator,Distributor">
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="distributor/dashboard">
-                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="distributor/orders">
-                    <span class="bi bi-clipboard" aria-hidden="true"></span> Orders
+                    <i class="bi bi-clipboard-data"></i>
+                    <span>Orders</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="distributor/inventory">
-                    <span class="bi bi-boxes" aria-hidden="true"></span> Inventory
+                    <i class="bi bi-archive"></i>
+                    <span>Inventory</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="distributor/orders/create">
-                    <span class="bi bi-plus-circle" aria-hidden="true"></span> Create Order
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Create Order</span>
                 </NavLink>
             </div>
         </AuthorizeView>
 
-        <!-- Seller Menu - ONLY SHOW BUSINESS MANAGEMENT -->
+        <!-- Seller Menu -->
         <AuthorizeView Roles="Administrator,Seller">
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="seller/dashboard">
-                    <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="seller/orders">
-                    <span class="bi bi-clipboard-check" aria-hidden="true"></span> Orders
+                    <i class="bi bi-clipboard-check-fill"></i>
+                    <span>Orders</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="seller/inventory">
-                    <span class="bi bi-boxes" aria-hidden="true"></span> Inventory
+                    <i class="bi bi-box2-heart"></i>
+                    <span>Inventory</span>
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="seller/orders/create-distributor-order">
-                    <span class="bi bi-plus-circle" aria-hidden="true"></span> Create Order
+                    <i class="bi bi-bag-plus-fill"></i>
+                    <span>Create Order</span>
                 </NavLink>
             </div>
         </AuthorizeView>
 
-        <!-- Logout for authenticated users -->
+        <!-- Separator and Logout -->
         <AuthorizeView>
             <Authorized>
-                <hr class="my-2" />
-                <div class="nav-item px-3">
+                <div class="nav-item">
+                    <hr style="border-color: rgba(255, 255, 255, 0.2); margin: 1.5rem 1rem;" />
+                </div>
+                <div class="nav-item">
                     <a class="nav-link" href="javascript:void(0)" @onclick="Logout">
-                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Logout
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
                     </a>
                 </div>
             </Authorized>

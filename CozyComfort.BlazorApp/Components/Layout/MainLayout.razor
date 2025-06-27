@@ -4,24 +4,37 @@
 @using CozyComfort.BlazorApp.Services.Interfaces
 
 <div class="page">
+    <!-- Enhanced Sidebar -->
     <div class="sidebar">
         <NavMenu />
     </div>
 
+    <!-- Main Content Area -->
     <main>
-        <div class="top-row px-4">
+        <!-- Clean Top Header -->
+        <div class="top-row">
             <AuthorizeView>
                 <Authorized>
-                    <span class="me-3">Welcome, @context.User.Identity?.Name</span>
-                    <button class="btn btn-link" @onclick="Logout">Logout</button>
+                    <div class="user-info">
+                        <i class="bi bi-person-circle" style="font-size: 1.2rem; color: var(--cozy-gray-600);"></i>
+                        <span>Welcome, @context.User.Identity?.Name</span>
+                        <button class="btn btn-link" @onclick="Logout">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                    </div>
                 </Authorized>
                 <NotAuthorized>
-                    <a href="/login">Login</a>
+                    <div class="user-info">
+                        <a href="/login" class="btn-cozy-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </div>
                 </NotAuthorized>
             </AuthorizeView>
         </div>
 
-        <article class="content px-4">
+        <!-- Content Area -->
+        <article class="content">
             @Body
         </article>
     </main>

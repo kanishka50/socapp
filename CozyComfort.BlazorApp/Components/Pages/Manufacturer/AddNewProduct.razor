@@ -1,0 +1,256 @@
+﻿@page "/manufacturer/products/add"
+@attribute [Authorize(Roles = "Manufacturer")]
+@inject IManufacturerService ManufacturerService
+@inject ILogger<AddProduct> Logger
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Add New Product - Manufacturer</PageTitle>
+
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/manufacturer/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/manufacturer/inventory">Inventory</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add Product</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Add New Blanket Product</h2>
+            <p class="text-muted mb-0">Create a new blanket model for production</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary" @onclick="NavigateBack">
+                <i class="bi bi-arrow-left"></i> Back to Inventory
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle"></i> @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Product Creation Form -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-plus-circle me-2"></i>Product Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="newProduct" OnValidSubmit="HandleCreateProduct">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger mb-3" />
+
+                <!-- Basic Product Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Basic Information
+                        </h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="productName" class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <InputText id="productName" class="form-control" @bind-Value="newProduct.Name"
+                                   placeholder="e.g., Luxury Wool Blanket" />
+                    </div>
+                    <div class="col-md-4">
+                        <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                        <InputSelect id="category" class="form-select" @bind-Value="newProduct.Category">
+                            <option value="">Select category</option>
+                            <option value="Wool Blankets">Wool Blankets</option>
+                            <option value="Cotton Blankets">Cotton Blankets</option>
+                            <option value="Fleece Blankets">Fleece Blankets</option>
+                            <option value="Weighted Blankets">Weighted Blankets</option>
+                            <option value="Electric Blankets">Electric Blankets</option>
+                            <option value="Throw Blankets">Throw Blankets</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sku" class="form-label">SKU <span class="text-danger">*</span></label>
+                        <InputText id="sku" class="form-control" @bind-Value="newProduct.SKU"
+                                   placeholder="e.g., LWB-Q-001" />
+                        <div class="form-text">Unique product identifier</div>
+                    </div>
+                </div>
+
+                <!-- Product Specifications -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-rulers me-2"></i>Specifications
+                        </h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="material" class="form-label">Material</label>
+                        <InputText id="material" class="form-control" @bind-Value="newProduct.Material"
+                                   placeholder="e.g., 100% Merino Wool" />
+                    </div>
+                    <div class="col-md-4">
+                        <label for="size" class="form-label">Size</label>
+                        <InputText id="size" class="form-control" @bind-Value="newProduct.Size"
+                                   placeholder="e.g., Queen (90x90 inches)" />
+                    </div>
+                    <div class="col-md-4">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="form-control" @bind-Value="newProduct.Description"
+                                       rows="1" placeholder="Brief product description" />
+                    </div>
+                </div>
+
+                <!-- Pricing & Costs -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-currency-dollar me-2"></i>Pricing & Costs
+                        </h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="price" class="form-label">Base Price <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <InputNumber id="price" class="form-control" @bind-Value="newProduct.Price"
+                                         placeholder="0.00" step="0.01" />
+                        </div>
+                        <div class="form-text">Wholesale price per unit</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="manufacturingCost" class="form-label">Manufacturing Cost</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <InputNumber id="manufacturingCost" class="form-control" @bind-Value="newProduct.ManufacturingCost"
+                                         placeholder="0.00" step="0.01" />
+                        </div>
+                        <div class="form-text">Cost to produce one unit</div>
+                    </div>
+                </div>
+
+                <!-- Inventory & Production -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-boxes me-2"></i>Inventory & Production
+                        </h6>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="initialStock" class="form-label">Initial Stock</label>
+                        <InputNumber id="initialStock" class="form-control" @bind-Value="newProduct.InitialStock" />
+                        <div class="form-text">Starting inventory</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="minStock" class="form-label">Min Stock Level</label>
+                        <InputNumber id="minStock" class="form-control" @bind-Value="newProduct.MinStockLevel" />
+                        <div class="form-text">Reorder threshold</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="prodCapacity" class="form-label">Daily Production</label>
+                        <InputNumber id="prodCapacity" class="form-control" @bind-Value="newProduct.ProductionCapacityPerDay" />
+                        <div class="form-text">Units per day</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="leadTime" class="form-label">Lead Time (Days)</label>
+                        <InputNumber id="leadTime" class="form-control" @bind-Value="newProduct.LeadTimeDays" />
+                        <div class="form-text">Production time</div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <hr class="mb-4">
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </button>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" @onclick="ResetForm">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset Form
+                                </button>
+                                <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Creating...
+                                                                        }
+                                    else
+                                    {
+                                        <i class="bi bi-plus-circle me-2"></i>
+                                        <span>Create Product</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateProductDto newProduct = new();
+    private bool isSubmitting = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private async Task HandleCreateProduct()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+            successMessage = null;
+
+            var response = await ManufacturerService.CreateProductAsync(newProduct);
+
+            if (response.Success)
+            {
+                successMessage = "Product created successfully!";
+
+                // Clear success message and redirect after 2 seconds
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/manufacturer/inventory");
+            }
+            else
+            {
+                errorMessage = response.Message ?? "Failed to create product";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating product");
+            errorMessage = "An error occurred while creating the product";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        newProduct = new CreateProductDto();
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/manufacturer/inventory");
+    }
+}

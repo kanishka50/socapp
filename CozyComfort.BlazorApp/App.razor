@@ -4,25 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+
+    <!-- Google Fonts for better typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <!-- Custom Theme (NEW) -->
+    <link rel="stylesheet" href="cozy-theme.css" />
+
+    <!-- Original app.css (for backward compatibility) -->
     <link rel="stylesheet" href="app.css" />
+
+    <!-- Generated Blazor styles -->
     <link rel="stylesheet" href="CozyComfort.BlazorApp.styles.css" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png" />
+
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 <body>
-    <!-- FIXED: Only one Routes component -->
+    <!-- Routes component -->
     <Routes @rendermode="InteractiveServer" />
 
-    <!-- ADDED: Error UI for Blazor errors -->
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
+    
 
-    <!-- FIXED: Correct script for Blazor Server -->
+    <!-- Blazor Server script -->
     <script src="_framework/blazor.server.js"></script>
 </body>
 </html>

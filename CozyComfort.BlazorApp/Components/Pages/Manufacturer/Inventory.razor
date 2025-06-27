@@ -2,148 +2,181 @@
 @attribute [Authorize(Roles = "Manufacturer")]
 @inject IManufacturerService ManufacturerService
 @inject ILogger<Inventory> Logger
+@inject NavigationManager Navigation
 
 <PageTitle>Inventory - Manufacturer</PageTitle>
 
 <div class="container-fluid p-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="h3">Inventory Management</h1>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Inventory Management</h2>
+            <p class="text-muted mb-0">Monitor and manage your blanket inventory</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="NavigateToAddProduct">
+                <i class="bi bi-plus-circle"></i> Add New Product
+            </button>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Total Products</h6>
-                    <h3 class="card-title mb-0">@inventory.Count</h3>
-                </div>
-            </div>
+    <!-- Filter Options -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="bi bi-funnel me-2"></i>Filter & Search
+            </h6>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Total Stock Value</h6>
-                    <h3 class="card-title mb-0">$@totalStockValue.ToString("N2")</h3>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search by name or SKU"
+                               @bind="searchTerm" @oninput="ApplyFilters" />
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Low Stock Items</h6>
-                    <h3 class="card-title mb-0 text-warning">@lowStockCount</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Out of Stock</h6>
-                    <h3 class="card-title mb-0 text-danger">@outOfStockCount</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-   <!-- Filter Options -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-4">
-                <label class="form-label">Search</label>
-                    <input type="text" class="form-control" placeholder="Search by name or SKU"
-                           @bind="searchTerm" @oninput="ApplyFilters" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Stock Status</label>
+                <div class="col-md-4">
+                    <label class="form-label">Stock Status</label>
                     <select class="form-select" @bind="stockFilter" @bind:after="ApplyFilters">
-                    <option value="">All Items</option>
-                    <option value="low">Low Stock</option>
-                    <option value="out">Out of Stock</option>
-                    <option value="ok">Sufficient Stock</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Sort By</label>
+                        <option value="">All Items</option>
+                        <option value="low">Low Stock</option>
+                        <option value="out">Out of Stock</option>
+                        <option value="ok">Sufficient Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sort By</label>
                     <select class="form-select" @bind="sortBy" @bind:after="ApplyFilters">
-                    <option value="name">Product Name</option>
-                    <option value="stock">Current Stock</option>
-                    <option value="available">Available Stock</option>
-                    <option value="value">Stock Value</option>
-                </select>
+                        <option value="name">Product Name</option>
+                        <option value="stock">Current Stock</option>
+                        <option value="available">Available Stock</option>
+                        <option value="value">Stock Value</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="ClearFilters">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm ms-2" @onclick="LoadInventory">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-    @if (loading)
-    {
-        <div class="text-center p-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+    <!-- Inventory Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-boxes me-2"></i>Inventory Items
+                @if (filteredInventory.Any())
+                {
+                    <span class="badge bg-secondary ms-2">@filteredInventory.Count items</span>
+                }
+            </h5>
+            <div class="text-muted">
+                Total Value: <strong>$@totalStockValue.ToString("N2")</strong>
             </div>
         </div>
-    }
-    else if (!filteredInventory.Any())
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No inventory items found matching your criteria.
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Current Stock</th>
-                        <th>Reserved</th>
-                        <th>Available</th>
-                        <th>Min Level</th>
-                        <th>Unit Cost</th>
-                        <th>Stock Value</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in filteredInventory)
+        <div class="card-body">
+            @if (loading)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading inventory...</span>
+                    </div>
+                </div>
+            }
+            else if (!filteredInventory.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-1"></i>
+                    <h5 class="mt-3">No Inventory Items Found</h5>
+                    @if (string.IsNullOrEmpty(searchTerm) && string.IsNullOrEmpty(stockFilter))
                     {
-                        <tr>
-                            <td>@item.ProductName</td>
-                            <td>@item.SKU</td>
-                            <td>@item.CurrentStock</td>
-                            <td>@item.ReservedStock</td>
-                            <td class="@(item.AvailableStock <= 0 ? "text-danger" : item.AvailableStock < item.MinStockLevel ? "text-warning" : "")">
-                                @item.AvailableStock
-                            </td>
-                            <td>@item.MinStockLevel</td>
-                            <td>$@item.ManufacturingCost.ToString("N2")</td>
-                            <td>$@((item.CurrentStock * item.ManufacturingCost).ToString("N2"))</td>
-                            <td>
-                                @if (item.AvailableStock <= 0)
-                                {
-                                    <span class="badge bg-danger">Out of Stock</span>
-                                }
-                                else if (item.NeedsProduction)
-                                {
-                                    <span class="badge bg-warning">Low Stock</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success">OK</span>
-                                }
-                            </td>
-                        </tr>
+                        <p>Start by adding your first product to the inventory.</p>
+                        <button class="btn btn-primary" @onclick="NavigateToAddProduct">
+                            <i class="bi bi-plus-circle"></i> Add First Product
+                        </button>
                     }
-                </tbody>
-            </table>
+                    else
+                    {
+                        <p>No items match your current filters. Try adjusting your search criteria.</p>
+                        <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+                            <i class="bi bi-x-circle"></i> Clear Filters
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Current Stock</th>
+                                <th>Reserved</th>
+                                <th>Available</th>
+                                <th>Min Level</th>
+                                <th>Unit Cost</th>
+                                <th>Stock Value</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in filteredInventory)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.ProductName</td>
+                                    <td class="text-muted">@item.SKU</td>
+                                    <td>@item.CurrentStock</td>
+                                    <td class="text-muted">@item.ReservedStock</td>
+                                    <td class="@(item.AvailableStock <= 0 ? "text-danger fw-bold" : item.AvailableStock < item.MinStockLevel ? "text-warning fw-bold" : "")">
+                                        @item.AvailableStock
+                                    </td>
+                                    <td class="text-muted">@item.MinStockLevel</td>
+                                    <td>$@item.ManufacturingCost.ToString("N2")</td>
+                                    <td class="fw-semibold">$@((item.CurrentStock * item.ManufacturingCost).ToString("N2"))</td>
+                                    <td>
+                                        @if (item.AvailableStock <= 0)
+                                        {
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                        }
+                                        else if (item.NeedsProduction)
+                                        {
+                                            <span class="badge bg-warning">Low Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">In Stock</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" @onclick="() => ViewProductDetails(item.ProductId)" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" @onclick="() => EditProduct(item.ProductId)" title="Edit Product">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
-    }
+    </div>
 </div>
 
 @code {
@@ -225,5 +258,31 @@
             "value" => filteredInventory.OrderByDescending(i => i.CurrentStock * i.ManufacturingCost).ToList(),
             _ => filteredInventory.OrderBy(i => i.ProductName).ToList()
         };
+
+        // Recalculate total for filtered items
+        totalStockValue = filteredInventory.Sum(i => i.CurrentStock * i.ManufacturingCost);
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = "";
+        stockFilter = "";
+        sortBy = "name";
+        ApplyFilters();
+    }
+
+    private void NavigateToAddProduct()
+    {
+        Navigation.NavigateTo("/manufacturer/products/add");
+    }
+
+    private void ViewProductDetails(int productId)
+    {
+        Navigation.NavigateTo($"/manufacturer/products/{productId}");
+    }
+
+    private void EditProduct(int productId)
+    {
+        Navigation.NavigateTo($"/manufacturer/products/{productId}/edit");
     }
 }

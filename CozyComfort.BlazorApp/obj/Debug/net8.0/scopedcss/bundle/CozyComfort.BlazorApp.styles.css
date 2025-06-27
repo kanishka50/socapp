@@ -1,100 +1,102 @@
 /* _content/CozyComfort.BlazorApp/Components/Layout/MainLayout.razor.rz.scp.css */
-.page[b-dbgg12otiq] {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
+/* ===== MINIMAL LAYOUT STYLES ===== */
+/* Most styles are now in cozy-theme.css for better organization */
 
-main[b-dbgg12otiq] {
-    flex: 1;
-}
-
-.sidebar[b-dbgg12otiq] {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-}
-
-.top-row[b-dbgg12otiq] {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
+/* Mobile Navigation Toggle */
+.navbar-toggler[b-dbgg12otiq] {
+    appearance: none;
+    cursor: pointer;
+    width: 3.5rem;
+    height: 2.5rem;
+    color: white;
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
-    .top-row[b-dbgg12otiq]  a, .top-row[b-dbgg12otiq]  .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
+    .navbar-toggler:hover[b-dbgg12otiq] {
+        background: rgba(255, 255, 255, 0.2);
     }
 
-    .top-row[b-dbgg12otiq]  a:hover, .top-row[b-dbgg12otiq]  .btn-link:hover {
-        text-decoration: underline;
+    .navbar-toggler:checked[b-dbgg12otiq] {
+        background-color: rgba(255, 255, 255, 0.3);
     }
 
-    .top-row[b-dbgg12otiq]  a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-@media (max-width: 640.98px) {
-    .top-row[b-dbgg12otiq] {
-        justify-content: space-between;
-    }
-
-    .top-row[b-dbgg12otiq]  a, .top-row[b-dbgg12otiq]  .btn-link {
-        margin-left: 0;
-    }
-}
-
-@media (min-width: 641px) {
-    .page[b-dbgg12otiq] {
-        flex-direction: row;
-    }
-
-    .sidebar[b-dbgg12otiq] {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
-
-    .top-row[b-dbgg12otiq] {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    .top-row.auth[b-dbgg12otiq]  a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
-
-    .top-row[b-dbgg12otiq], article[b-dbgg12otiq] {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
-}
-
-#blazor-error-ui[b-dbgg12otiq] {
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+/* Mobile Navigation Container */
+.nav-scrollable[b-dbgg12otiq] {
     display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss[b-dbgg12otiq] {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
+.navbar-toggler:checked ~ .nav-scrollable[b-dbgg12otiq] {
+    display: block;
+}
+
+/* Desktop Navigation - Always Visible */
+@media (min-width: 768px) {
+    .navbar-toggler[b-dbgg12otiq] {
+        display: none;
     }
+
+    .nav-scrollable[b-dbgg12otiq] {
+        display: block !important;
+        height: calc(100vh - 5rem); /* Account for brand header */
+        overflow-y: auto;
+        padding-bottom: 2rem;
+    }
+
+        /* Custom scrollbar for sidebar */
+        .nav-scrollable[b-dbgg12otiq]::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .nav-scrollable[b-dbgg12otiq]::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-scrollable[b-dbgg12otiq]::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+            .nav-scrollable[b-dbgg12otiq]::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+}
+
+/* Role-Based Accent Colors for Navigation */
+/* These will be applied via JavaScript or server-side logic */
+.role-manufacturer .nav-link.active[b-dbgg12otiq] {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border-left: 3px solid #8b5cf6;
+}
+
+.role-distributor .nav-link.active[b-dbgg12otiq] {
+    background: rgba(6, 182, 212, 0.2) !important;
+    border-left: 3px solid #06b6d4;
+}
+
+.role-seller .nav-link.active[b-dbgg12otiq] {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-left: 3px solid #10b981;
+}
+
+/* Enhanced Focus States for Accessibility */
+.nav-link:focus[b-dbgg12otiq] {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.navbar-toggler:focus[b-dbgg12otiq] {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
 /* _content/CozyComfort.BlazorApp/Components/Layout/NavMenu.razor.rz.scp.css */
 .navbar-toggler[b-219xf03j1i] {
     appearance: none;
