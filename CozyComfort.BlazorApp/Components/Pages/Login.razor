@@ -8,70 +8,131 @@
 
 <PageTitle>Login - Cozy Comfort</PageTitle>
 
-<div class="container mt-5">
+<div class="container-fluid p-4">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-5 col-lg-4">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="mb-1">Welcome Back</h2>
+                <p class="text-muted">Sign in to your CozyComfort account</p>
+            </div>
+
+            <!-- Login Card -->
             <div class="card">
                 <div class="card-header">
-                    <h3>Login to Cozy Comfort</h3>
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Login
+                    </h5>
                 </div>
                 <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle me-2"></i>@errorMessage
+                        </div>
+                    }
+
                     <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
                         <DataAnnotationsValidator />
-                        <ValidationSummary class="text-danger" />
+                        <ValidationSummary class="text-danger mb-3" />
 
+                        <!-- Role Selection -->
                         <div class="mb-3">
-                            <label class="form-label">Login As:</label>
+                            <label class="form-label fw-semibold">Login As <span class="text-danger">*</span></label>
                             <InputSelect @bind-Value="selectedRole" class="form-select">
-                                <option value="">Select Role</option>
+                                <option value="">Select Your Role</option>
                                 <option value="manufacturer">Manufacturer</option>
                                 <option value="distributor">Distributor</option>
                                 <option value="seller">Seller</option>
                             </InputSelect>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <InputText @bind-Value="loginModel.Email" class="form-control" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <InputText @bind-Value="loginModel.Password"
-                                       type="password" class="form-control" />
-                        </div>
-
-                        <div class="alert alert-info">
-                            <strong>DEBUG INFO:</strong><br>
-                            Selected Role: '@selectedRole'<br>
-                            Email: '@loginModel.Email'<br>
-                            Password Length: @(loginModel.Password?.Length ?? 0)<br>
-                            Form Valid: @(string.IsNullOrEmpty(selectedRole) ? "NO" : "YES")
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" disabled="@loading">
-                            @if (loading)
+                            @if (string.IsNullOrEmpty(selectedRole) && attemptedSubmit)
                             {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <div class="text-danger small mt-1">Please select a role</div>
                             }
-                            Login
-                        </button>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-envelope"></i>
+                                </span>
+                                <InputText @bind-Value="loginModel.Email" class="form-control" placeholder="Enter your email" />
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="Enter your password" />
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" disabled="@loading">
+                                @if (loading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Signing In...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    <span>Sign In</span>
+                                }
+                            </button>
+                        </div>
                     </EditForm>
+                </div>
+            </div>
 
-                    @if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        <div class="alert alert-danger mt-3">@errorMessage</div>
-                    }
+            <!-- Test Accounts Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Demo Accounts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Use these test accounts to explore the platform:</p>
 
-                    <div class="mt-3">
-                        <h5>Test Accounts:</h5>
-                        <ul>
-                            <li>Manufacturer: manufacturer@cozycomfort.com / Manufacturer123!</li>
-                            <li>Distributor: distributor@cozycomfort.com / Distributor123!</li>
-                            <li>Seller: seller@cozycomfort.com / Seller123!</li>
-                        </ul>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <div class="border rounded p-2 mb-2">
+                                <div class="fw-semibold text-primary">Manufacturer</div>
+                                <small class="text-muted">manufacturer@cozycomfort.com</small><br>
+                                <small class="text-muted">Password: Manufacturer123!</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded p-2 mb-2">
+                                <div class="fw-semibold text-info">Distributor</div>
+                                <small class="text-muted">distributor@cozycomfort.com</small><br>
+                                <small class="text-muted">Password: Distributor123!</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded p-2">
+                                <div class="fw-semibold text-success">Seller</div>
+                                <small class="text-muted">seller@cozycomfort.com</small><br>
+                                <small class="text-muted">Password: Seller123!</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="text-center mt-4">
+                <a href="/" class="btn btn-link">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Home
+                </a>
             </div>
         </div>
     </div>
@@ -82,6 +143,7 @@
     private string selectedRole = "";
     private bool loading;
     private string errorMessage = "";
+    private bool attemptedSubmit = false;
 
     protected override void OnInitialized()
     {
@@ -90,9 +152,17 @@
 
     private async Task HandleLogin()
     {
+        attemptedSubmit = true;
+
         if (string.IsNullOrEmpty(selectedRole))
         {
             errorMessage = "Please select a role";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(loginModel.Email) || string.IsNullOrEmpty(loginModel.Password))
+        {
+            errorMessage = "Please enter both email and password";
             return;
         }
 
@@ -113,17 +183,16 @@
                     _ => "/"
                 };
 
-                // Navigate without force reload to maintain SignalR connection
                 Navigation.NavigateTo(redirectUrl);
             }
             else
             {
-                errorMessage = result.Message ?? "Login failed";
+                errorMessage = result.Message ?? "Login failed. Please check your credentials.";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred during login: {ex.Message}";
+            errorMessage = "An error occurred during login. Please try again.";
         }
         finally
         {

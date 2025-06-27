@@ -1,7 +1,523 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>CozyComfort - Premium Blanket Manufacturing & Distribution</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-hero">
+    <!-- Hero Section -->
+    <div class="hero-container">
+        <div class="container-fluid">
+            <div class="row align-items-center min-vh-100 py-5">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1 class="hero-title">
+                            Welcome to <span class="brand-highlight">CozyComfort</span>
+                        </h1>
+                        <p class="hero-subtitle">
+                            Premium blanket manufacturing and distribution platform connecting manufacturers,
+                            distributors, and sellers in a seamless supply chain ecosystem.
+                        </p>
+                        <div class="hero-actions">
+                            <AuthorizeView>
+                                <Authorized>
+                                    @{
+                                        var userRole = GetUserRole(context.User);
+                                    }
+                                    <a href="@GetDashboardUrl(userRole)" class="btn btn-cozy-primary btn-lg">
+                                        <i class="bi bi-speedometer2 me-2"></i>
+                                        Go to @userRole Dashboard
+                                    </a>
+                                </Authorized>
+                                <NotAuthorized>
+                                    <a href="/login" class="btn btn-cozy-primary btn-lg">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                                        Sign In to Continue
+                                    </a>
+                                    <a href="/shop" class="btn btn-cozy-secondary btn-lg ms-3">
+                                        <i class="bi bi-shop me-2"></i>
+                                        Browse Products
+                                    </a>
+                                </NotAuthorized>
+                            </AuthorizeView>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-visual">
+                        <div class="feature-cards-stack">
+                            <div class="feature-card card-manufacturer">
+                                <i class="bi bi-gear-fill"></i>
+                                <h4>Manufacturing</h4>
+                                <p>Premium blanket production</p>
+                            </div>
+                            <div class="feature-card card-distributor">
+                                <i class="bi bi-truck"></i>
+                                <h4>Distribution</h4>
+                                <p>Efficient supply chain</p>
+                            </div>
+                            <div class="feature-card card-seller">
+                                <i class="bi bi-shop"></i>
+                                <h4>Retail</h4>
+                                <p>Quality products for customers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-Welcome to your new app.
+<!-- Features Section -->
+<div class="features-section bg-light py-5">
+    <div class="container-fluid">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Complete Supply Chain Management</h2>
+            <p class="section-subtitle text-muted">
+                Streamlined operations from manufacturing to retail
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Manufacturer Features -->
+            <div class="col-lg-4">
+                <div class="feature-highlight-card h-100">
+                    <div class="feature-icon manufacturer-accent">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                    <h3 class="feature-title">For Manufacturers</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-check-circle text-success"></i> Production Planning & Capacity Management</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Inventory Tracking & Stock Control</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Order Management & Fulfillment</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Real-time Production Analytics</li>
+                    </ul>
+                    <AuthorizeView Roles="Manufacturer,Administrator">
+                        <div class="mt-auto">
+                            <a href="/manufacturer/dashboard" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-speedometer2 me-2"></i>Manufacturer Dashboard
+                            </a>
+                        </div>
+                    </AuthorizeView>
+                </div>
+            </div>
+
+            <!-- Distributor Features -->
+            <div class="col-lg-4">
+                <div class="feature-highlight-card h-100">
+                    <div class="feature-icon distributor-accent">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <h3 class="feature-title">For Distributors</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-check-circle text-success"></i> Multi-Supplier Inventory Management</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Automated Reorder Processing</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Seller Network Management</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Distribution Analytics & Insights</li>
+                    </ul>
+                    <AuthorizeView Roles="Distributor,Administrator">
+                        <div class="mt-auto">
+                            <a href="/distributor/dashboard" class="btn btn-outline-info w-100">
+                                <i class="bi bi-speedometer2 me-2"></i>Distributor Dashboard
+                            </a>
+                        </div>
+                    </AuthorizeView>
+                </div>
+            </div>
+
+            <!-- Seller Features -->
+            <div class="col-lg-4">
+                <div class="feature-highlight-card h-100">
+                    <div class="feature-icon seller-accent">
+                        <i class="bi bi-shop-window"></i>
+                    </div>
+                    <h3 class="feature-title">For Sellers</h3>
+                    <ul class="feature-list">
+                        <li><i class="bi bi-check-circle text-success"></i> Customer Order Management</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Real-time Stock Availability</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Automated Distributor Orders</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Sales Performance Tracking</li>
+                    </ul>
+                    <AuthorizeView Roles="Seller,Administrator">
+                        <div class="mt-auto">
+                            <a href="/seller/dashboard" class="btn btn-outline-success w-100">
+                                <i class="bi bi-speedometer2 me-2"></i>Seller Dashboard
+                            </a>
+                        </div>
+                    </AuthorizeView>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="stats-section py-5">
+    <div class="container-fluid">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Platform Overview</h2>
+            <p class="section-subtitle text-muted">Real-time system metrics</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-primary">
+                        <i class="bi bi-box-seam display-4"></i>
+                    </div>
+                    <h3 class="stat-number">@totalProducts</h3>
+                    <p class="stat-label">Active Products</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-info">
+                        <i class="bi bi-clipboard-data display-4"></i>
+                    </div>
+                    <h3 class="stat-number">@totalOrders</h3>
+                    <p class="stat-label">Orders Processed</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-success">
+                        <i class="bi bi-people-fill display-4"></i>
+                    </div>
+                    <h3 class="stat-number">@activeUsers</h3>
+                    <p class="stat-label">Active Users</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-icon text-warning">
+                        <i class="bi bi-graph-up display-4"></i>
+                    </div>
+                    <h3 class="stat-number">99.8%</h3>
+                    <p class="stat-label">System Uptime</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action Section -->
+<div class="cta-section bg-primary text-white py-5">
+    <div class="container-fluid text-center">
+        <h2 class="mb-3">Ready to Optimize Your Supply Chain?</h2>
+        <p class="lead mb-4">
+            Join our platform and experience seamless blanket manufacturing and distribution management.
+        </p>
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="cta-actions">
+                    <a href="/login" class="btn btn-light btn-lg me-3">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Get Started
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </NotAuthorized>
+            <Authorized>
+                <p class="lead">Welcome back! Access your dashboard to continue managing your operations.</p>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+<style>
+    /* Hero Section Styles */
+    .home-hero {
+        background: linear-gradient(135deg, var(--cozy-gray-50) 0%, var(--cozy-gray-100) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .home-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.3'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: 1;
+        }
+
+    .hero-container {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: var(--cozy-gray-800);
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .brand-highlight {
+        color: var(--cozy-primary);
+        position: relative;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: var(--cozy-gray-600);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+        max-width: 90%;
+    }
+
+    .hero-actions {
+        margin-top: 2rem;
+    }
+
+    /* Feature Cards Stack */
+    .hero-visual {
+        position: relative;
+        height: 500px;
+    }
+
+    .feature-cards-stack {
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: var(--cozy-border-radius);
+        padding: 2rem;
+        box-shadow: var(--cozy-shadow-lg);
+        position: absolute;
+        width: 280px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid var(--cozy-gray-200);
+    }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+    .card-manufacturer {
+        top: 0;
+        left: 0;
+        z-index: 3;
+        border-left: 4px solid var(--cozy-manufacturer);
+    }
+
+    .card-distributor {
+        top: 100px;
+        left: 100px;
+        z-index: 2;
+        border-left: 4px solid var(--cozy-distributor);
+    }
+
+    .card-seller {
+        top: 200px;
+        left: 200px;
+        z-index: 1;
+        border-left: 4px solid var(--cozy-seller);
+    }
+
+    .feature-card i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .card-manufacturer i {
+        color: var(--cozy-manufacturer);
+    }
+
+    .card-distributor i {
+        color: var(--cozy-distributor);
+    }
+
+    .card-seller i {
+        color: var(--cozy-seller);
+    }
+
+    .feature-card h4 {
+        font-weight: 600;
+        color: var(--cozy-gray-800);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Section Styles */
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--cozy-gray-800);
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* Feature Highlight Cards */
+    .feature-highlight-card {
+        background: white;
+        border-radius: var(--cozy-border-radius);
+        padding: 2.5rem;
+        box-shadow: var(--cozy-shadow-sm);
+        border: 1px solid var(--cozy-gray-200);
+        transition: var(--cozy-transition);
+        display: flex;
+        flex-direction: column;
+    }
+
+        .feature-highlight-card:hover {
+            box-shadow: var(--cozy-shadow-md);
+            transform: translateY(-2px);
+        }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .manufacturer-accent {
+        background: var(--cozy-manufacturer);
+    }
+
+    .distributor-accent {
+        background: var(--cozy-distributor);
+    }
+
+    .seller-accent {
+        background: var(--cozy-seller);
+    }
+
+    .feature-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--cozy-gray-800);
+        margin-bottom: 1.5rem;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            color: var(--cozy-gray-700);
+        }
+
+        .feature-list i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+    /* Stats Section */
+    .stat-card {
+        background: white;
+        border-radius: var(--cozy-border-radius);
+        padding: 2rem;
+        box-shadow: var(--cozy-shadow-sm);
+        border: 1px solid var(--cozy-gray-200);
+        transition: var(--cozy-transition);
+    }
+
+        .stat-card:hover {
+            box-shadow: var(--cozy-shadow-md);
+            transform: translateY(-3px);
+        }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--cozy-gray-800);
+        margin: 1rem 0 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--cozy-gray-600);
+        font-weight: 500;
+        margin: 0;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        background: linear-gradient(135deg, var(--cozy-primary) 0%, var(--cozy-primary-dark) 100%);
+    }
+
+    .cta-actions .btn {
+        margin: 0.5rem;
+        padding: 0.75rem 2rem;
+    }
+
+   
+</style>
+
+@code {
+    private int totalProducts = 0;
+    private int totalOrders = 0;
+    private int activeUsers = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardMetrics();
+    }
+
+    private async Task LoadDashboardMetrics()
+    {
+        try
+        {
+            // Simulate loading metrics - replace with actual service calls
+            await Task.Delay(500); // Simulate API call
+
+            // Mock data - replace with actual service calls
+            totalProducts = 247;
+            totalOrders = 1834;
+            activeUsers = 89;
+        }
+        catch (Exception)
+        {
+            // Handle errors gracefully
+            totalProducts = 0;
+            totalOrders = 0;
+            activeUsers = 0;
+        }
+    }
+
+    private string GetUserRole(System.Security.Claims.ClaimsPrincipal user)
+    {
+        if (user.IsInRole("Manufacturer")) return "Manufacturer";
+        if (user.IsInRole("Distributor")) return "Distributor";
+        if (user.IsInRole("Seller")) return "Seller";
+        if (user.IsInRole("Administrator")) return "Administrator";
+        return "User";
+    }
+
+    private string GetDashboardUrl(string role)
+    {
+        return role.ToLower() switch
+        {
+            "manufacturer" => "/manufacturer/dashboard",
+            "distributor" => "/distributor/dashboard",
+            "seller" => "/seller/dashboard",
+            "administrator" => "/admin/dashboard",
+            _ => "/dashboard"
+        };
+    }
+}

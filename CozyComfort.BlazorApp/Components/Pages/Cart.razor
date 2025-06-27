@@ -8,86 +8,121 @@
 
 <PageTitle>Shopping Cart - CozyComfort</PageTitle>
 
-<div class="container mt-4">
-    <h2>Shopping Cart</h2>
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Shopping Cart</h2>
+            <p class="text-muted mb-0">Review your selected items</p>
+        </div>
+        <a href="/shop" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Continue Shopping
+        </a>
+    </div>
 
     @if (isLoading)
     {
-        <div class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading cart...</span>
             </div>
+            <p class="mt-3 text-muted">Loading your cart...</p>
         </div>
     }
     else if (cart?.Items?.Any() == true)
     {
         <div class="row">
-            <div class="col-md-8">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
                 <div class="card">
-                    <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in cart.Items)
-                                {
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cart me-2"></i>Cart Items
+                            <span class="badge bg-secondary ms-2">@cart.Items.Count items</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                @if (!string.IsNullOrEmpty(item.ImageUrl))
-                                                {
-                                                    <img src="@item.ImageUrl" alt="@item.ProductName"
-                                                         class="img-thumbnail me-3" style="width: 80px; height: 80px;">
-                                                }
-                                                <div>
-                                                    <h6 class="mb-0">@item.ProductName</h6>
-                                                    <small class="text-muted">SKU: @item.SKU</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>$@item.UnitPrice.ToString("F2")</td>
-                                        <td>
-                                            <div class="input-group" style="width: 120px;">
-                                                <button class="btn btn-sm btn-outline-secondary"
-                                                        @onclick="() => UpdateQuantity(item.ProductId, item.Quantity - 1)"
-                                                        disabled="@(item.Quantity <= 1)">
-                                                    -
-                                                </button>
-                                                <input type="text" class="form-control text-center"
-                                                       value="@item.Quantity" readonly>
-                                                <button class="btn btn-sm btn-outline-secondary"
-                                                        @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
-                                                    +
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td>$@((item.UnitPrice * item.Quantity).ToString("F2"))</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-danger"
-                                                    @onclick="() => RemoveItem(item.ProductId)">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                        <th class="text-center">Action</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in cart.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                                    {
+                                                        <img src="@item.ImageUrl" alt="@item.ProductName"
+                                                             class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                                             style="width: 60px; height: 60px;">
+                                                            <i class="bi bi-image text-muted"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <div class="fw-semibold">@item.ProductName</div>
+                                                        <small class="text-muted">SKU: @item.SKU</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="fw-semibold">$@item.UnitPrice.ToString("F2")</span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="input-group" style="width: 130px;">
+                                                    <button class="btn btn-outline-secondary btn-sm"
+                                                            @onclick="() => UpdateQuantity(item.ProductId, item.Quantity - 1)"
+                                                            disabled="@(item.Quantity <= 1)">
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                    <input type="text" class="form-control form-control-sm text-center"
+                                                           value="@item.Quantity" readonly>
+                                                    <button class="btn btn-outline-secondary btn-sm"
+                                                            @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="fw-semibold text-primary">$@((item.UnitPrice * item.Quantity).ToString("F2"))</span>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <button class="btn btn-outline-danger btn-sm"
+                                                        @onclick="() => RemoveItem(item.ProductId)"
+                                                        title="Remove item">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <!-- Order Summary -->
+            <div class="col-lg-4">
                 <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt me-2"></i>Order Summary
+                        </h5>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">Order Summary</h5>
-                        <hr>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
                             <span>$@cart.SubTotal.ToString("F2")</span>
@@ -96,21 +131,45 @@
                             <span>Tax:</span>
                             <span>$@cart.Tax.ToString("F2")</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex justify-content-between mb-3">
                             <span>Shipping:</span>
-                            <span>$@cart.ShippingCost.ToString("F2")</span>
+                            <span class="text-success">
+                                @if (cart.ShippingCost == 0)
+                                {
+                                    <span>Free</span>
+                                }
+                                else
+                                {
+                                    <span>$@cart.ShippingCost.ToString("F2")</span>
+                                }
+                            </span>
                         </div>
                         <hr>
-                        <div class="d-flex justify-content-between mb-3">
-                            <strong>Total:</strong>
-                            <strong>$@cart.Total.ToString("F2")</strong>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="h5 fw-bold">Total:</span>
+                            <span class="h5 fw-bold text-primary">$@cart.Total.ToString("F2")</span>
                         </div>
-                        <button class="btn btn-primary w-100" @onclick="ProceedToCheckout">
-                            Proceed to Checkout
-                        </button>
-                        <button class="btn btn-link w-100 mt-2" @onclick="ContinueShopping">
-                            Continue Shopping
-                        </button>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-lg" @onclick="ProceedToCheckout">
+                                <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+                            </button>
+                            <a href="/shop" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Continue Shopping
+                            </a>
+                        </div>
+
+                        <!-- Shipping Info -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="mb-2">
+                                <i class="bi bi-truck me-2"></i>Shipping Information
+                            </h6>
+                            <small class="text-muted">
+                                <i class="bi bi-check-circle text-success me-1"></i>Free shipping on all orders<br>
+                                <i class="bi bi-check-circle text-success me-1"></i>Estimated delivery: 3-5 business days<br>
+                                <i class="bi bi-check-circle text-success me-1"></i>30-day return policy
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,13 +177,16 @@
     }
     else
     {
+        <!-- Empty Cart -->
         <div class="text-center py-5">
-            <i class="bi bi-cart-x" style="font-size: 4rem; color: #ccc;"></i>
-            <h4 class="mt-3">Your cart is empty</h4>
-            <p class="text-muted">Add some cozy blankets to your cart!</p>
-            <button class="btn btn-primary" @onclick="ContinueShopping">
-                Start Shopping
-            </button>
+            <div class="mb-4">
+                <i class="bi bi-cart-x text-muted" style="font-size: 5rem;"></i>
+            </div>
+            <h4 class="mb-3">Your cart is empty</h4>
+            <p class="text-muted mb-4">Discover our premium collection of cozy blankets!</p>
+            <a href="/shop" class="btn btn-primary btn-lg">
+                <i class="bi bi-shop me-2"></i>Start Shopping
+            </a>
         </div>
     }
 </div>
@@ -136,9 +198,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Get the shared session ID
         sessionId = SessionService.GetSessionId();
-        Console.WriteLine($"Cart using session ID: {sessionId}");
         await LoadCart();
     }
 
@@ -151,11 +211,6 @@
             if (response.Success)
             {
                 cart = response.Data;
-                Console.WriteLine($"Loaded cart with {cart?.Items?.Count ?? 0} items");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to load cart: {response.Message}");
             }
         }
         catch (Exception ex)
@@ -212,7 +267,6 @@
                 return;
             }
 
-            // Create order using your existing DTOs
             var createOrderDto = new CreateCustomerOrderDto
             {
                 SessionId = sessionId,
@@ -224,8 +278,6 @@
                 PaymentMethod = "Credit Card"
             };
 
-            Console.WriteLine($"Creating order for session {sessionId} with {cart.Items.Count} items, total: ${cart.Total:F2}");
-
             var response = await SellerService.CreateOrderAsync(createOrderDto);
 
             if (response.Success)
@@ -236,28 +288,18 @@
                     $"Items: {response.Data.Items.Count}\n\n" +
                     $"This order will now appear in the Seller's order management system.");
 
-                // Clear the cart after successful order
                 cart = new CartDto { SessionId = sessionId };
                 StateHasChanged();
-
-                // Navigate to shop
                 Navigation.NavigateTo("/shop");
             }
             else
             {
                 await JSRuntime.InvokeVoidAsync("alert", $"Error creating order: {response.Message}");
-                Console.WriteLine($"Order creation failed: {response.Message}");
             }
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", "Error placing order. Please try again.");
-            Console.WriteLine($"Error in checkout: {ex.Message}");
         }
-    }
-
-    private void ContinueShopping()
-    {
-        Navigation.NavigateTo("/shop");
     }
 }

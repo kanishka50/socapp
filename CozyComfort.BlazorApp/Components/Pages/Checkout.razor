@@ -9,196 +9,258 @@
 
 <PageTitle>Checkout - CozyComfort</PageTitle>
 
-<div class="container mt-4">
-    <h2>Checkout</h2>
-    
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Checkout</h2>
+            <p class="text-muted mb-0">Complete your order details</p>
+        </div>
+        <a href="/cart" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Cart
+        </a>
+    </div>
+
     @if (isLoading)
     {
-        <div class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading checkout...</span>
             </div>
+            <p class="mt-3 text-muted">Loading checkout...</p>
         </div>
     }
     else if (cart?.Items?.Any() == true)
     {
         <div class="row">
-            <div class="col-md-8">
+            <!-- Checkout Form -->
+            <div class="col-lg-8">
                 <EditForm Model="@orderModel" OnValidSubmit="@PlaceOrder">
                     <DataAnnotationsValidator />
-                    
-                    <div class="card mb-3">
+
+                    <!-- Customer Information -->
+                    <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Customer Information</h5>
+                            <h5 class="mb-0">
+                                <i class="bi bi-person me-2"></i>Customer Information
+                            </h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Full Name</label>
-                                    <InputText @bind-Value="orderModel.CustomerName" class="form-control" />
+                                    <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.CustomerName" class="form-control" placeholder="Enter your full name" />
                                     <ValidationMessage For="() => orderModel.CustomerName" />
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email</label>
-                                    <InputText @bind-Value="orderModel.CustomerEmail" class="form-control" />
+                                    <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.CustomerEmail" class="form-control" placeholder="Enter your email" />
                                     <ValidationMessage For="() => orderModel.CustomerEmail" />
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Phone Number</label>
-                                <InputText @bind-Value="orderModel.CustomerPhone" class="form-control" />
-                                <ValidationMessage For="() => orderModel.CustomerPhone" />
+                                <div class="col-12 mb-3">
+                                    <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.CustomerPhone" class="form-control" placeholder="Enter your phone number" />
+                                    <ValidationMessage For="() => orderModel.CustomerPhone" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card mb-3">
+                    <!-- Shipping Address -->
+                    <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Shipping Address</h5>
+                            <h5 class="mb-0">
+                                <i class="bi bi-truck me-2"></i>Shipping Address
+                            </h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label class="form-label">Street Address</label>
-                                <InputText @bind-Value="orderModel.ShippingAddress.Street" class="form-control" />
+                                <label class="form-label fw-semibold">Street Address <span class="text-danger">*</span></label>
+                                <InputText @bind-Value="orderModel.ShippingAddress.Street" class="form-control" placeholder="Enter street address" />
                                 <ValidationMessage For="() => orderModel.ShippingAddress.Street" />
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">City</label>
-                                    <InputText @bind-Value="orderModel.ShippingAddress.City" class="form-control" />
+                                    <label class="form-label fw-semibold">City <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.ShippingAddress.City" class="form-control" placeholder="Enter city" />
                                     <ValidationMessage For="() => orderModel.ShippingAddress.City" />
                                 </div>
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">State</label>
-                                    <InputText @bind-Value="orderModel.ShippingAddress.State" class="form-control" />
+                                    <label class="form-label fw-semibold">State <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.ShippingAddress.State" class="form-control" placeholder="State" />
                                     <ValidationMessage For="() => orderModel.ShippingAddress.State" />
                                 </div>
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">ZIP Code</label>
-                                    <InputText @bind-Value="orderModel.ShippingAddress.ZipCode" class="form-control" />
+                                    <label class="form-label fw-semibold">ZIP Code <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.ShippingAddress.ZipCode" class="form-control" placeholder="ZIP" />
                                     <ValidationMessage For="() => orderModel.ShippingAddress.ZipCode" />
                                 </div>
                             </div>
-                            <div class="form-check mb-3">
+                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" @bind="sameAsShipping" id="sameAsShipping">
                                 <label class="form-check-label" for="sameAsShipping">
-                                    Billing address same as shipping
+                                    Billing address is the same as shipping address
                                 </label>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Billing Address (if different) -->
                     @if (!sameAsShipping)
                     {
-                        <div class="card mb-3">
+                        <div class="card mb-4">
                             <div class="card-header">
-                                <h5 class="mb-0">Billing Address</h5>
+                                <h5 class="mb-0">
+                                    <i class="bi bi-credit-card me-2"></i>Billing Address
+                                </h5>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label class="form-label">Street Address</label>
-                                    <InputText @bind-Value="orderModel.BillingAddress.Street" class="form-control" />
+                                    <label class="form-label fw-semibold">Street Address <span class="text-danger">*</span></label>
+                                    <InputText @bind-Value="orderModel.BillingAddress.Street" class="form-control" placeholder="Enter billing street address" />
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label">City</label>
-                                        <InputText @bind-Value="orderModel.BillingAddress.City" class="form-control" />
+                                        <label class="form-label fw-semibold">City <span class="text-danger">*</span></label>
+                                        <InputText @bind-Value="orderModel.BillingAddress.City" class="form-control" placeholder="Enter city" />
                                     </div>
                                     <div class="col-md-3 mb-3">
-                                        <label class="form-label">State</label>
-                                        <InputText @bind-Value="orderModel.BillingAddress.State" class="form-control" />
+                                        <label class="form-label fw-semibold">State <span class="text-danger">*</span></label>
+                                        <InputText @bind-Value="orderModel.BillingAddress.State" class="form-control" placeholder="State" />
                                     </div>
                                     <div class="col-md-3 mb-3">
-                                        <label class="form-label">ZIP Code</label>
-                                        <InputText @bind-Value="orderModel.BillingAddress.ZipCode" class="form-control" />
+                                        <label class="form-label fw-semibold">ZIP Code <span class="text-danger">*</span></label>
+                                        <InputText @bind-Value="orderModel.BillingAddress.ZipCode" class="form-control" placeholder="ZIP" />
                                     </div>
                                 </div>
                             </div>
                         </div>
                     }
 
-                    <div class="card mb-3">
+                    <!-- Payment Method -->
+                    <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">Payment Method</h5>
+                            <h5 class="mb-0">
+                                <i class="bi bi-credit-card me-2"></i>Payment Method
+                            </h5>
                         </div>
                         <div class="card-body">
                             <InputRadioGroup @bind-Value="orderModel.PaymentMethod">
-                                <div class="form-check mb-2">
-                                    <InputRadio class="form-check-input" id="creditCard" Value="@("Credit Card")" />
-                                    <label class="form-check-label" for="creditCard">
-                                        Credit Card
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <InputRadio class="form-check-input" id="paypal" Value="@("PayPal")" />
-                                    <label class="form-check-label" for="paypal">
-                                        PayPal
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <InputRadio class="form-check-input" id="bankTransfer" Value="@("Bank Transfer")" />
-                                    <label class="form-check-label" for="bankTransfer">
-                                        Bank Transfer
-                                    </label>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check">
+                                            <InputRadio class="form-check-input" id="creditCard" Value="@("Credit Card")" />
+                                            <label class="form-check-label" for="creditCard">
+                                                <i class="bi bi-credit-card me-2"></i>Credit Card
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check">
+                                            <InputRadio class="form-check-input" id="paypal" Value="@("PayPal")" />
+                                            <label class="form-check-label" for="paypal">
+                                                <i class="bi bi-paypal me-2"></i>PayPal
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check">
+                                            <InputRadio class="form-check-input" id="bankTransfer" Value="@("Bank Transfer")" />
+                                            <label class="form-check-label" for="bankTransfer">
+                                                <i class="bi bi-bank me-2"></i>Bank Transfer
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </InputRadioGroup>
                             <ValidationMessage For="() => orderModel.PaymentMethod" />
                         </div>
                     </div>
-                    
 
+                    <!-- Action Buttons -->
                     <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" @onclick="BackToCart">
-                            Back to Cart
-                        </button>
-                        <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                        <a href="/cart" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Cart
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg" disabled="@isProcessing">
                             @if (isProcessing)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                <span>Processing...</span>
+                                <span>Processing Order...</span>
                             }
                             else
                             {
+                                <i class="bi bi-check-circle me-2"></i>
                                 <span>Place Order</span>
                             }
                         </button>
                     </div>
                 </EditForm>
             </div>
-            
-            <div class="col-md-4">
+
+            <!-- Order Summary Sidebar -->
+            <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">Order Summary</h5>
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt me-2"></i>Order Summary
+                        </h5>
                     </div>
                     <div class="card-body">
-                        @foreach (var item in cart.Items)
-                        {
-                            <div class="d-flex justify-content-between mb-2">
-                                <div>
-                                    <small>@item.ProductName</small><br>
-                                    <small class="text-muted">Qty: @item.Quantity</small>
+                        <!-- Order Items -->
+                        <div class="mb-3">
+                            @foreach (var item in cart.Items)
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold small">@item.ProductName</div>
+                                        <small class="text-muted">Qty: @item.Quantity × $@item.UnitPrice.ToString("F2")</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="fw-semibold">$@((item.UnitPrice * item.Quantity).ToString("F2"))</span>
+                                    </div>
                                 </div>
-                                <small>$@((item.UnitPrice * item.Quantity).ToString("F2"))</small>
+                            }
+                        </div>
+
+                        <!-- Totals -->
+                        <div class="border-top pt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span>$@cart.SubTotal.ToString("F2")</span>
                             </div>
-                        }
-                        <hr>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
-                            <span>$@cart.SubTotal.ToString("F2")</span>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tax:</span>
+                                <span>$@cart.Tax.ToString("F2")</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Shipping:</span>
+                                <span class="text-success">
+                                    @if (cart.ShippingCost == 0)
+                                    {
+                                        <span>Free</span>
+                                    }
+                                    else
+                                    {
+                                        <span>$@cart.ShippingCost.ToString("F2")</span>
+                                    }
+                                </span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span class="h5 fw-bold">Total:</span>
+                                <span class="h5 fw-bold text-primary">$@cart.Total.ToString("F2")</span>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Tax:</span>
-                            <span>$@cart.Tax.ToString("F2")</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Shipping:</span>
-                            <span>$@cart.ShippingCost.ToString("F2")</span>
-                        </div>
-                        <hr>
-                        <div class="d-flex justify-content-between">
-                            <strong>Total:</strong>
-                            <strong>$@cart.Total.ToString("F2")</strong>
+
+                        <!-- Security Notice -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="mb-2">
+                                <i class="bi bi-shield-check text-success me-2"></i>Secure Checkout
+                            </h6>
+                            <small class="text-muted">
+                                Your payment information is encrypted and secure. We never store your payment details.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -207,8 +269,10 @@
     }
     else
     {
+        <!-- Empty Cart Message -->
         <div class="alert alert-warning">
-            Your cart is empty. <a href="/shop">Continue shopping</a>
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Your cart is empty. <a href="/shop" class="alert-link">Continue shopping</a>
         </div>
     }
 </div>
@@ -251,6 +315,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading cart: {ex.Message}");
+            Navigation.NavigateTo("/cart");
         }
         finally
         {
@@ -300,24 +365,18 @@
             var response = await SellerService.CreateOrderAsync(createOrderDto);
             if (response.Success && response.Data != null)
             {
-                // Clear the cart
                 await SellerService.ClearCartAsync(sessionId);
-                
-                // Store order number for confirmation page
                 await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "lastOrderNumber", response.Data.OrderNumber);
-                
-                // Navigate to confirmation
                 Navigation.NavigateTo($"/order-confirmation");
             }
             else
             {
-                // Show error message
-                Console.WriteLine($"Order failed: {response.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Failed to place order. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error placing order: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while placing your order. Please try again.");
         }
         finally
         {
@@ -325,12 +384,6 @@
         }
     }
 
-    private void BackToCart()
-    {
-        Navigation.NavigateTo("/cart");
-    }
-
-    // Model classes for form binding
     private class OrderFormModel
     {
         [Required(ErrorMessage = "Name is required")]
