@@ -3,6 +3,7 @@ using CozyComfort.BlazorApp.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
 using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs.Seller;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -38,6 +39,32 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
 
             return client;
+        }
+
+        public async Task<ApiResponse<CombinedOrdersDto>> GetCombinedOrdersAsync(PagedRequest request)
+        {
+            try
+            {
+                var queryParams = $"?PageNumber={request.PageNumber}&PageSize={request.PageSize}";
+
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                    queryParams += $"&SearchTerm={Uri.EscapeDataString(request.SearchTerm)}";
+
+                var response = await _httpClient.GetAsync($"api/orders/combined{queryParams}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CombinedOrdersDto>>();
+                    return result ?? ApiResponse<CombinedOrdersDto>.FailureResult("Failed to deserialize response");
+                }
+
+                return ApiResponse<CombinedOrdersDto>.FailureResult($"Failed to load orders: {response.StatusCode}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting combined orders");
+                return ApiResponse<CombinedOrdersDto>.FailureResult("Failed to load orders");
+            }
         }
 
         #region Products

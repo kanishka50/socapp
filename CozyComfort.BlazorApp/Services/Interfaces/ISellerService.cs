@@ -22,7 +22,7 @@ namespace CozyComfort.BlazorApp.Services.Interfaces
         Task<ApiResponse<DistributorProductDto>> GetDistributorProductByIdAsync(int id);
 
 
-        Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderRequest orderRequest);
+        //Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderRequest orderRequest);
 
         // Cart - Updated to return CartDto
         Task<ApiResponse<CartDto>> GetCartAsync(string sessionId);

@@ -1,11 +1,11 @@
-﻿using CozyComfort.Seller.API.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using CozyComfort.Seller.API.Data;
 using CozyComfort.Seller.API.Models.Entities;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
-using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.DTOs.Seller;
+using CozyComfort.Shared.DTOs.Distributor;
 using CozyComfort.Shared.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace CozyComfort.Seller.API.Services.Implementations
 {
@@ -120,14 +120,6 @@ namespace CozyComfort.Seller.API.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 // Create order with distributor
-                var distributorOrderDto = new ProcessSellerOrderDto
-                {
-                    SellerId = 1, // Seller ID
-                    SellerOrderNumber = order.OrderNumber,
-                    ShippingAddress = dto.ShippingAddress,
-                    Items = distributorOrderItems
-                };
-
                 var distributorResponse = await _distributorApiService.CreateDistributorOrderAsync(distributorOrderItems);
 
                 if (distributorResponse.Success && distributorResponse.Data != null)
@@ -153,6 +145,89 @@ namespace CozyComfort.Seller.API.Services.Implementations
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating distributor order");
                 return ApiResponse<SellerDistributorOrderDto>.FailureResult($"Error creating order: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<PagedResult<SellerDistributorOrderDto>>> GetDistributorOrdersAsync(PagedRequest request)
+        {
+            try
+            {
+                var query = _context.DistributorOrders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .AsQueryable();
+
+                // Apply search filter
+                if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+                {
+                    query = query.Where(o =>
+                        o.OrderNumber.Contains(request.SearchTerm) ||
+                        o.DistributorOrderNumber.Contains(request.SearchTerm));
+                }
+
+                // Apply sorting
+                query = request.SortBy?.ToLower() switch
+                {
+                    "date" => request.IsDescending ? query.OrderByDescending(o => o.OrderDate) : query.OrderBy(o => o.OrderDate),
+                    "amount" => request.IsDescending ? query.OrderByDescending(o => o.TotalAmount) : query.OrderBy(o => o.TotalAmount),
+                    _ => query.OrderByDescending(o => o.OrderDate)
+                };
+
+                var totalCount = await query.CountAsync();
+
+                var orders = await query
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(o => new SellerDistributorOrderDto
+                    {
+                        Id = o.Id,
+                        OrderNumber = o.OrderNumber,
+                        DistributorOrderNumber = o.DistributorOrderNumber,
+                        Status = o.Status.ToString(),
+                        OrderDate = o.OrderDate,
+                        TotalAmount = o.TotalAmount,
+                        ItemCount = o.OrderItems.Count
+                    })
+                    .ToListAsync();
+
+                var result = new PagedResult<SellerDistributorOrderDto>
+                {
+                    Items = orders,
+                    TotalCount = totalCount,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize
+                };
+
+                return ApiResponse<PagedResult<SellerDistributorOrderDto>>.SuccessResult(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting distributor orders");
+                return ApiResponse<PagedResult<SellerDistributorOrderDto>>.FailureResult("Error retrieving orders");
+            }
+        }
+
+        public async Task<ApiResponse<SellerDistributorOrderDto>> GetDistributorOrderByIdAsync(int orderId)
+        {
+            try
+            {
+                var order = await _context.DistributorOrders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null)
+                {
+                    return ApiResponse<SellerDistributorOrderDto>.FailureResult("Order not found");
+                }
+
+                var orderDto = MapToDto(order);
+                return ApiResponse<SellerDistributorOrderDto>.SuccessResult(orderDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting distributor order");
+                return ApiResponse<SellerDistributorOrderDto>.FailureResult("Error retrieving order");
             }
         }
 
@@ -189,7 +264,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     product.UpdatedAt = DateTime.UtcNow;
 
                     // Create inventory transaction
-                    var transaction = new SellerInventoryTransaction
+                    var inventoryTransaction = new SellerInventoryTransaction
                     {
                         ProductId = product.Id,
                         TransactionType = "IN",
@@ -202,7 +277,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                         IsActive = true
                     };
 
-                    _context.InventoryTransactions.Add(transaction);
+                    _context.InventoryTransactions.Add(inventoryTransaction);
                 }
 
                 await _context.SaveChangesAsync();
@@ -311,13 +386,12 @@ namespace CozyComfort.Seller.API.Services.Implementations
                 {
                     ProductId = oi.ProductId,
                     ProductName = oi.Product?.ProductName ?? "",
+                    SKU = oi.Product?.SKU ?? "",
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
                     TotalPrice = oi.TotalPrice
                 }).ToList() ?? new List<SellerDistributorOrderItemDto>()
             };
         }
-
-        // Implement other methods...
     }
 }
