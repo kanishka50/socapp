@@ -68,7 +68,7 @@ namespace CozyComfort.Seller.API.Services.Implementations
                     }).ToList()
                 };
 
-                var response = await _httpClient.PostAsJsonAsync("api/orders/from-seller", orderRequest);
+                var response = await _httpClient.PostAsJsonAsync("api/orders/process-seller-order", orderRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -90,6 +90,14 @@ namespace CozyComfort.Seller.API.Services.Implementations
         {
             try
             {
+                // ADD AUTHENTICATION HERE
+                var token = await GetAuthTokenAsync();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+
                 var response = await _httpClient.GetAsync($"api/products/{productId}");
 
                 if (response.IsSuccessStatusCode)
@@ -111,6 +119,14 @@ namespace CozyComfort.Seller.API.Services.Implementations
         {
             try
             {
+                // ADD AUTHENTICATION HERE
+                var token = await GetAuthTokenAsync();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+
                 var queryParams = $"?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))

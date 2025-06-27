@@ -106,6 +106,7 @@ builder.Services.AddScoped<ICustomerOrderService, CustomerOrderService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IDistributorApiService, DistributorApiService>();
+builder.Services.AddScoped<ISellerOrderService, SellerOrderService>();
 
 // Add memory cache for cart functionality
 builder.Services.AddMemoryCache();

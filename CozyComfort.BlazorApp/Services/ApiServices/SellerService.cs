@@ -586,7 +586,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
                 var client = await GetAuthenticatedClientAsync();
 
                 // Call the correct endpoint that returns SellerDistributorOrderDto
-                var response = await client.PostAsJsonAsync("api/orders/create-distributor-order", request);
+                var response = await client.PostAsJsonAsync("api/distributor-orders/create", request);
 
                 if (response.IsSuccessStatusCode)
                 {
