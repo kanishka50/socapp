@@ -6,12 +6,20 @@
         public string OrderNumber { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerEmail { get; set; } = string.Empty;
+        public string CustomerPhone { get; set; } = string.Empty; // ADD THIS
         public string Status { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; }
+        public decimal SubTotal { get; set; } // ADD THIS
+        public decimal Tax { get; set; } // ADD THIS
+        public decimal ShippingCost { get; set; } // ADD THIS
         public decimal TotalAmount { get; set; }
-        public List<OrderItemDto> Items { get; set; } = new();
         public string ShippingAddress { get; set; } = string.Empty;
+        public string BillingAddress { get; set; } = string.Empty; // ADD THIS
+        public string PaymentMethod { get; set; } = string.Empty; // ADD THIS
         public bool IsPaid { get; set; }
+        public DateTime? PaidAt { get; set; } // ADD THIS
+        public int ItemCount { get; set; } // ADD THIS
+        public List<OrderItemDto> Items { get; set; } = new();
     }
 
     public class CreateCustomerOrderDto
@@ -40,18 +48,5 @@
         public string Status { get; set; } = string.Empty;
     }
 
-    // For inter-service communication
-    public class DistributorOrderItem
-    {
-        public int DistributorProductId { get; set; }
-        public int Quantity { get; set; }
-        public decimal RequestedPrice { get; set; }
-    }
-
-    public class CreateDistributorOrderRequest
-    {
-        public List<DistributorOrderItem> Items { get; set; } = new();
-        public string OrderReference { get; set; } = string.Empty;
-        public string Notes { get; set; } = string.Empty;
-    }
+   
 }

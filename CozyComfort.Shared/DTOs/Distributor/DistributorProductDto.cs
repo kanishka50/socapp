@@ -5,12 +5,15 @@
         public int Id { get; set; }
         public int? ManufacturerProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty; // ADD THIS
         public string SKU { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty; // ADD THIS
         public decimal PurchasePrice { get; set; }
         public decimal SellingPrice { get; set; }
         public int CurrentStock { get; set; }
         public int AvailableStock { get; set; }
         public int MinStockLevel { get; set; }
+        public string ImageUrl { get; set; } = string.Empty; // ADD THIS
         public decimal ProfitMargin => SellingPrice - PurchasePrice;
         public decimal ProfitPercentage => PurchasePrice > 0 ? ((SellingPrice - PurchasePrice) / PurchasePrice) * 100 : 0;
     }

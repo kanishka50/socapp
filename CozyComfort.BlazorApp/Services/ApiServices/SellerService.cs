@@ -45,12 +45,14 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
         {
             try
             {
+                var client = await GetAuthenticatedClientAsync(); // Use authenticated client
+
                 var queryParams = $"?PageNumber={request.PageNumber}&PageSize={request.PageSize}";
 
                 if (!string.IsNullOrWhiteSpace(request.SearchTerm))
                     queryParams += $"&SearchTerm={Uri.EscapeDataString(request.SearchTerm)}";
 
-                var response = await _httpClient.GetAsync($"api/orders/combined{queryParams}");
+                var response = await client.GetAsync($"api/orders/combined{queryParams}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -703,40 +705,7 @@ namespace CozyComfort.BlazorApp.Services.ApiServices
             }
         }
 
-        public async Task<ApiResponse<bool>> CreateDistributorOrderAsync(CreateDistributorOrderRequest orderRequest)
-        {
-            try
-            {
-                var client = await GetAuthenticatedClientAsync();
-
-                var response = await client.PostAsJsonAsync("api/distributor-orders/create", orderRequest);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
-                    return result ?? new ApiResponse<bool> { Success = true, Data = true };
-                }
-
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Failed to create distributor order: {response.StatusCode}, Content: {errorContent}");
-
-                return new ApiResponse<bool>
-                {
-                    Success = false,
-                    Message = $"Failed to create distributor order: {response.StatusCode}"
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating distributor order");
-                return new ApiResponse<bool>
-                {
-                    Success = false,
-                    Message = "Error creating distributor order",
-                    Errors = new List<string> { ex.Message }
-                };
-            }
-        }
+        
 
         #endregion
     }
