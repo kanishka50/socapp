@@ -10,6 +10,6 @@ namespace CozyComfort.Shared.DTOs.Seller
     {
         public string DistributorOrderNumber { get; set; } = string.Empty;
         public string SellerOrderNumber { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+        public List<DistributorOrderAcceptedItemDto> Items { get; set; } = new();
     }
 }

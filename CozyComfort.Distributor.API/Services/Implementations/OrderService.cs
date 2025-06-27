@@ -8,6 +8,7 @@ using CozyComfort.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 using System.Net.Http.Json;
+using SellerDTOs = CozyComfort.Shared.DTOs.Seller;
 
 namespace CozyComfort.Distributor.API.Services.Implementations
 {
@@ -160,9 +161,47 @@ namespace CozyComfort.Distributor.API.Services.Implementations
                         };
                         _context.InventoryTransactions.Add(inventoryTx);
                     }
+
+                    // **FIXED: Notify seller when distributor order is accepted**
+                    try
+                    {
+                        // Prepare seller notification using alias
+                        var sellerNotification = new SellerDTOs.DistributorOrderAcceptedDto
+                        {
+                            DistributorOrderNumber = order.OrderNumber,
+                            Items = order.OrderItems.Select(item => new SellerDTOs.DistributorOrderAcceptedItemDto
+                            {
+                                DistributorProductId = item.ProductId,
+                                Quantity = item.Quantity
+                            }).ToList()
+                        };
+
+                        // Call Seller API with correct URL
+                        using var httpClient = new HttpClient();
+                        httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+                        var response = await httpClient.PostAsJsonAsync(
+                            "https://localhost:7003/api/distributor-orders/accept-notification",
+                            sellerNotification);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            _logger.LogInformation($"Successfully notified seller about order {order.OrderNumber} acceptance");
+                        }
+                        else
+                        {
+                            var errorContent = await response.Content.ReadAsStringAsync();
+                            _logger.LogWarning($"Failed to notify seller about order {order.OrderNumber} acceptance. Status: {response.StatusCode}, Content: {errorContent}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error notifying seller about order {order.OrderNumber} acceptance");
+                        // Don't fail the transaction if seller notification fails
+                    }
                 }
 
-                // NEW CODE: Handle TO_MANUFACTURER orders - INCREASE inventory when accepted
+                // Handle TO_MANUFACTURER orders - INCREASE inventory when accepted
                 else if (newStatus == OrderStatus.Accepted && order.OrderType == OrderType.ToManufacturer)
                 {
                     _logger.LogInformation($"Processing manufacturer order acceptance for {order.OrderNumber}");

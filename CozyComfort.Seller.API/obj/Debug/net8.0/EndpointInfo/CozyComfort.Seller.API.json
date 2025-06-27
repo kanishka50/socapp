@@ -847,9 +847,26 @@
             "type": "string",
             "nullable": true
           },
-          "status": {
-            "type": "string",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DistributorOrderAcceptedItemDto"
+            },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DistributorOrderAcceptedItemDto": {
+        "type": "object",
+        "properties": {
+          "distributorProductId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
