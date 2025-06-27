@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CozyComfort.Seller.API.Services.Interfaces;
 using CozyComfort.Shared.DTOs;
+using CozyComfort.Shared.DTOs.Seller;
 
 namespace CozyComfort.Seller.API.Controllers
 {
@@ -22,6 +23,43 @@ namespace CozyComfort.Seller.API.Controllers
             _orderService = orderService;
             _customerOrderService = customerOrderService;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Create a new customer order from the shopping cart
+        /// This endpoint is accessible without authentication for public customers
+        /// </summary>
+        [HttpPost("create")]
+        [AllowAnonymous] // Allow public customers to create orders
+        public async Task<IActionResult> CreateCustomerOrder([FromBody] CreateCustomerOrderDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ApiResponse<CustomerOrderDto>.FailureResult("Invalid order data"));
+                }
+
+                _logger.LogInformation("Creating customer order for session: {SessionId}", dto.SessionId);
+
+                var result = await _customerOrderService.CreateOrderAsync(dto);
+
+                if (result.Success)
+                {
+                    _logger.LogInformation("Customer order created successfully: {OrderNumber}", result.Data?.OrderNumber);
+                    return Ok(result);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to create customer order: {Message}", result.Message);
+                    return BadRequest(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating customer order");
+                return BadRequest(ApiResponse<CustomerOrderDto>.FailureResult("Error creating order"));
+            }
         }
 
         /// <summary>

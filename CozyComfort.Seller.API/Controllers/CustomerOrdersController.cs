@@ -11,7 +11,6 @@ using CozyComfort.Shared.DTOs.Seller;
 namespace CozyComfort.Seller.API.Controllers
 {
     [Route("api/customer-orders")]
-    [Route("api/orders")] // Also handle the /api/orders route for backward compatibility
     [ApiController]
     public class CustomerOrdersController : ControllerBase
     {
