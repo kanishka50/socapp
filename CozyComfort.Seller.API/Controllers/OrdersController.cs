@@ -1,69 +1,42 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CozyComfort.Seller.API.Services.Interfaces;
-//using CozyComfort.Seller.API.Models.DTOs;
-using CozyComfort.Shared.DTOs.Seller;
 using CozyComfort.Shared.DTOs;
 
 namespace CozyComfort.Seller.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/orders")]
     [ApiController]
+    [Authorize(Policy = "SellerOnly")]
     public class OrdersController : ControllerBase
     {
-        private readonly ICustomerOrderService _orderService;
+        private readonly ISellerOrderService _orderService;
+        private readonly ICustomerOrderService _customerOrderService;
         private readonly ILogger<OrdersController> _logger;
 
-        public OrdersController(ICustomerOrderService orderService, ILogger<OrdersController> logger)
+        public OrdersController(
+            ISellerOrderService orderService,
+            ICustomerOrderService customerOrderService,
+            ILogger<OrdersController> logger)
         {
             _orderService = orderService;
+            _customerOrderService = customerOrderService;
             _logger = logger;
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateCustomerOrderDto dto)
+        [HttpGet("combined")]
+        public async Task<IActionResult> GetCombinedOrders([FromQuery] PagedRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var result = await _orderService.CreateOrderAsync(dto);
-            return result.Success ? Ok(result) : BadRequest(result);
+            try
+            {
+                var result = await _orderService.GetCombinedOrdersAsync(request);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting combined orders");
+                return BadRequest(ApiResponse<bool>.FailureResult("Error retrieving orders"));
+            }
         }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrder(int id)
-        {
-            var result = await _orderService.GetOrderByIdAsync(id);
-            return result.Success ? Ok(result) : NotFound(result);
-        }
-
-        [HttpGet("customer/{email}")]
-        [Authorize]
-        public async Task<IActionResult> GetCustomerOrders(string email)
-        {
-            var result = await _orderService.GetCustomerOrdersAsync(email);
-            return Ok(result);
-        }
-
-        [HttpGet]
-        [Authorize(Policy = "SellerOnly")]
-        public async Task<IActionResult> GetAllOrders([FromQuery] PagedRequest request)
-        {
-            var result = await _orderService.GetOrdersAsync(request);
-            return Ok(result);
-        }
-
-        [HttpPut("{id}/status")]
-        [Authorize(Policy = "SellerOnly")]
-        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateStatusDto dto)
-        {
-            var result = await _orderService.UpdateOrderStatusAsync(id, dto.Status);
-            return result.Success ? Ok(result) : BadRequest(result);
-        }
-    }
-
-    public class UpdateStatusDto
-    {
-        public string Status { get; set; } = string.Empty;
     }
 }
