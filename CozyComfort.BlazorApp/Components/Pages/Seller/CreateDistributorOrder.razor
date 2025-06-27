@@ -117,7 +117,8 @@
                                                 </td>
                                                 <td class="text-muted">@product.SKU</td>
                                                 <td>
-                                                    <span class="badge bg-primary">$@product.PurchasePrice.ToString("F2")</span>
+                                                    @* FIXED: Show SellingPrice (what seller pays) instead of PurchasePrice *@
+                                                    <span class="badge bg-primary">$@product.SellingPrice.ToString("F2")</span>
                                                 </td>
                                                 <td>
                                                     @if (product.AvailableStock > 0)
@@ -298,7 +299,6 @@
                     </div>
 
                     <div class="d-grid gap-2">
-                        @* Lines 306-311 area - Fixed button text sections *@
                         <button class="btn btn-primary btn-lg" @onclick="CreateOrder"
                                 disabled="@(!orderItems.Any() || isCreatingOrder || string.IsNullOrWhiteSpace(shippingAddress))">
                             @if (isCreatingOrder)
@@ -486,7 +486,7 @@
                     ProductName = product.ProductName,
                     SKU = product.SKU,
                     Quantity = quantity,
-                    RequestedPrice = product.SellingPrice
+                    RequestedPrice = product.SellingPrice  // FIXED: Use SellingPrice (what seller pays)
                 });
             }
 

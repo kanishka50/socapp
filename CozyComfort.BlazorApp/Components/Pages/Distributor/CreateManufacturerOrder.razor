@@ -569,9 +569,11 @@
 
             if (response.Success)
             {
-                successMessage = "Order created successfully! Redirecting...";
+                successMessage = "Order created successfully! Your order has been sent to the manufacturer for approval. Redirecting to orders list...";
                 await Task.Delay(1500); // Show success message briefly
-                Navigation.NavigateTo($"/distributor/orders/{response.Data?.Id ?? 0}");
+
+                // CHANGED: Redirect to orders list instead of order details
+                Navigation.NavigateTo("/distributor/orders");
             }
             else
             {

@@ -100,24 +100,38 @@
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
-                                                @if (order.Status == "Pending")
+                                                @* CONDITIONAL ACTIONS BASED ON CUSTOMER TYPE *@
+                                                @if (order.CustomerName.Contains("Manufacturer") || order.CustomerName == "Cozy Comfort Manufacturing")
                                                 {
-                                                    <button class="btn btn-outline-success"
-                                                            @onclick="@(() => UpdateOrderStatus(order.Id, "Accepted"))"
-                                                            title="Accept Order">
-                                                        <i class="bi bi-check-circle"></i>
-                                                    </button>
-                                                    <button class="btn btn-outline-danger"
-                                                            @onclick="@(() => UpdateOrderStatus(order.Id, "Cancelled"))"
-                                                            title="Cancel Order">
-                                                        <i class="bi bi-x-circle"></i>
+                                                    @* MANUFACTURER ORDERS: Only View button - Manufacturer handles acceptance *@
+                                                    <button class="btn btn-outline-primary"
+                                                            @onclick="@(() => ViewOrderDetails(order))"
+                                                            title="View Details">
+                                                        <i class="bi bi-eye"></i>
                                                     </button>
                                                 }
-                                                <button class="btn btn-outline-primary"
-                                                        @onclick="@(() => ViewOrderDetails(order))"
-                                                        title="View Details">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
+                                                else
+                                                {
+                                                    @* SELLER ORDERS: Full action buttons - Distributor can accept/cancel *@
+                                                    @if (order.Status == "Pending")
+                                                    {
+                                                        <button class="btn btn-outline-success"
+                                                                @onclick="@(() => UpdateOrderStatus(order.Id, "Accepted"))"
+                                                                title="Accept Order">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger"
+                                                                @onclick="@(() => UpdateOrderStatus(order.Id, "Cancelled"))"
+                                                                title="Cancel Order">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    }
+                                                    <button class="btn btn-outline-primary"
+                                                            @onclick="@(() => ViewOrderDetails(order))"
+                                                            title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                }
                                             </div>
                                         </td>
                                     </tr>
@@ -169,14 +183,41 @@
                             <div>@selectedOrder.OrderDate.ToString("MMMM dd, yyyy HH:mm")</div>
                         </div>
                         <div class="col-md-6">
+                            <div class="fw-semibold text-muted">Order Type:</div>
+                            <div>
+                                @if (selectedOrder.OrderType == "Manufacturer")
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-factory me-1"></i>From Manufacturer
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-shop me-1"></i>From Seller
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="fw-semibold text-muted">Status:</div>
                             <span class="badge @GetStatusBadgeClass(selectedOrder.Status)">@selectedOrder.Status</span>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="fw-semibold text-muted">Total Amount:</div>
                             <div class="h5 text-success mb-0">$@selectedOrder.TotalAmount.ToString("F2")</div>
                         </div>
                     </div>
+
+                    @* CONDITIONAL INFO FOR MANUFACTURER ORDERS *@
+                    @if (selectedOrder.CustomerName.Contains("Manufacturer") || selectedOrder.CustomerName == "Cozy Comfort Manufacturing")
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> This order was sent to the manufacturer.
+                            Status updates will be handled by the manufacturer.
+                        </div>
+                    }
 
                     <!-- Order Items -->
                     <h6 class="fw-semibold mb-3">Order Items</h6>
@@ -216,8 +257,11 @@
                     <button type="button" class="btn btn-secondary" @onclick="@(() => selectedOrder = null)">
                         <i class="bi bi-x-circle me-1"></i> Close
                     </button>
-                    @if (selectedOrder.Status == "Pending")
+
+                    @* CONDITIONAL ACTION BUTTONS IN MODAL BASED ON CUSTOMER TYPE *@
+                    @if (!(selectedOrder.CustomerName.Contains("Manufacturer") || selectedOrder.CustomerName == "Cozy Comfort Manufacturing") && selectedOrder.Status == "Pending")
                     {
+                        @* ONLY SHOW ACCEPT/CANCEL FOR SELLER ORDERS *@
                         <button type="button" class="btn btn-success" @onclick="@(() => UpdateOrderStatusFromModal(selectedOrder.Id, "Accepted"))">
                             <i class="bi bi-check-circle me-1"></i> Accept Order
                         </button>

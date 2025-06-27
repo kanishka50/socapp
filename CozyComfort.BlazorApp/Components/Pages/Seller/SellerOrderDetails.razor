@@ -65,9 +65,24 @@
                         <h5 class="mb-0">
                             <i class="bi bi-clipboard-data me-2"></i>Order Summary
                         </h5>
-                        <span class="badge @GetStatusBadgeClass(order.Status) fs-6">
-                            @GetDisplayStatus(order.Status)
-                        </span>
+                        <div class="d-flex gap-2">
+                            @* ORDER TYPE INDICATOR *@
+                            @if (IsDistributorOrder())
+                            {
+                                <span class="badge bg-info">
+                                    <i class="bi bi-truck me-1"></i>Distributor Order
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-person me-1"></i>Customer Order
+                                </span>
+                            }
+                            <span class="badge @GetStatusBadgeClass(order.Status) fs-6">
+                                @GetDisplayStatus(order.Status)
+                            </span>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -80,11 +95,22 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="text-muted">Customer Information</h6>
-                                <div class="mb-3">
-                                    <strong>Name:</strong> @order.CustomerName<br />
-                                    <strong>Email:</strong> @order.CustomerEmail
-                                </div>
+                                @if (IsDistributorOrder())
+                                {
+                                    <h6 class="text-muted">Distributor Order Information</h6>
+                                    <div class="mb-3">
+                                        <strong>Order Type:</strong> Distributor Order<br />
+                                        <strong>Status:</strong> @GetDisplayStatus(order.Status)
+                                    </div>
+                                }
+                                else
+                                {
+                                    <h6 class="text-muted">Customer Information</h6>
+                                    <div class="mb-3">
+                                        <strong>Name:</strong> @order.CustomerName<br />
+                                        <strong>Email:</strong> @order.CustomerEmail
+                                    </div>
+                                }
                             </div>
                         </div>
 
@@ -166,44 +192,58 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        @if (IsOrderPending(order.Status))
+                        @* CONDITIONAL ACTIONS BASED ON ORDER TYPE *@
+                        @if (IsDistributorOrder())
                         {
+                            @* DISTRIBUTOR ORDERS: View only - No actions allowed *@
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i>
-                                <strong>Pending Order</strong><br />
-                                Choose an action for this order
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Distributor Order</strong><br />
+                                This order was sent to a distributor. Status updates are handled by the distributor.
                             </div>
-
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-success" @onclick='() => QuickUpdateStatus("Accepted")' disabled="@isUpdating">
-                                    @if (isUpdating && pendingAction == "Accepted")
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2"></span>
-                                    }
-                                    <i class="bi bi-check-circle me-2"></i>Accept Order
-                                </button>
-
-                                <button class="btn btn-danger" @onclick='() => QuickUpdateStatus("Cancelled")' disabled="@isUpdating">
-                                    @if (isUpdating && pendingAction == "Cancelled")
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2"></span>
-                                    }
-                                    <i class="bi bi-x-circle me-2"></i>Cancel Order
-                                </button>
-                            </div>
-
-                            <hr />
                         }
                         else
                         {
-                            <div class="alert alert-secondary">
-                                <i class="bi bi-lock"></i>
-                                <strong>Order Processed</strong><br />
-                                <small>
-                                    Status: @GetDisplayStatus(order.Status)<br />
-                                    This order cannot be modified.
-                                </small>
-                            </div>
+                            @* CUSTOMER ORDERS: Full action capabilities *@
+                            @if (IsOrderPending(order.Status))
+                            {
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Pending Order</strong><br />
+                                    Choose an action for this order
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success" @onclick='() => QuickUpdateStatus("Accepted")' disabled="@isUpdating">
+                                        @if (isUpdating && pendingAction == "Accepted")
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                        }
+                                        <i class="bi bi-check-circle me-2"></i>Accept Order
+                                    </button>
+
+                                    <button class="btn btn-danger" @onclick='() => QuickUpdateStatus("Cancelled")' disabled="@isUpdating">
+                                        @if (isUpdating && pendingAction == "Cancelled")
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                        }
+                                        <i class="bi bi-x-circle me-2"></i>Cancel Order
+                                    </button>
+                                </div>
+
+                                <hr />
+                            }
+                            else
+                            {
+                                <div class="alert alert-secondary">
+                                    <i class="bi bi-lock"></i>
+                                    <strong>Order Processed</strong><br />
+                                    <small>
+                                        Status: @GetDisplayStatus(order.Status)<br />
+                                        This order cannot be modified.
+                                    </small>
+                                </div>
+                            }
                         }
 
                         <!-- Additional Actions -->
@@ -211,62 +251,15 @@
                             <button class="btn btn-outline-secondary" @onclick="PrintOrder">
                                 <i class="bi bi-printer me-2"></i>Print Order
                             </button>
-                            <button class="btn btn-outline-info" @onclick="EmailCustomer">
-                                <i class="bi bi-envelope me-2"></i>Email Customer
-                            </button>
+                            @if (!IsDistributorOrder())
+                            {
+                                <button class="btn btn-outline-info" @onclick="EmailCustomer">
+                                    <i class="bi bi-envelope me-2"></i>Email Customer
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
-
-                <!-- Order Status Timeline Card -->
-                @* <div class="card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="bi bi-clock-history me-2"></i>Order Timeline
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="timeline">
-                            <div class="timeline-item completed">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <div class="fw-semibold">Order Placed</div>
-                                    <small class="text-muted">@order.OrderDate.ToString("MMM dd, yyyy HH:mm")</small>
-                                </div>
-                            </div>
-
-                            <div class="timeline-item @(IsStatusReached("Pending") ? "completed" : "")">
-                                <div class="timeline-marker @(IsStatusReached("Pending") ? "bg-warning" : "bg-secondary")"></div>
-                                <div class="timeline-content">
-                                    <div class="fw-semibold">Pending Review</div>
-                                    <small class="text-muted">Awaiting seller action</small>
-                                </div>
-                            </div>
-
-                            @if (IsStatusReached("Accepted"))
-                            {
-                                <div class="timeline-item completed">
-                                    <div class="timeline-marker bg-success"></div>
-                                    <div class="timeline-content">
-                                        <div class="fw-semibold">Order Accepted</div>
-                                        <small class="text-muted">Inventory updated</small>
-                                    </div>
-                                </div>
-                            }
-
-                            @if (IsStatusReached("Cancelled"))
-                            {
-                                <div class="timeline-item completed">
-                                    <div class="timeline-marker bg-danger"></div>
-                                    <div class="timeline-content">
-                                        <div class="fw-semibold">Order Cancelled</div>
-                                        <small class="text-muted">Order was cancelled</small>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div> *@
 
                 <!-- Order Summary Stats -->
                 <div class="card">
@@ -298,13 +291,12 @@
     }
 </div>
 
-<!-- Confirmation Modal -->
-@if (showConfirmModal)
+<!-- Confirmation Modal - Only for Customer Orders -->
+@if (showConfirmModal && !IsDistributorOrder())
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog">
             <div class="modal-content">
-                @* Line 306 area - Fixed modal title section *@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         @if (pendingAction == "Accepted")
@@ -376,47 +368,6 @@
     </div>
 }
 
-<style>
-    .timeline {
-        position: relative;
-        padding-left: 30px;
-    }
-
-    .timeline-item {
-        position: relative;
-        padding-bottom: 20px;
-    }
-
-        .timeline-item:not(:last-child)::before {
-            content: '';
-            position: absolute;
-            left: -20px;
-            top: 20px;
-            width: 2px;
-            height: calc(100% - 10px);
-            background-color: #dee2e6;
-        }
-
-        .timeline-item.completed:not(:last-child)::before {
-            background-color: #28a745;
-        }
-
-    .timeline-marker {
-        position: absolute;
-        left: -25px;
-        top: 5px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 2px #dee2e6;
-    }
-
-    .timeline-content {
-        margin-bottom: 5px;
-    }
-</style>
-
 @code {
     [Parameter] public int OrderId { get; set; }
 
@@ -462,8 +413,25 @@
         }
     }
 
+    private bool IsDistributorOrder()
+    {
+        if (order == null) return false;
+
+        // Determine if this is a distributor order based on:
+        // 1. Missing customer email (distributor orders don't have customer emails)
+        // 2. Order number pattern (if it starts with specific patterns)
+        // 3. Empty customer name or default values
+
+        return string.IsNullOrEmpty(order.CustomerEmail) ||
+               string.IsNullOrEmpty(order.CustomerName) ||
+               order.CustomerName.Trim() == "";
+    }
+
     private void QuickUpdateStatus(string newStatus)
     {
+        // Only allow status updates for customer orders
+        if (IsDistributorOrder()) return;
+
         pendingAction = newStatus;
         showConfirmModal = true;
     }
@@ -476,7 +444,7 @@
 
     private async Task ConfirmStatusUpdate()
     {
-        if (order == null || string.IsNullOrEmpty(pendingAction))
+        if (order == null || string.IsNullOrEmpty(pendingAction) || IsDistributorOrder())
             return;
 
         try
@@ -519,7 +487,10 @@
 
     private void EmailCustomer()
     {
-        successMessage = "Email functionality will be implemented";
+        if (!IsDistributorOrder())
+        {
+            successMessage = "Email functionality will be implemented";
+        }
     }
 
     private void NavigateToOrders()
@@ -572,30 +543,5 @@
             "2" => "Cancelled",
             _ => status
         };
-    }
-
-    private bool IsStatusReached(string targetStatus)
-    {
-        if (order == null) return false;
-
-        return targetStatus.ToLower() switch
-        {
-            "pending" => true,
-            "accepted" => IsOrderAccepted(order.Status),
-            "cancelled" => IsOrderCancelled(order.Status),
-            _ => false
-        };
-    }
-
-    private bool IsOrderAccepted(string status)
-    {
-        return status?.Trim().Equals("Accepted", StringComparison.OrdinalIgnoreCase) == true ||
-               status?.Trim() == "1";
-    }
-
-    private bool IsOrderCancelled(string status)
-    {
-        return status?.Trim().Equals("Cancelled", StringComparison.OrdinalIgnoreCase) == true ||
-               status?.Trim() == "2";
     }
 }
