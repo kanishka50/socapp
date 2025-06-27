@@ -111,6 +111,75 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "GetCustomerOrderById",
+    "RelativePath": "api/customer-orders/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "UpdateCustomerOrderStatus",
+    "RelativePath": "api/customer-orders/{id}/status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Seller.API.Controllers.UpdateOrderStatusDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "GetCustomerOrdersByEmail",
+    "RelativePath": "api/customer-orders/by-email/{email}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "email",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "CreateCustomerOrder",
+    "RelativePath": "api/customer-orders/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CreateCustomerOrderDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Seller.API.Controllers.DistributorOrdersController",
     "Method": "GetDistributorOrders",
     "RelativePath": "api/distributor-orders",
@@ -336,6 +405,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "GetCustomerOrderById",
+    "RelativePath": "api/orders/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "CozyComfort.Seller.API.Controllers.OrdersController",
     "Method": "GetOrderById",
     "RelativePath": "api/orders/{id}",
@@ -346,6 +431,27 @@
       {
         "Name": "id",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "UpdateCustomerOrderStatus",
+    "RelativePath": "api/orders/{id}/status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Seller.API.Controllers.UpdateOrderStatusDto",
         "IsRequired": true
       }
     ],
@@ -367,6 +473,22 @@
       {
         "Name": "dto",
         "Type": "CozyComfort.Seller.API.Controllers.UpdateOrderStatusDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "GetCustomerOrdersByEmail",
+    "RelativePath": "api/orders/by-email/{email}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "email",
+        "Type": "System.String",
         "IsRequired": true
       }
     ],
@@ -404,6 +526,22 @@
         "Name": "IsDescending",
         "Type": "System.Boolean",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CozyComfort.Seller.API.Controllers.CustomerOrdersController",
+    "Method": "CreateCustomerOrder",
+    "RelativePath": "api/orders/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "CozyComfort.Shared.DTOs.Seller.CreateCustomerOrderDto",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

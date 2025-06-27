@@ -24,6 +24,9 @@ namespace CozyComfort.Seller.API.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Get combined orders (customer + distributor orders)
+        /// </summary>
         [HttpGet("combined")]
         public async Task<IActionResult> GetCombinedOrders([FromQuery] PagedRequest request)
         {
@@ -39,7 +42,9 @@ namespace CozyComfort.Seller.API.Controllers
             }
         }
 
-        // ADD THIS MISSING ENDPOINT - This is the key fix
+        /// <summary>
+        /// Get order by ID (searches both customer and distributor orders)
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrderById(int id)
         {
@@ -47,7 +52,6 @@ namespace CozyComfort.Seller.API.Controllers
             {
                 // Try to get as customer order first (since that's what the UI expects)
                 var customerOrderResult = await _customerOrderService.GetOrderByIdAsync(id);
-
                 if (customerOrderResult.Success)
                 {
                     return Ok(customerOrderResult);
@@ -55,7 +59,6 @@ namespace CozyComfort.Seller.API.Controllers
 
                 // If not found as customer order, try as distributor order
                 var distributorOrderResult = await _orderService.GetDistributorOrderByIdAsync(id);
-
                 if (distributorOrderResult.Success)
                 {
                     return Ok(distributorOrderResult);
@@ -71,7 +74,9 @@ namespace CozyComfort.Seller.API.Controllers
             }
         }
 
-        // ADD THIS ENDPOINT FOR UPDATING ORDER STATUS
+        /// <summary>
+        /// Update order status (for customer orders)
+        /// </summary>
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
         {
@@ -79,7 +84,6 @@ namespace CozyComfort.Seller.API.Controllers
             {
                 // Try to update as customer order first
                 var result = await _customerOrderService.UpdateOrderStatusAsync(id, dto.Status);
-
                 if (result.Success)
                 {
                     return Ok(result);
